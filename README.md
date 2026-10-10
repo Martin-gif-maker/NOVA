@@ -1,0 +1,182 @@
+# NOVA — desktop AI assistant (v6)
+
+## Run from source
+```
+./setup_mac.command      # one-time: venv + dependencies
+./start.command          # or:  .venv/bin/python main.py
+```
+First launch shows a setup wizard: how your data is handled, which AI to use, optional permissions.
+
+## Which AI answers
+Pick it in the wizard or in **Settings → AI**; each provider's key is stored separately in the Keychain.
+
+| Provider | Needs | Notes |
+|---|---|---|
+| Groq (default) | API key (free tier) | fast; also does speech-to-text |
+| Anthropic (Claude) | API key | `claude-opus-5-5` by default, Haiku as the fast fallback. Server-side model fallbacks are on. |
+| OpenAI | API key | also does speech-to-text |
+| Ollama | Ollama running on this Mac | **private and offline** — nothing is sent to an AI service |
+| Custom | a server address | any OpenAI-compatible server (LM Studio, OpenRouter, a company gateway …) |
+
+The three model slots (best / fast / third) can be changed per provider in Settings → AI; NOVA starts with the
+best model and falls back to the fast one when it is rate-limited. If a provider retires a model, NOVA notices
+and switches to one that exists.
+
+## What NOVA can do on your Mac
+*The complete list, with how each thing works, is in [WHAT_NOVA_CAN_DO.md](WHAT_NOVA_CAN_DO.md).*
+
+* **Calendar, Reminders, Mail** — "what's on today?", "add a meeting Friday at 3", "remind me on my phone to call the
+  bank", "draft a reply to this email". Mail is only ever *drafted*: you press Send. macOS asks once for each app.
+* **Your documents** — drop a PDF, Word or PowerPoint file, or a whole folder, onto the window (or ＋ → Documents) and
+  ask about it. The text is indexed on the Mac; only the few passages that match a question are sent to the AI.
+* **Selected text anywhere** — select text in any app, press **⌃⇧Space**, pick Explain / Summarize / Translate /
+  Rewrite / Fix grammar — or one of your own actions (menu → *My actions…*). Rewrites are copied so ⌘V pastes them
+  over the selection; with *Settings → General → Paste rewrites … straight over the selection* NOVA switches back
+  to that app and pastes for you (only if you are still in that app or in NOVA; needs Accessibility permission).
+* **The page in your browser** — "summarize this page" (Safari, Chrome, Arc, Brave, Edge).
+* **Part of the screen** — ＋ → Analyze part of the screen, then drag a rectangle.
+* **Scheduled tasks** — "every morning at 8 give me news and the weather", "remind me every weekday at 17:30 to
+  stretch" (＋ → Scheduled tasks). They run while NOVA is open, and catch up for a few hours if it was closed.
+* **Modes and saved prompts** — ＋ → Mode: Coder, Translator, Tutor, Writer or your own. Type `/tldr`, `/eli5`, `/fix`
+  (or your own `/name`) before a text to reuse a prompt.
+* **Apple Shortcuts** — NOVA can run your shortcuts ("run my Morning Routine shortcut"), and a shortcut can hand NOVA
+  a request: *Open URL* `nova://ask?text=…` (packaged app) or *Run Shell Script* `NOVA --ask "…"`. Such text waits in
+  the message box until you press Enter, unless you allow auto-send in Settings → Privacy.
+  To use NOVA's **answer** in the shortcut, add `--wait`:
+  `/Applications/NOVA.app/Contents/MacOS/NOVA --ask "Summarize: $1" --wait` prints the answer and nothing else
+  (exit code 0; 1 = NOVA could not be reached, 2 = no answer, with the reason on stderr, 3 = no answer in time —
+  10 minutes, or `--timeout SECONDS`). If NOVA is not running it is started in the menu bar first.
+* **MCP tool servers** — ＋ → Tool servers (MCP): connect ready-made servers for GitHub, Notion, databases, files … by
+  command (`npx -y …`, `uvx …`) or web address, or paste the `mcpServers` JSON other apps use. NOVA asks the first
+  time each server tool is used and treats what a server returns as untrusted. Tokens you enter for a server are
+  kept in the Keychain; `config.json` (and an export of your data) only notes that they exist.
+
+## Voice
+* **Speech recognition**: the AI provider's (Groq / OpenAI, any language) or **on this Mac** (Settings → Voice →
+  *Download offline voice model*, 41 MB, English). With the offline model the "Hey NOVA" wake word is detected
+  on the Mac and no audio is uploaded while listening.
+* **Read aloud**: Microsoft's online neural voices, or the Mac's built-in voice (offline).
+* **Hands-free conversation**: ＋ → Voice conversation. NOVA listens, answers aloud and listens again; say "stop
+  listening" (or "стоп"), tap the mic, or stay quiet to end. Talking over NOVA interrupts it. NOVA compares what the
+  microphone hears with the audio it is playing, so its own voice from the loudspeakers is not taken for yours;
+  with loud speakers right next to the microphone you may need to speak up or use a pause (headphones are easiest).
+
+## Where your data lives
+`~/Library/Application Support/NOVA/` (chats, memories, notes, reminders, settings; user-only permissions)
+and `~/Library/Logs/NOVA/nova.log`. **Settings → Data** can export everything to a zip (decrypted, without keys),
+open these folders, or delete all data (including the Keychain entries).
+
+## Privacy tools (Settings → Privacy)
+* **Encrypt on disk** — chats, saved sessions, memories, notes, reminders and the activity / outbound logs are
+  stored with AES-256-GCM. The key is random and lives only in the Keychain, so a copy of the data folder is
+  unreadable. Turning it on or off converts the existing files. (`config.json` and `nova.log` stay plain text.)
+  If the Keychain entry is lost, encrypted files cannot be recovered — export first if you plan to wipe the Keychain.
+* **What NOVA sent today** — every request that left the Mac: destination, kind and size. Never the content.
+* **Activity log** — every action NOVA took, whether you approved it and how it ended.
+* **Allowed without asking** — the "always allow" choices you made (one folder, one app); remove any of them.
+* **Usage and cost** (Settings → AI) — requests and tokens per model, with an estimated cost from prices you can edit.
+* **Crash reports** — off by default. When on, an unexpected error writes a small report (no chat text, no user
+  name) into the data folder. Nothing is sent unless `crash_report_url` is set **and** you approve each report.
+
+## Memory
+NOVA remembers facts you tell it, each with a category and an optional expiry ("remember for a week that…").
+Only the memories that fit the current question are sent with it (up to 12); the rest stay on the Mac until
+they are relevant. When a memory is saved, the AI is asked once for keywords, so "what should I order at the
+restaurant?" finds "is allergic to peanuts" (can be turned off). Edit memories in Settings → Privacy → View memories.
+
+## Safety model
+* Risky tool calls (shell, Python, delete/move/rename, overwrite, kill, shutdown, typing) always ask first.
+  "Always allow" is scoped: file changes inside **one folder**, typing into **one app**, or sleep.
+* After a request has read web pages or files, every side-effect tool asks (with a warning) and "Always allow"
+  is off — a hostile page cannot quietly trigger actions.
+* Before a file is overwritten, deleted or moved, the prompt shows exactly what changes (a coloured diff, or what
+  goes to the Trash / would be replaced).
+* Text that comes from outside — web pages, files, email, calendar invitations, selected text, MCP servers, Shortcuts —
+  never gets "always allow": every action after it asks.
+* **Plugins** (`plugins/` in the data folder) load only after you approve each file; a changed file asks again.
+  * A plugin with a `MANIFEST` runs in the **macOS sandbox**, in its own process, with only the permissions it
+    lists (`network`, `read_files`, `write_files`). It can never read NOVA's data or keys, your Library or hidden
+    files, or start other apps. See `examples/plugins/word_count.py`.
+  * A plugin without a `MANIFEST` runs inside NOVA with full access — the prompt says so. Its tools always ask.
+
+## Build a distributable app
+```
+./packaging/build_mac.sh                                   # unsigned NOVA.app + dmg in dist/
+NOVA_SIGN_ID="Developer ID Application: …" \
+NOVA_NOTARY_PROFILE=<notarytool profile> ./packaging/build_mac.sh   # signed + notarized
+```
+Needs an Apple Developer account for signing/notarization. The packaged app is built for the architecture of
+the Mac that built it (arm64 = Apple Silicon); build on an Intel Mac for Intel users.
+
+## Tip: keep NOVA out of ~/Downloads
+macOS asks for permission the first time an app reads files in Downloads, which can stall the first launch by
+~30 s. Move the folder (e.g. to `~/NOVA`) and re-run `setup_mac.command`, or install the packaged app to `/Applications`.
+
+## Updates
+With an update address set (`"update_feed"` in config.json), NOVA checks once a day. Settings → Data chooses between
+*tell me*, *install by itself* and *do not check*. The packaged app installs a new version in place: the download is
+checked against the feed's SHA-256, the app inside must be intact and — if your NOVA is signed — signed by the same
+developer; if anything fails the working app is put back.
+
+## Development
+* The project is a git repository; the tag `before-additions` marks the state before the October 2026 feature pass.
+* `./check.sh` runs lint and every test (`./check.sh --screen` adds the few that briefly open a real window).
+  `.github/workflows/ci.yml` does the same on GitHub for every push, once the repository is pushed there.
+* Python **3.14** (`.python-version`) is what NOVA is tested on. `requirements.txt` lists minimum versions;
+  `requirements.lock` pins the exact tested set (`pip install -r requirements.lock`; refresh it with
+  `.venv/bin/python packaging/make_lock.py`).
+* Tests (nothing touches your real data, Keychain or the network):
+  ```
+  pip install -r requirements-dev.txt
+  QT_QPA_PLATFORM=offscreen python -m pytest -q tests
+  python -m pyflakes *.py tests/*.py
+  ```
+  They include render checks (every theme, both languages), an accessibility check (every control has a spoken
+  name), a translation check (every interface string has a Bulgarian entry) and the plugin sandbox.
+* `python main.py --selftest` (or `NOVA.app/Contents/MacOS/NOVA --selftest`) verifies a build is complete.
+
+## Before you ship to other people
+* PySide6 (LGPL) is used for the UI, so closed-source distribution is allowed under the LGPL terms (see NOTICE.md).
+* `edge-tts` (online voices), `ddgs` (DuckDuckGo) and Google News RSS are unofficial endpoints that can change or
+  block. Official alternatives are built in: the system voice, and the Brave Search API (Settings → AI → Web search).
+  Weather uses Open-Meteo (free for non-commercial use; a commercial product needs their paid plan).
+* Review your AI provider's terms for sending user text/audio, and publish a privacy policy matching the first-run screen.
+* Optional update check: set `"update_feed"` in config.json to a JSON URL like `{"version":"6.1.0","url":"…","sha256":"…"}`.
+
+## How tools reach the AI
+Every tool definition is sent with every request and counts against the provider's limits (Groq's free tier allows
+8,000 tokens a minute). The everyday tools always go along; the groups for calendar, mail, browser, documents,
+schedules, Shortcuts and each MCP server are added when the conversation is about them, and stay on once used. If the
+model needs a group that is not there it calls `more_tools` — one small extra step instead of a permanent cost.
+
+## Code layout
+| File | Purpose |
+|---|---|
+| `main.py` | the window class (`AssistantWindow`, assembled from the mixins below), start-up, theme, hotkeys, quitting, entry point |
+| `win_build.py` · `win_account.py` | building the window (layout, menus, tray) · provider, models, API key and Settings |
+| `win_modes.py` · `win_chat.py` · `win_voice.py` · `win_approvals.py` · `win_data.py` · `win_extras.py` | the window's behaviour, split by topic (mixins) |
+| `workers.py` | background threads: AI request (tool loop, rate-limit fallback), voice, wake word, vision, stats |
+| `providers.py` · `provider_anthropic.py` · `provider_openai.py` · `models.py` | AI services behind one interface, model slots |
+| `speech.py` · `tts.py` | speech-to-text (cloud or on-device) and read-aloud |
+| `tools.py` · `schemas.py` · `prompts.py` | the table of tools, NOVA's stateful tools, approvals, taint tracking, plugins · tool descriptions · the system prompt |
+| `tools_apps.py` · `tools_system.py` · `tools_web.py` · `tools_files.py` · `toolbase.py` | the tools themselves, by theme: open things · control the Mac · the web · files, notes, code |
+| `echo.py` · `selftest.py` | telling your voice from NOVA's own in the speakers · `--selftest` |
+| `sandbox.py` · `plugin_host.py` | the macOS sandbox profile and the separate process plugins run in |
+| `memory.py` | memories: categories, expiry, relevance |
+| `storage.py` · `ledger.py` · `crash.py` | encryption at rest, the outbound ledger, opt-in crash reports |
+| `settings.py` · `paths.py` · `keystore.py` | typed settings, data locations / export / wipe, Keychain |
+| `widgets.py` · `dialogs.py` · `settings_dialog.py` · `onboarding.py` | UI pieces |
+| `mdrender.py` · `themes.py` · `i18n.py` | markdown, the four palettes (WCAG-checked), translations (EN/BG) |
+| `icons.py` · `actions.py` | NOVA's own line icons · how a finished tool call is worded for the "what NOVA did" rows |
+| `mac_apps.py` · `eventkit_helper.py` | Calendar / Reminders (EventKit, in a helper process), Mail, browser, Shortcuts |
+| `docs.py` · `schedule.py` · `modes.py` · `usage.py` | document library, scheduled tasks, modes and saved prompts, usage and cost |
+| `mcp_client.py` · `ipc.py` | MCP tool servers (stdio and HTTP), requests handed over from other programs |
+| `win_docs.py` · `win_selection.py` · `win_schedule.py` · `win_persona.py` · `win_mcp.py` | the window's side of those features |
+| `updater.py` · `diagnostics.py` · `platform_utils.py` · `games.py` | verified updates, support report, macOS glue, mini-games |
+
+## Handy settings (Settings window, or config.json)
+`provider` · `base_url` · `models_by_provider` · `reasoning` low/medium/high · `ui_lang` auto/en/bg · `home_city` ·
+`stt_engine` auto/cloud/local · `tts_engine` online/system · `search_engine` ddg/brave · `encrypt_data` ·
+`retention_days` · `save_history` · `confirm_uploads` · `confirm_memory` · `smart_memory` · `crash_reports` ·
+`crash_report_url` · `mode` · `custom_modes` · `saved_prompts` · `selection_actions` · `selection_custom` · `selection_paste` · `external_autosend` ·
+`voice_barge_in` · `mcp_servers` · `prices` · `update_feed` · `auto_update`. A mistyped name in config.json is reported in the log with a "did you mean…" hint.

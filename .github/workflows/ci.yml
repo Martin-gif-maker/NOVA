@@ -1,0 +1,35 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: macos-14
+    strategy:
+      matrix:
+        python: ["3.13", "3.14"]          # 3.14 is the version NOVA is developed and locked on
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "${{ matrix.python }}" }
+      - name: Install
+        run: |
+          python -m venv .venv && source .venv/bin/activate
+          pip install -r requirements-dev.txt
+      - name: Lint
+        run: source .venv/bin/activate && python -m pyflakes *.py tests/*.py
+      - name: Tests (headless)
+        env: { QT_QPA_PLATFORM: offscreen }
+        run: source .venv/bin/activate && python -m pytest -q tests
+      - name: Self-test entry point
+        run: source .venv/bin/activate && python main.py --selftest
+
+  package:
+    needs: test
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.14" }
+      - name: Build NOVA.app (unsigned) and run its self-test
+        run: ./packaging/build_mac.sh
+      - uses: actions/upload-artifact@v4
+        with: { name: NOVA-macos-unsigned, path: dist/NOVA-*.dmg }

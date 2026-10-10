@@ -1,0 +1,33 @@
+# NOVA - what the app needs (minimum versions).
+# For an exact copy of the environment the test-suite passes on, install requirements.lock instead:
+#     pip install -r requirements.lock        (Python 3.14, macOS)
+groq>=0.4.0
+anthropic>=1.0                  # Claude (optional provider)
+openai>=3.0                     # OpenAI, Ollama and any OpenAI-compatible server (optional providers)
+vosk>=0.3.44                    # on-device speech recognition + wake word (offline voice)
+cryptography>=43                # optional encryption of chats / memories on disk
+numbers-parser>=4.10            # reads Apple Numbers spreadsheets (document library)
+xlrd>=2.0                       # reads old Excel files (.xls)
+PySide6>=6.6.0
+pyautogui>=0.9.54
+Pillow>=10.0.0
+requests>=2.31.0
+sounddevice>=0.4.6
+numpy>=1.24.0
+psutil>=5.9.0
+keyring>=24.0.0
+ddgs>=9.0.0
+pyperclip>=1.8.0
+edge-tts>=6.1.9
+pygments>=2.17
+linkify-it-py>=2.0.0
+markdown-it-py>=3.0.0
+
+# ── macOS only (global hotkey + screenshots/keystrokes via pyautogui) ──
+pyobjc-core>=10.0; sys_platform == "darwin"
+pyobjc-framework-Cocoa>=10.0; sys_platform == "darwin"
+pyobjc-framework-Quartz>=10.0; sys_platform == "darwin"
+pyobjc-framework-AVFoundation>=10.0; sys_platform == "darwin"
+pyobjc-framework-ApplicationServices>=10.0; sys_platform == "darwin"
+pyobjc-framework-EventKit>=10.0; sys_platform == "darwin"          # Calendar and Reminders
+pyobjc-framework-Vision>=10.0; sys_platform == "darwin"            # on-device text recognition (scanned PDFs)
