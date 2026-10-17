@@ -185,7 +185,7 @@ def group_of(tool_name: str):
 
 def _mcp_groups() -> dict:
     out = {}
-    for tid, m in computer_tools.MCP_TOOLS.items():
+    for m in computer_tools.MCP_TOOLS.values():
         out.setdefault("mcp:" + m["server"], []).append(m["tool"])
     return out
 

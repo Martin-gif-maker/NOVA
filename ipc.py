@@ -68,7 +68,7 @@ def request(payload: dict, wait_secs: float = 600, connect_secs: float = 1.5) ->
             if left <= 0: return "timeout", ""
             sock.settimeout(min(left, 1.0))
             try: chunk = sock.recv(65536)
-            except socket.timeout: continue
+            except TimeoutError: continue
             if not chunk: break
             buf.extend(chunk)
     except OSError:

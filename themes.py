@@ -66,7 +66,7 @@ def contrast(a: str, b: str) -> float:
 def _mix(c: str, to: str, amt: float) -> str:
     c, to = c.lstrip("#"), to.lstrip("#")
     ch = [round(int(c[i:i + 2], 16) + (int(to[i:i + 2], 16) - int(c[i:i + 2], 16)) * amt) for i in (0, 2, 4)]
-    return "#%02x%02x%02x" % tuple(ch)
+    return "#{:02x}{:02x}{:02x}".format(*ch)
 
 
 def readable_on(color: str, backgrounds, target: float = 4.6) -> str:

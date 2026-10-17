@@ -39,7 +39,7 @@ class ApprovalsMixin:
         for fname, path, h in list(computer_tools.PENDING_PLUGINS):
             computer_tools.PENDING_PLUGINS.remove((fname, path, h))
             try:
-                with open(path, "r", encoding="utf-8", errors="replace") as f: code = f.read(1500)
+                with open(path, encoding="utf-8", errors="replace") as f: code = f.read(1500)
                 manifest = computer_tools.read_manifest(path)
             except OSError:
                 continue

@@ -128,7 +128,7 @@ def test_clipboard_is_read_and_written_as_utf8(shell):
     shell.answers["pbpaste"] = "  Здравей, свят  \n"
     assert plat.get_clipboard_text() == "Здравей, свят" and shell.ran[-1] == ["pbpaste"]
     plat.set_clipboard_text("Чай ☕")
-    assert shell.ran[-1] == ["pbcopy"] and shell.inputs[-1] == "Чай ☕".encode("utf-8")
+    assert shell.ran[-1] == ["pbcopy"] and shell.inputs[-1] == "Чай ☕".encode()
     assert plat._utf8_env()["LANG"] == "en_US.UTF-8"
 
 

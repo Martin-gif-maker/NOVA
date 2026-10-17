@@ -175,7 +175,7 @@ def search_files(query: str, folder: str = None, content_search: bool = False) -
                 elif content_search:
                     try:
                         if os.path.getsize(fpath) < 2_000_000:
-                            with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
+                            with open(fpath, encoding="utf-8", errors="ignore") as f:
                                 if q in f.read().lower():
                                     results.append(fpath)
                     except OSError: pass                          # unreadable file: skip it
@@ -205,7 +205,7 @@ def read_file(path: str, max_chars: int = 8000) -> str:
             more = (f"\n[… shortened — the document has {len(text):,} characters, showing the first {max_chars:,}. "
                     f"For questions about a long document use add_document then search_documents.]") if len(text) > max_chars else ""
             return f"File: {path}\n{'─'*40}\n{text[:max_chars]}{more}"
-        with open(path, "r", encoding="utf-8", errors="replace") as f:
+        with open(path, encoding="utf-8", errors="replace") as f:
             content = f.read(max_chars)
         truncated = size > max_chars
         note = f"\n[… truncated — file is {size:,} bytes, showing first {max_chars:,} chars]" if truncated else ""

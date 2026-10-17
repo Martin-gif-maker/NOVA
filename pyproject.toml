@@ -1,0 +1,25 @@
+# NOVA is an app, not a library: this file only configures the tools. Dependencies are in requirements.txt
+# (minimum versions) and requirements.lock (the exact tested set); the version lives in paths.py.
+
+[tool.ruff]
+target-version = "py313"
+extend-exclude = ["dist", "dist_next", "build_dist", "build_dist_next", "build"]
+
+[tool.ruff.lint]
+# Errors, likely bugs (flake8-bugbear), outdated syntax, simplifications and pylint's error/warning checks.
+select = ["E9", "F", "B", "UP", "SIM", "PLE", "PLW"]
+ignore = [
+    "SIM102", "SIM103", "SIM105", "SIM108", "SIM117",  # nested ifs / try-except-pass / ternaries: kept where they read better
+    "B008",     # function calls in defaults (Qt objects are created that way on purpose)
+    "B904",     # `raise ... from` - the user-facing errors deliberately replace the low-level one
+    "B905",     # zip(strict=) - the pairs are built side by side
+    "PLW0603",  # module-level state (the shared library, the loaded model) is updated with `global`
+    "PLW1510",  # subprocess.run(check=) - return codes are read explicitly
+    "PLW2901",  # reusing a loop variable for its cleaned-up value
+    "PLW0108",  # lambdas that wrap a call keep Qt's signal arguments out
+    "SIM300",   # "yoda" comparisons read naturally in a few range checks
+    "SIM905",   # word lists written as one string and split read better than a list of quoted words
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["SIM115", "B023", "B007"]     # one-line open().read() and loop helpers are fine in tests

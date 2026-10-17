@@ -120,7 +120,7 @@ def is_valid_guess(word: str) -> bool:
         _DICT_WORDS = set()
         for path in ("/usr/share/dict/words", "/usr/share/dict/web2"):
             try:
-                with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                with open(path, encoding="utf-8", errors="ignore") as f:
                     for line in f:
                         line = line.strip()
                         if len(line) == 5 and line.isalpha() and line.islower():
@@ -146,7 +146,7 @@ def time_until_midnight() -> str:
 # ── Stats helpers ─────────────────────────────────────────────────
 def load_stats() -> dict:
     try:
-        with open(GAMES_FILE, "r", encoding="utf-8") as f:
+        with open(GAMES_FILE, encoding="utf-8") as f:
             return json.load(f)
     except Exception:
         return {}

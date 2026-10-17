@@ -68,7 +68,7 @@ def unseen() -> list:
     """Reports the user has not been told about yet (and mark them as seen)."""
     marker = os.path.join(paths.CRASH_DIR, ".seen")
     try:
-        with open(marker, "r", encoding="utf-8") as f: seen = set(f.read().split())
+        with open(marker, encoding="utf-8") as f: seen = set(f.read().split())
     except OSError:
         seen = set()
     new = [p for p in reports() if os.path.basename(p) not in seen]
@@ -111,7 +111,8 @@ def enable_fault_log() -> None:
         if _fault_file is not None or not _enabled(): return
         import faulthandler
         os.makedirs(paths.CRASH_DIR, mode=0o700, exist_ok=True)
-        _fault_file = open(os.path.join(paths.CRASH_DIR, "hard-crash.log"), "a", encoding="utf-8")
+        # stays open for the life of the process: faulthandler writes into it when NOVA crashes hard
+        _fault_file = open(os.path.join(paths.CRASH_DIR, "hard-crash.log"), "a", encoding="utf-8")  # noqa: SIM115
         faulthandler.enable(file=_fault_file, all_threads=True)
     except Exception as e: log.info("crash capture could not be switched on: %s", e)
 
@@ -122,7 +123,7 @@ def send(path: str, url: str):
         return False, "Crash reports can only be sent to an https address."
     try:
         import requests, ledger
-        with open(path, "r", encoding="utf-8") as f: body = f.read()
+        with open(path, encoding="utf-8") as f: body = f.read()
         ledger.record(url, "crash report", len(body.encode("utf-8")))
         r = requests.post(url, data=body.encode("utf-8"), headers={"Content-Type": "text/plain; charset=utf-8"}, timeout=15)
         return (True, "Report sent ✓") if r.status_code < 300 else (False, f"The server answered {r.status_code}.")

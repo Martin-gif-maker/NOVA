@@ -153,7 +153,7 @@ def classify_error(exc: Exception):
         return exc.kind, exc.retry_after
     text = str(exc)
     for sdk in _sdk_modules():
-        def _is(name):
+        def _is(name, sdk=sdk):
             cls = getattr(sdk, name, None)
             return cls is not None and isinstance(exc, cls)
         if _is("RateLimitError"):

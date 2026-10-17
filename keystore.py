@@ -33,7 +33,7 @@ def _get_api_key(provider: str = "groq") -> str:
             if v: return v
         except Exception as e: log.info("the Keychain could not be read: %s", e)
     try:
-        with open(_file(provider), "r", encoding="utf-8") as f:
+        with open(_file(provider), encoding="utf-8") as f:
             return f.read().strip()
     except OSError:
         return ""

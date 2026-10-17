@@ -10,7 +10,7 @@ _SAFE_KEYS = ("theme", "model_key", "reasoning", "font_size", "tts", "tts_auto",
 
 def _tail(path: str, n: int) -> str:
     try:
-        with open(path, "r", encoding="utf-8", errors="replace") as f: lines = f.readlines()[-n:]
+        with open(path, encoding="utf-8", errors="replace") as f: lines = f.readlines()[-n:]
         return _SECRET.sub("<redacted>", "".join(lines))
     except OSError:
         return "(no log yet)"

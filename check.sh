@@ -5,7 +5,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 PY=".venv/bin/python"; [ -x "$PY" ] || PY="python3"
-echo "▶ lint";  "$PY" -m pyflakes *.py tests/*.py evals/*.py
+echo "▶ lint"
+if "$PY" -m ruff --version >/dev/null 2>&1; then "$PY" -m ruff check .          # rules in pyproject.toml
+else "$PY" -m pyflakes *.py tests/*.py evals/*.py; fi
 echo "▶ tests"
 if [ "${1:-}" = "--screen" ]; then export NOVA_GUI_TESTS=1; fi
 QT_QPA_PLATFORM=offscreen "$PY" -m pytest -q tests -p no:cacheprovider

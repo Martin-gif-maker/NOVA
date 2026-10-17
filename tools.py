@@ -163,9 +163,9 @@ def save_memory(fact: str, category: str = "", expires_in_days: float = 0) -> st
         if TAG_HOOK:
             try: TAG_HOOK()
             except Exception as e: log.info("memory keywords were not requested: %s", e)
-        return "Remembered: {} \u2713{}".format(fact, note)
+        return f"Remembered: {fact} \u2713{note}"
     except Exception as e:
-        return fail("Error saving memory: {}".format(e))
+        return fail(f"Error saving memory: {e}")
 
 def read_memory() -> str:
     try:
@@ -173,7 +173,7 @@ def read_memory() -> str:
         if not items: return "No saved memories."
         return "Saved memories:\n" + "\n".join(mem.line(it) for it in items[-60:])
     except Exception as e:
-        return fail("Error: {}".format(e))
+        return fail(f"Error: {e}")
 
 def delete_memory(keyword: str) -> str:
     keyword = (keyword or "").strip()
@@ -184,11 +184,11 @@ def delete_memory(keyword: str) -> str:
             items = mem.load(MEMORY_FILE)
             kept = mem.remove(items, keyword)
             if len(kept) == len(items):
-                return "No facts containing '{}'.".format(keyword)
+                return f"No facts containing '{keyword}'."
             mem.save(MEMORY_FILE, kept)
-        return "Deleted {} fact(s) containing '{}' \u2713".format(len(items) - len(kept), keyword)
+        return f"Deleted {len(items) - len(kept)} fact(s) containing '{keyword}' \u2713"
     except Exception as e:
-        return fail("Error: {}".format(e))
+        return fail(f"Error: {e}")
 
 # ── MCP servers (tool servers the user connected) ────────────────
 MCP = None                    # mcp_client.Manager, created by the GUI
@@ -705,7 +705,7 @@ def change_preview(tool_name: str, args: dict) -> str:
 def execute_tool(tool_name: str, args: dict) -> str:
     """Validate, ask for approval if needed, run, log. Returns the result text; failures are `ToolFailure`."""
     func = TOOL_FUNCTIONS.get(tool_name)
-    if func is None: return fail("Unknown tool: {}".format(tool_name))
+    if func is None: return fail(f"Unknown tool: {tool_name}")
     args, problem = validate_args(tool_name, args)
     if problem:
         _log_activity(tool_name, args, "invalid", problem, ok=False)
@@ -727,8 +727,8 @@ def execute_tool(tool_name: str, args: dict) -> str:
     try:
         result = func(**(args or {}))
         if not isinstance(result, str): result = str(result)
-    except TypeError as e: result = fail("Bad arguments for {}: {}".format(tool_name, e))
-    except Exception as e: result = fail("Error in {}: {}".format(tool_name, e))
+    except TypeError as e: result = fail(f"Bad arguments for {tool_name}: {e}")
+    except Exception as e: result = fail(f"Error in {tool_name}: {e}")
     if tool_name in UNTRUSTED_SOURCES or tool_name in MCP_TOOLS:      # whatever a connected server returns is outside text
         _taint["on"] = True; _taint["src"] = tool_name
     _log_activity(tool_name, args, outcome + (" (tainted)" if _taint["on"] else ""), result, ok=not isinstance(result, ToolFailure))
@@ -759,7 +759,7 @@ def _plugin_hash(path: str) -> str:
 
 def _plugin_settings(key: str) -> dict:
     try:
-        with open(paths.CONFIG_FILE, "r", encoding="utf-8") as f: return json.load(f).get(key, {}) or {}
+        with open(paths.CONFIG_FILE, encoding="utf-8") as f: return json.load(f).get(key, {}) or {}
     except (OSError, ValueError):
         return {}
 
@@ -769,7 +769,7 @@ def read_manifest(path: str):
          {"name", "description", "permissions": [...]}   - a sandboxed plugin
        Raises ValueError when a manifest exists but is not valid."""
     import ast
-    with open(path, "r", encoding="utf-8") as f: source = f.read()
+    with open(path, encoding="utf-8") as f: source = f.read()
     try:
         tree = ast.parse(source)
     except SyntaxError as e:

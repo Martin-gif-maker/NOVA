@@ -12,7 +12,8 @@ norm = lambda n: re.sub(r"[-_.]+", "-", n).lower()
 
 def direct(path):
     names = []
-    for line in open(path, encoding="utf-8"):
+    with open(path, encoding="utf-8") as f: lines = f.readlines()
+    for line in lines:
         line = line.split("#")[0].strip()
         if not line or line.startswith("-"): continue
         marker = line.split(";", 1)[1] if ";" in line else ""

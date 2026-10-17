@@ -12,7 +12,7 @@ def _is_public_url(url: str):
     host = urlparse(url).hostname
     if not host: return False, "Invalid URL."
     try:
-        for fam, _, _, _, addr in socket.getaddrinfo(host, None):
+        for _fam, _, _, _, addr in socket.getaddrinfo(host, None):
             ip = ipaddress.ip_address(addr[0].split("%")[0])
             if (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
                     or ip.is_multicast or ip.is_unspecified):

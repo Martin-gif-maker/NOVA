@@ -187,7 +187,7 @@ def append_line(path: str, line: str) -> None:
 def read_lines(path: str) -> list:
     """Every readable record of a log, decrypted."""
     try:
-        with open(path, "r", encoding="utf-8", errors="replace") as f: raw = f.read().splitlines()
+        with open(path, encoding="utf-8", errors="replace") as f: raw = f.read().splitlines()
     except OSError:
         return []
     return [l for l in (_open_line(x) for x in raw if x.strip()) if l is not None]

@@ -75,7 +75,7 @@ _cache = {}
 def svg(name: str, color: str, stroke: float = 1.5) -> bytes:
     body = PATHS.get(name) or PATHS["info"]
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="{color}" color="{color}" '
-            f'stroke-width="{stroke}" stroke-linecap="round" stroke-linejoin="round">{body}</svg>').encode("utf-8")
+            f'stroke-width="{stroke}" stroke-linecap="round" stroke-linejoin="round">{body}</svg>').encode()
 
 
 def pixmap(name: str, color: str, size: int = 16, stroke: float = 1.5) -> QPixmap:

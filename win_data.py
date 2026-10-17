@@ -40,7 +40,7 @@ class DataMixin:
         raw = None
         if os.path.exists(paths.CONFIG_FILE):
             try:
-                with open(paths.CONFIG_FILE,"r",encoding="utf-8") as f: raw = json.load(f)
+                with open(paths.CONFIG_FILE,encoding="utf-8") as f: raw = json.load(f)
             except (OSError, ValueError): raw = None
             if not isinstance(raw, dict): raw = None
         if raw is None:
@@ -209,7 +209,7 @@ class DataMixin:
 
     def _offer_crash_report(self, path: str, url: str):
         try:
-            with open(path, "r", encoding="utf-8") as f: body = f.read()
+            with open(path, encoding="utf-8") as f: body = f.read()
         except OSError:
             return
         box = QMessageBox(self); box.setWindowTitle(tr("Send crash report?"))

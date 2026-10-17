@@ -301,7 +301,7 @@ def run_shortcut(name: str, text: str = "", timeout: int = 120) -> str:
             raise AppError(f"The shortcut “{match}” failed: {(r.stderr or r.stdout).strip()[:300] or 'no details'}")
         out = ""
         try:
-            with open(os.path.join(tmp, "out.txt"), "r", encoding="utf-8", errors="replace") as f: out = f.read().strip()
+            with open(os.path.join(tmp, "out.txt"), encoding="utf-8", errors="replace") as f: out = f.read().strip()
         except OSError:
             pass
     took = time.time() - started
