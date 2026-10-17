@@ -16,7 +16,7 @@ class _NS:
 
 
 class OpenAICompatClient:
-    def __init__(self, api_key: str, base_url: str = None, local: bool = False, http_client=None):
+    def __init__(self, api_key: str, base_url: str | None = None, local: bool = False, http_client=None):
         import openai
         self._sdk = openai
         # local models can take a while to load into memory on the first request

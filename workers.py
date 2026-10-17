@@ -15,7 +15,7 @@ from chatutil import compress_messages, _LENGTH_HINTS
 from i18n import tr
 log = logging.getLogger("nova")
 
-_MODEL_COOLDOWN = {}          # model id -> time until which it is rate-limited (skip it, don't re-hit the 429)
+_MODEL_COOLDOWN: dict[str, float] = {}   # model id -> time until which it is rate-limited (skip it, don't re-hit the 429)
 # Read-only tools that can safely run side by side; anything else runs strictly in order.
 # Action tools whose result only says "done ✓". When every call of a round is one of these and succeeded, and
 # either the model already wrote its reply in the same message or the request was one plain command ("open
@@ -410,9 +410,10 @@ class BargeInMonitor(QThread):
     hears while NOVA speaks and only something clearly louder counts."""
     interrupted = Signal()
     HOLD_CHUNKS = 8                 # ≈ 0.25 s of sustained speech
-    def __init__(self, reference=None, started: float = None, seed_gain: float = None):
+    def __init__(self, reference=None, started: float | None = None, seed_gain: float | None = None):
         super().__init__(); self._stop = threading.Event()
-        self.reference = reference; self.started = started; self.seed_gain = seed_gain
+        # (not `self.started`: that name is QThread's own "the thread has started" signal)
+        self.reference = reference; self.playback_started = started; self.seed_gain = seed_gain
         self._gate = None
     def stop(self): self._stop.set()
     def learned_gain(self):
@@ -427,10 +428,10 @@ class BargeInMonitor(QThread):
         gate = None
         try:
             with sd.InputStream(samplerate=16000, channels=1, dtype="int16", blocksize=512) as s:
-                if self.reference is not None and self.started is not None:
+                if self.reference is not None and self.playback_started is not None:
                     import echo
                     # where the playback is by now; a little early on purpose, so the echo is never "ahead" of it
-                    offset = int((time.monotonic() - self.started) / echo.CHUNK_SECS) - 3
+                    offset = int((time.monotonic() - self.playback_started) / echo.CHUNK_SECS) - 3
                     gate = self._gate = echo.EchoGate(self.reference, offset=offset, seed_gain=self.seed_gain)
                 heard = []; thresh = None; loud = 0
                 while not self._stop.is_set():

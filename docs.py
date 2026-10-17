@@ -83,7 +83,7 @@ def _ocr_pdf(path: str, wanted: list, progress=None) -> dict:
     import Quartz
     from Foundation import NSURL
     pdf = Quartz.CGPDFDocumentCreateWithURL(NSURL.fileURLWithPath_(path))
-    out = {}
+    out: dict[int, str] = {}
     if pdf is None: return out
     for n, i in enumerate(wanted):
         if progress: progress(n, len(wanted))
@@ -147,7 +147,7 @@ def _pptx_slides(path: str) -> list:
     A = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
     with zipfile.ZipFile(path) as z:
         names = sorted((n for n in z.namelist() if re.fullmatch(r"ppt/slides/slide\d+\.xml", n)),
-                       key=lambda n: int(re.search(r"(\d+)\.xml$", n).group(1)))
+                       key=lambda n: int(n[len("ppt/slides/slide"):-len(".xml")]))       # the names were matched above
         return [_xml_text(z.read(n), A + "p", A + "t") for n in names]
 
 
@@ -233,9 +233,10 @@ def _xlsx_sheets(path: str) -> list:
             if member not in names: continue
             rows = []
             for row in ET.fromstring(z.read(member)).iter(M + "row"):
-                cells = {}
+                cells: dict = {}
                 for c in row.iter(M + "c"):
                     kind, v = c.get("t"), c.find(M + "v")
+                    value: object                               # text, yes/no, a number, a date or a time
                     if kind == "inlineStr":
                         value = "".join(t.text or "" for t in c.iter(M + "t"))
                     elif v is None or v.text is None:
@@ -371,7 +372,7 @@ def extract(path: str, progress=None) -> list:
     return parts
 
 
-def extract_text(path: str, max_chars: int = None) -> str:
+def extract_text(path: str, max_chars: int | None = None) -> str:
     text = "\n\n".join(f"[{label}]\n{t}" if label else t for label, t in extract(path))
     return text if max_chars is None else text[:max_chars]
 
@@ -419,24 +420,28 @@ def tokens(text: str) -> list:
 
 class Library:
     """The indexed documents. Thread-safe; stored in one (optionally encrypted) file in NOVA's data folder."""
-    def __init__(self, path: str = None):
+    def __init__(self, path: str | None = None):
         self.path = path or paths.DOCS_FILE
         self._lock = threading.RLock()
-        self._docs = None                # name -> {"path", "added", "chars", "mtime", "size", "passages": [...]}
-        self._folders = []               # folders that were added as a whole: new files in them are picked up
-        self._stats = None               # cached search statistics
-        self._vecs = None                # cached meaning vectors: (matrix, [(name, passage index)])
+        self._docs: dict | None = None   # name -> {"path", "added", "chars", "mtime", "size", "passages": [...]}
+        self._folders: list[str] = []    # folders that were added as a whole: new files in them are picked up
+        self._stats: tuple | None = None # cached search statistics
+        self._vecs: tuple | None = None  # cached meaning vectors: (matrix, [(name, passage index)], [is Cyrillic])
 
     # persistence
     def _load(self) -> dict:
         with self._lock:
             if self._docs is None:
+                docs: dict = {}; folders: list[str] = []
                 try:
                     data = storage.read_json(self.path)
-                    self._docs = data.get("docs", {}) if isinstance(data, dict) else {}
-                    self._folders = [f for f in (data.get("folders") or []) if isinstance(f, str)] if isinstance(data, dict) else []
+                    if isinstance(data, dict):
+                        docs = data.get("docs", {})
+                        folders = [f for f in (data.get("folders") or []) if isinstance(f, str)]
                 except (OSError, ValueError):
-                    self._docs = {}; self._folders = []
+                    pass
+                self._docs, self._folders = docs, folders
+                return docs
             return self._docs
 
     def _save(self) -> None:
@@ -459,7 +464,7 @@ class Library:
     def total_chars(self) -> int:
         return sum(d.get("chars", 0) for d in self._load().values())
 
-    def add_file(self, path: str, parts: list = None, progress=None) -> dict:
+    def add_file(self, path: str, parts: list | None = None, progress=None) -> dict:
         """Index one file (replacing an older copy with the same name). Returns its info. Raises DocError.
         `parts` = text already taken out with extract(), to avoid reading the file twice."""
         path = os.path.abspath(os.path.expanduser(path))
@@ -519,7 +524,7 @@ class Library:
         """Keep the index true to the files: re-read documents that changed on disk, note the ones that are gone,
         and (with scan_folders) pick up new files in folders that were added as a whole.
         Returns {'updated': [names], 'added': [names], 'missing': [names]}."""
-        report = {"updated": [], "added": [], "missing": []}
+        report: dict[str, list[str]] = {"updated": [], "added": [], "missing": []}
         with self._lock:
             docs = self._load()
             dirty = False
@@ -691,7 +696,7 @@ class Library:
             scored.sort(reverse=True)
         else:
             scored = [(sc, name, i, "words") for sc, name, i in words]
-        docs = self._load(); out = []; taken = collections.Counter()
+        docs = self._load(); out = []; taken: collections.Counter[str] = collections.Counter()
         for s, name, i, how in scored:
             if taken[name] >= max(3, k - 1) and not want: continue            # do not let one document crowd out the rest
             p = docs[name]["passages"][i]
@@ -749,7 +754,7 @@ def search_many(lib: "Library", queries: list, k: int = 6, document: str = "") -
     queries = [q for q in dict.fromkeys(str(q).strip() for q in queries) if q][:6]
     if len(queries) <= 1:
         return lib.search(queries[0] if queries else "", k, document)
-    merged = {}
+    merged: dict = {}
     for q in queries:
         for rank, hit in enumerate(lib.search(q, max(k, 6), document)):
             key = (hit["doc"], hit["text"])
@@ -777,7 +782,7 @@ def answer_material(query, k: int = 6, document: str = "") -> str:
     `query` may be one string or a list of alternative wordings."""
     lib = library()
     if not lib.names(): return ""
-    hits = search_many(lib, query if isinstance(query, (list, tuple)) else [query], k, document)
+    hits = search_many(lib, list(query) if isinstance(query, (list, tuple)) else [query], k, document)
     if not hits: return ""
     def head(h):
         where = f"[{h['doc']}{', ' + h['at'] if h['at'] else ''}]"

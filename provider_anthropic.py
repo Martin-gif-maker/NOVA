@@ -58,7 +58,7 @@ def _bget(block, key):
 
 
 class AnthropicClient:
-    def __init__(self, api_key: str = None, http_client=None):
+    def __init__(self, api_key: str | None = None, http_client=None):
         # No key given -> the SDK resolves ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN / an `ant auth login` profile.
         # max_retries=0: NOVA's worker decides what to do on a rate limit (switch to the fast model at once).
         kw = {"max_retries": 0}

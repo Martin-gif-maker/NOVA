@@ -152,7 +152,7 @@ def run_case(case: dict, client, model_id: str, max_tokens: int = 1024) -> dict:
 
     msgs = [{"role": "system", "content": prompts._build_prompt(case["text"])}, {"role": "user", "content": case["text"]}]
     w = workers.AIWorker(client, msgs, model_id, max_tokens=max_tokens)
-    got = {}
+    got: dict = {}
     w.response_ready.connect(lambda text, _m: got.setdefault("reply", text))
     w.error_occurred.connect(lambda err, kind: got.setdefault("error", f"{kind}: {err}"[:300]))
     w.usage_ready.connect(lambda i, o: got.update(tok_in=i, tok_out=o))
@@ -191,7 +191,7 @@ def live_summary(results: list) -> dict:
     return out
 
 
-def markdown(routing_sum: dict = None, live_sum: dict = None, title: str = "") -> str:
+def markdown(routing_sum: dict | None = None, live_sum: dict | None = None, title: str = "") -> str:
     lines = [f"### {title}" if title else ""]
     if routing_sum:
         s = routing_sum

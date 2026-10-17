@@ -16,7 +16,7 @@ MAGIC       = b"NOVAENC1\n"            # whole-file marker
 LINE_PREFIX = "NOVAENC1:"              # per-line marker (append-only logs)
 _KR_SERVICE = "NOVA_AI_Assistant"
 _KR_USER    = "data_encryption_key"
-_state = {"on": False, "key": None}
+_state: dict = {"on": False, "key": None}         # encryption on for new writes; the key once read
 _lock  = threading.RLock()
 
 

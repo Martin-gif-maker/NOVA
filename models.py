@@ -3,16 +3,16 @@
 import providers
 
 MODEL_ORDER = ["smart", "fast", "mix"]
-MODELS = {}                    # slot -> (model id, short label); filled by activate()
-VISION_MODELS = []             # tried in order; unavailable ones are skipped
-PREFERRED = {}                 # slot -> ids to fall back to when the configured one is gone
-_state = {"provider": providers.DEFAULT_PROVIDER, "stt": None}
+MODELS: dict[str, tuple] = {}            # slot -> (model id, short label); filled by activate()
+VISION_MODELS: list[str] = []            # tried in order; unavailable ones are skipped
+PREFERRED: dict[str, list[str]] = {}     # slot -> ids to fall back to when the configured one is gone
+_state: dict[str, str | None] = {"provider": providers.DEFAULT_PROVIDER, "stt": None}
 
 _NOT_CHAT = ("embed", "whisper", "tts", "guard", "moderation", "dall", "image", "audio", "realtime", "transcribe",
              "orpheus", "safeguard", "rerank")
 
 
-def activate(provider_id: str, overrides: dict = None) -> None:
+def activate(provider_id: str, overrides: dict | None = None) -> None:
     """Switch every model slot to the given provider's defaults (+ the user's pinned ids)."""
     p = providers.info(provider_id)
     _state["provider"] = provider_id if provider_id in providers.PROVIDERS else providers.DEFAULT_PROVIDER
@@ -24,7 +24,7 @@ def activate(provider_id: str, overrides: dict = None) -> None:
 
 
 def provider() -> str:
-    return _state["provider"]
+    return _state["provider"] or providers.DEFAULT_PROVIDER
 
 
 def fast_model_id() -> str:
@@ -41,7 +41,7 @@ def vision_models() -> list:
     return list(VISION_MODELS) or [MODELS["smart"][0], MODELS["mix"][0]]
 
 
-def apply_overrides(overrides: dict) -> None:
+def apply_overrides(overrides: dict | None) -> None:
     """config["models_by_provider"][provider] = {"smart": "model-id", ...} lets users pin their own models."""
     for key, mid in (overrides or {}).items():
         if key in MODELS and isinstance(mid, str) and mid.strip():
@@ -58,7 +58,7 @@ def chat_models(available) -> list:
 
 def reconcile(available: set) -> list:
     """Replace configured models that no longer exist. Returns human-readable change notes."""
-    notes = []
+    notes: list[str] = []
     if not available:
         return notes
     for key, (mid, label) in list(MODELS.items()):

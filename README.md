@@ -202,7 +202,7 @@ checked against the feed's SHA-256, the app inside must be intact and — if you
 developer; if anything fails the working app is put back.
 
 ## Development
-* `./check.sh` runs lint (ruff, rules in `pyproject.toml`) and every test (`./check.sh --screen` adds the few that briefly open a real window).
+* `./check.sh` runs lint (ruff), a type check of the core modules (mypy; both set up in `pyproject.toml`) and every test (`./check.sh --screen` adds the few that briefly open a real window).
   `.github/workflows/ci.yml` does the same on GitHub for every push, then builds the app.
 * The README pictures come from the real window with a sample chat (fake AI, nothing shown on screen):
   `NOVA_SCREENSHOTS=1 QT_QPA_PLATFORM=cocoa .venv/bin/python -m pytest -q tests/test_screenshots.py`.

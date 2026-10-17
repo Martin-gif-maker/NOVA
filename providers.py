@@ -78,7 +78,7 @@ def base_url_for(provider_id: str, configured: str = "") -> str:
 # ── Errors, the same for every provider ────────────────────────────
 class ProviderError(Exception):
     """A provider failure reduced to what the app needs to decide what to do next."""
-    def __init__(self, kind: str, message: str, retry_after: float = None):
+    def __init__(self, kind: str, message: str, retry_after: float | None = None):
         super().__init__(message)
         self.kind, self.retry_after = kind, retry_after
 
@@ -87,7 +87,7 @@ class ProviderError(Exception):
 # Free tiers count tokens per minute and per model (Groq: 8,000). The provider says how much is left with every
 # answer; NOVA remembers it, so it can use the other model or wait exactly as long as needed *before* sending a
 # request that would be refused - instead of failing first and guessing afterwards.
-_ALLOWANCE = {}            # model id -> (tokens left, tokens per minute, when that was true)
+_ALLOWANCE: dict[str, tuple] = {}   # model id -> (tokens left, tokens per minute, when that was true)
 _allow_lock = threading.Lock()
 
 
@@ -158,7 +158,7 @@ def classify_error(exc: Exception):
             return cls is not None and isinstance(exc, cls)
         if _is("RateLimitError"):
             ra = None
-            try: ra = float(exc.response.headers.get("retry-after"))
+            try: ra = float(exc.response.headers.get("retry-after"))     # type: ignore[attr-defined]  # the SDK's error has one
             except Exception: ra = _retry_after_from_text(text)
             return "rate_limit", ra
         if _is("AuthenticationError") or _is("PermissionDeniedError"): return "auth", None

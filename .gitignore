@@ -16,3 +16,5 @@ dist_next/
 .pytest_cache/
 .DS_Store
 *.locked-*
+.mypy_cache/
+.ruff_cache/

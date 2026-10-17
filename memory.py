@@ -59,7 +59,7 @@ def _clean_category(cat: str, text: str) -> str:
     return cat if cat in CATEGORIES else guess_category(text)
 
 
-def make(text: str, category: str = "", expires_days: float = 0, created: str = None, tags: str = "") -> dict:
+def make(text: str, category: str = "", expires_days: float = 0, created: str | None = None, tags: str = "") -> dict:
     text = re.sub(r"\s+", " ", str(text or "")).strip()
     expires = ""
     try:
@@ -100,7 +100,7 @@ def coerce(x) -> dict:
     return from_display(x)
 
 
-def is_expired(item: dict, on: str = None) -> bool:
+def is_expired(item: dict, on: str | None = None) -> bool:
     exp = item.get("expires") or ""
     return bool(exp) and exp < (on or today())
 
@@ -170,7 +170,7 @@ def relevant(items: list, query: str = "", limit: int = PROMPT_LIMIT) -> list:
 
 def line(item: dict) -> str:
     extra = f" (until {item['expires']})" if item.get("expires") else ""
-    return f"• [{LABELS.get(item.get('category'), 'Other')}] {item['text']}{extra}"
+    return f"• [{LABELS.get(item.get('category') or '', 'Other')}] {item['text']}{extra}"
 
 
 def prompt_text(items: list, query: str = "", limit: int = PROMPT_LIMIT) -> str:
