@@ -31,6 +31,9 @@ the full texts ship with the packages (inside the app bundle under `Contents/Res
 | pyobjc-framework-Vision | 12.2.2 | MIT |
 | numbers-parser | 4.19.0 | MIT |
 | xlrd | 2.0.2 | BSD |
+| onnxruntime | 1.31.0 | MIT |
+| tokenizers | 0.23.3 | Apache-2.0 |
+| flatbuffers | 25.12.19 | Apache-2.0 |
 | protobuf, cramjam, python-snappy (used by numbers-parser) | 7.36.2, 2.13.0, 0.7.3 | BSD-3-Clause, MIT, BSD |
 | compact-json, sigfig, six, wcwidth (used by numbers-parser) | 1.8.2, 1.4.0, 1.17.0, 0.9.2 | MIT |
 | python-dateutil, importlib_resources (used by numbers-parser) | 2.9.0.post0, 7.1.0 | Apache-2.0 OR BSD-3-Clause, Apache-2.0 |
@@ -49,6 +52,12 @@ Source code for PySide6 and Qt is available from https://code.qt.io and https://
 ## Offline voice model (downloaded on request, not bundled)
 `vosk-model-small-en-us-0.15` from https://alphacephei.com/vosk/models — Apache-2.0. NOVA downloads it only when you
 press *Download* in Settings → Voice, and verifies its SHA-256 before unpacking.
+
+## Search-by-meaning model (downloaded on request, not bundled)
+`multilingual-e5-small` by Liang Wang et al. (https://huggingface.co/intfloat/multilingual-e5-small), in the 8-bit ONNX
+form published at https://huggingface.co/Xenova/multilingual-e5-small — MIT. NOVA downloads it only when you press
+*Download* in ＋ → Documents, from a pinned revision, and verifies each file's SHA-256 before using it. It runs with
+`onnxruntime` (MIT) and `tokenizers` (Apache-2.0).
 
 ## Services NOVA contacts (not bundled)
 * The AI provider you choose: Groq, Anthropic, OpenAI, or a server you run yourself (Ollama / custom).

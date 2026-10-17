@@ -593,6 +593,20 @@ BG.update({
     "No image-capable model is available with this AI provider.": "Тази AI услуга няма модел, който разбира изображения.",
     "Image analysis is rate-limited - try again in {}s.": "Анализът на изображения е ограничен за момента — опитай пак след {} с.",
     "Image analysis is rate-limited - try again shortly.": "Анализът на изображения е ограничен за момента — опитай пак след малко.",
+    # search by meaning (Documents)
+    "Search by meaning": "Търсене по смисъл",
+    "Search by meaning is not part of this build.": "Търсенето по смисъл не е включено в тази версия.",
+    "Search by meaning is on: a question also finds passages that say the same thing in other words or in another language.":
+        "Търсенето по смисъл е включено: въпросът намира и откъси, които казват същото с други думи или на друг език.",
+    "Search by meaning finds passages that say the same thing in other words or in another language. It works on this Mac after a one-time download.":
+        "Търсенето по смисъл намира откъси, които казват същото с други думи или на друг език. Работи на този Mac след еднократно изтегляне.",
+    "Remove search by meaning? NOVA then finds passages by their words only. You can download it again at any time.":
+        "Да се премахне ли търсенето по смисъл? Тогава NOVA ще намира откъси само по думите им. Можеш да го изтеглиш отново по всяко време.",
+    "Preparing your documents for search by meaning… {}%": "Подготвям документите ти за търсене по смисъл… {}%",
+    "Search by meaning could not be set up: {}": "Търсенето по смисъл не можа да се настрои: {}",
+    "The download was cancelled.": "Изтеглянето беше прекъснато.",
+    "The downloaded model is corrupt or was tampered with (checksum mismatch).":
+        "Изтегленият модел е повреден или подменен (контролната сума не съвпада).",
 })
 
 TABLES = {"bg": BG}

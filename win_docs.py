@@ -111,7 +111,8 @@ class DocsMixin:
         self.messages[0] = {"role": "system", "content": _build_prompt(query)}
 
     def _refresh_documents(self):
-        """In the background: re-read documents that changed on disk and pick up new files in added folders."""
+        """In the background: re-read documents that changed on disk, pick up new files in added folders, and prepare
+        for search by meaning any document that is not prepared yet."""
         def _bg():
             try:
                 r = docs.library().refresh(scan_folders=True)
@@ -119,6 +120,11 @@ class DocsMixin:
                 log.info("document refresh failed: %s", e); return
             if r["updated"] or r["added"]:
                 self._doc_ready.emit(dict(r, kind="refreshed"))
+            try:
+                n = docs.library().embed_missing()
+                if n: log.info("prepared %d document(s) for search by meaning", n)
+            except Exception as e:
+                log.info("preparing documents for search by meaning failed: %s", e)
         if docs.library().names():
             threading.Thread(target=_bg, daemon=True).start()
 

@@ -42,6 +42,9 @@ def make_pptx(path, slides):
 
 @pytest.fixture
 def lib(monkeypatch, tmp_path):
+    """Search by words alone (meaning has its own tests: test_embeddings.py, test_meaning_search.py)."""
+    import embeddings
+    monkeypatch.setattr(embeddings, "ready", lambda: False)
     monkeypatch.setattr(paths, "DOCS_FILE", str(tmp_path / "data" / "documents.json"))
     return docs.library()
 

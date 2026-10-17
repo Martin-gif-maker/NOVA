@@ -23,7 +23,8 @@ Groq, Claude, OpenAI or a model running offline on your Mac, and it asks before 
   will change. After NOVA has read a web page, file or email, every action asks again, so text hidden in a
   page cannot trigger anything (prompt-injection defence).
 * **Answers from your files.** PDFs, Word, PowerPoint, Excel, Numbers and scanned pages are indexed on the
-  Mac (BM25). Only the few passages that match a question go to the AI, and answers name the page.
+  Mac. Search is hybrid: words (BM25) plus meaning, from a multilingual model that runs on the Mac. Only the
+  few passages that match a question go to the AI, and answers name the page.
 * **Any model, any budget.** Groq, Anthropic, OpenAI, Ollama (fully offline) or any OpenAI-compatible
   server, behind one interface. NOVA tracks each model's per-minute token allowance and switches models
   before a request would be refused.
@@ -69,6 +70,11 @@ with hidden instructions that NOVA must not follow.
   to say "Done". That halves the time and the cost of most commands.
 * **Taint tracking instead of trust.** A request that has read outside text (web, files, email, MCP) is
   marked. From then on no action runs without asking, and "always allow" is switched off.
+* **Search by meaning blends scores, not ranks.** The meaning model rates almost every passage fairly close, so
+  a passage's place in the list says little and a stray shared word could win. Meaning is scored from a measured
+  floor (0) to the best passage (1), words from 0 to the best word match, and the two are blended 80/20. On the
+  test library that finds 11 of 12 reworded questions (words alone: 2, Apple's built-in model: 6, rank fusion: 7).
+  Bulgarian↔English pairs always score lower, so they get their own floor (0.75 instead of 0.80).
 * **Rate limits are planned for, not caught.** NOVA counts the tokens each model has used in the last
   minute. It switches to the other model, or waits exactly as long as needed, instead of sending a request
   that will get a 429.
@@ -104,6 +110,8 @@ and switches to one that exists.
   bank", "draft a reply to this email". Mail is only ever *drafted*: you press Send. macOS asks once for each app.
 * **Your documents** — drop a PDF, Word or PowerPoint file, or a whole folder, onto the window (or ＋ → Documents) and
   ask about it. The text is indexed on the Mac; only the few passages that match a question are sent to the AI.
+  With *Search by meaning* (＋ → Documents, a one-time 135 MB download) a question also finds passages that say the
+  same thing in other words or in another language.
 * **Selected text anywhere** — select text in any app, press **⌃⇧Space**, pick Explain / Summarize / Translate /
   Rewrite / Fix grammar — or one of your own actions (menu → *My actions…*). Rewrites are copied so ⌘V pastes them
   over the selection; with *Settings → General → Paste rewrites … straight over the selection* NOVA switches back
@@ -239,7 +247,7 @@ developer; if anything fails the working app is put back.
 | `mdrender.py` · `themes.py` · `i18n.py` | markdown, the four palettes (WCAG-checked), translations (EN/BG) |
 | `icons.py` · `actions.py` | NOVA's own line icons · how a finished tool call is worded for the "what NOVA did" rows |
 | `mac_apps.py` · `eventkit_helper.py` | Calendar / Reminders (EventKit, in a helper process), Mail, browser, Shortcuts |
-| `docs.py` · `schedule.py` · `modes.py` · `usage.py` | document library, scheduled tasks, modes and saved prompts, usage and cost |
+| `docs.py` · `embeddings.py` · `schedule.py` · `modes.py` · `usage.py` | document library and its search by words and by meaning (the on-device model), scheduled tasks, modes and saved prompts, usage and cost |
 | `mcp_client.py` · `ipc.py` | MCP tool servers (stdio and HTTP), requests handed over from other programs |
 | `win_docs.py` · `win_selection.py` · `win_schedule.py` · `win_persona.py` · `win_mcp.py` | the window's side of those features |
 | `updater.py` · `diagnostics.py` · `platform_utils.py` · `games.py` | verified updates, support report, macOS glue, mini-games |

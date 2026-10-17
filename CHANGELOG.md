@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Search your documents by meaning.** ＋ → Documents → *Search by meaning* downloads a small multilingual model once
+  (135 MB). After that a question also finds passages that say the same thing in other words ("how much do I put
+  down up front?" → "security deposit") or in another language (a Bulgarian question → an English contract). It runs
+  on the Mac and is blended with the word search. On the test library it finds 11 of 12 reworded questions, where
+  words alone found 2.
+- Word search ignores question words ("how", "when", "does", "кога", "колко" …). "When does the plane leave?" no
+  longer finds a passage just because it also says "when".
 - The chat no longer leaves an empty gap under the last message. The gap grew by 20–40 px with every message
   on screen.
 - Short messages stay on one line in their bubble instead of wrapping early.

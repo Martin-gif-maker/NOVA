@@ -20,13 +20,18 @@ distro==1.9.0
 docstring_parser==0.18.0
 edge-tts==7.2.8
 enum-tools==0.13.0
+filelock==4.0.12
+flatbuffers==25.12.19
 frozenlist==1.8.0
+fsspec==2026.9.0
 groq==1.7.0
 h11==0.16.0
+hf-xet==1.7.0
 httpcore2==2.13.1
 httpcore==1.0.9
 httpx2==2.13.1
 httpx==0.28.1
+huggingface_hub==2.2.0
 idna==3.20
 importlib_resources==7.1.0
 jaraco.classes==3.4.0
@@ -43,7 +48,9 @@ MouseInfo==0.1.3
 multidict==6.9.1
 numbers-parser==4.19.0
 numpy==2.5.3
+onnxruntime==1.31.0
 openai==3.27.0
+packaging==26.3
 pillow==12.3.0
 primp==2.0.1
 propcache==0.5.4
@@ -78,6 +85,7 @@ PySide6_WebEngine==6.12.0.140
 python-dateutil==2.9.0.post0
 python-snappy==0.7.3
 pytweening==1.2.0
+PyYAML==6.0.3
 requests==2.34.2
 rubicon-objc==0.5.7
 shiboken6==6.12.0
@@ -87,6 +95,7 @@ sniffio==1.3.1
 sounddevice==0.5.6
 srt==3.5.3
 tabulate==0.10.0
+tokenizers==0.23.3
 tomli==2.5.0
 tqdm==4.70.1
 truststore==0.10.4
@@ -109,7 +118,6 @@ cyclonedx-python-lib==11.12.0
 defusedxml==0.7.1
 duckduckgo_search==8.1.1
 et_xmlfile==2.0.0
-filelock==4.0.12
 iniconfig==2.3.1
 jsonschema-specifications==2025.9.1
 jsonschema==4.26.0
@@ -121,7 +129,6 @@ msgpack==1.2.3
 openpyxl==3.1.5
 opentelemetry-api==1.45.1
 packageurl-python==0.17.6
-packaging==26.3
 pip-requirements-parser==32.0.1
 pip_api==0.0.35
 pip_audit==2.10.1

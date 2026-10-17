@@ -2,10 +2,13 @@
 #
 # Text is pulled out of PDFs, Word / PowerPoint files, rich text and plain text ON THIS MAC, cut into
 # passages and kept in a local index. When you ask something, the best-matching passages are found here
-# (BM25, no network) and only those few passages go to the AI together with your question.
-import os, re, math, time, zipfile, threading, subprocess, collections
+# (BM25 by words, and - with the optional on-device model in embeddings.py - by meaning; no network) and only
+# those few passages go to the AI together with your question.
+import os, re, math, time, base64, logging, zipfile, threading, subprocess, collections
 import paths
 import storage
+
+log = logging.getLogger("nova")
 
 MAX_FILE_CHARS  = 3_000_000        # ≈ a 1,000-page book; longer files are cut here
 MAX_TOTAL_CHARS = 40_000_000
@@ -400,7 +403,13 @@ def passages(parts: list) -> list:
 # ── the library ────────────────────────────────────────────────────
 _WORD = re.compile(r"\w+", re.UNICODE)
 _STOP = set("a an and are as at be but by for from has have in is it its of on or that the their this to was were will with "
-            "и в на с за от по да не се е са че това".split())
+            # question and function words: they say how something is asked, not what it is about
+            "how what when where which who whom whose why do does did can could would should must shall may might "
+            "i me my mine we us our you your he him his she her they them there here if so not no yes than then "
+            "about into onto also just very any some all am been being had having get got "
+            "и в на с за от по да не се е са че това "
+            "как какво кога къде кой коя кое кои защо колко ли ми ти му ни ви им аз той тя то ние вие те мой моя мое мои "
+            "твой който която което ако но или а до при със във към също още вече има няма бъде бих съм си сме сте".split())
 
 
 def tokens(text: str) -> list:
@@ -416,6 +425,7 @@ class Library:
         self._docs = None                # name -> {"path", "added", "chars", "mtime", "size", "passages": [...]}
         self._folders = []               # folders that were added as a whole: new files in them are picked up
         self._stats = None               # cached search statistics
+        self._vecs = None                # cached meaning vectors: (matrix, [(name, passage index)])
 
     # persistence
     def _load(self) -> dict:
@@ -431,12 +441,12 @@ class Library:
 
     def _save(self) -> None:
         with self._lock:
-            self._stats = None
+            self._stats = None; self._vecs = None
             os.makedirs(os.path.dirname(self.path), exist_ok=True)
             storage.write_json(self.path, {"version": 1, "docs": self._docs or {}, "folders": self._folders}, indent=None)
 
     def reload(self) -> None:
-        with self._lock: self._docs = None; self._stats = None
+        with self._lock: self._docs = None; self._stats = None; self._vecs = None
 
     # content
     def names(self) -> list:
@@ -462,6 +472,8 @@ class Library:
                 if room <= 0: break
                 kept.append((label, text[:room])); room -= len(text)
             parts = kept; chars = MAX_FILE_CHARS
+        cut_up = passages(parts)
+        vec = _vectors_for(cut_up)                                      # by meaning, when the model is installed (slow part)
         with self._lock:
             docs = self._load()
             name = os.path.basename(path)
@@ -471,7 +483,8 @@ class Library:
                 raise DocError("Your document library is full. Remove some documents first (＋ → Documents).")
             try: st = os.stat(path); stamp = {"mtime": st.st_mtime, "size": st.st_size}
             except OSError: stamp = {}
-            docs[name] = dict({"path": path, "added": time.strftime("%Y-%m-%d %H:%M"), "chars": chars, "passages": passages(parts)}, **stamp)
+            if vec: stamp["vec"] = vec
+            docs[name] = dict({"path": path, "added": time.strftime("%Y-%m-%d %H:%M"), "chars": chars, "passages": cut_up}, **stamp)
             self._save()
             return {"name": name, "parts": len(docs[name]["passages"]), "chars": chars, "cut": cut}
 
@@ -562,12 +575,11 @@ class Library:
                 self._stats = (rows, df, (total / len(rows)) if rows else 1.0)
             return self._stats
 
-    def search(self, query: str, k: int = 6, document: str = "") -> list:
-        """The k passages that best match the question: [{'doc', 'at', 'text', 'score'}], best first (BM25)."""
+    def _word_hits(self, query: str, want: str) -> list:
+        """[(BM25 score, name, passage index)], best first; only passages that share a word with the question."""
         rows, df, avg = self._statistics()
         q = set(tokens(query))
         if not rows or not q: return []
-        want = document.strip().lower()
         N = len(rows); scored = []
         for name, i, tf, n in rows:
             if want and want not in name.lower(): continue
@@ -579,13 +591,156 @@ class Library:
                     s += idf * f * 2.2 / (f + 1.2 * (0.25 + 0.75 * n / avg))
             if s > 0: scored.append((s, name, i))
         scored.sort(reverse=True)
+        return scored
+
+    # ── by meaning (embeddings.py) ──
+    # Cosine similarity below which a passage is not about the question. A question and a passage in different
+    # alphabets (Bulgarian <-> English) always score lower, so they get their own floor. Measured on
+    # tests/meaning_corpus.py and the small libraries in tests/test_docs.py: same alphabet - right answers from 0.81,
+    # unrelated questions up to 0.80; across alphabets - right answers from 0.77, unrelated up to 0.73.
+    MEANING_FLOOR = 0.80
+    MEANING_FLOOR_ACROSS = 0.75
+    MEANING_TAKE = 12        # how many passages by meaning take part in the ranking
+    MEANING_WEIGHT = 0.8     # share of meaning in the blended score (the rest is words). On tests/meaning_corpus.py
+                             # 0.7-0.9 all find 11 of 12 reworded questions; 0.6 and below let a stray shared word win.
+
+    def _meaning(self):
+        """(unit vectors as one matrix, [(name, passage index)], [passage is in Cyrillic]) of every document that has
+        vectors of this model."""
+        with self._lock:
+            if self._vecs is None:
+                import numpy as np, embeddings
+                mats, rows, cyr = [], [], []
+                for name, d in self._load().items():
+                    m = _decode(d, len(d.get("passages", [])))
+                    if m is None: continue
+                    mats.append(m); rows += [(name, i) for i in range(len(m))]
+                    cyr += [_cyrillic(p["t"]) for p in d["passages"]]
+                self._vecs = (np.vstack(mats) if mats else np.zeros((0, embeddings.DIM), np.float32), rows, np.array(cyr, bool))
+            return self._vecs
+
+    def _closeness(self, query: str, want: str) -> dict:
+        """{(name, passage index): similarity to the question minus that passage's floor} for every passage with a
+        vector; >= 0 means it is about the question. {} = no meaning model."""
+        import embeddings
+        if not query.strip() or not embeddings.ready(): return {}
+        mat, rows, cyr = self._meaning()
+        if not rows: return {}
+        try:
+            sims = mat @ embeddings.embed_query(query)
+        except Exception as e:                                          # the words still work
+            log.warning("search by meaning failed: %s", e); return {}
+        import numpy as np
+        floors = np.where(cyr == _cyrillic(query), self.MEANING_FLOOR, self.MEANING_FLOOR_ACROSS)
+        return {row: float(v) for row, v in zip(rows, sims - floors) if not want or want in row[0].lower()}
+
+    def _meaning_hits(self, close: dict) -> list:
+        """[(closeness, name, passage index)], best first, only passages above their floor (from _closeness)."""
+        return sorted(((v, n, i) for (n, i), v in close.items() if v >= 0), reverse=True)[:self.MEANING_TAKE]
+
+    def missing_vectors(self) -> int:
+        """How many documents have no meaning vectors (from the installed model) yet."""
+        return sum(1 for d in self._load().values() if d.get("passages") and not _has_vectors(d))
+
+    def embed_missing(self, progress=None, cancelled=None) -> int:
+        """Give every document without meaning vectors its vectors (after the model was installed, or for documents
+        indexed before). Slow work happens outside the lock. progress(done, total, name); cancelled() -> True stops
+        after the current document. Returns how many."""
+        import embeddings
+        if not embeddings.ready(): return 0
+        with self._lock:
+            todo = [(n, d["passages"]) for n, d in self._load().items() if d.get("passages") and not _has_vectors(d)]
+        done = 0
+        for k, (name, ps) in enumerate(todo):
+            if cancelled and cancelled(): break
+            if progress: progress(k, len(todo), name)
+            vec = _vectors_for(ps)
+            if not vec: break
+            with self._lock:
+                d = self._load().get(name)
+                if d is not None and d.get("passages") is ps:            # not re-read or removed in the meantime
+                    d["vec"] = vec; done += 1
+        if done:
+            with self._lock: self._save()
+        return done
+
+    def search(self, query: str, k: int = 6, document: str = "") -> list:
+        """The k passages that best match the question: [{'doc', 'at', 'text', 'score', 'how'}], best first.
+        By words (BM25) and, with the meaning model installed, by meaning; the two rankings are merged by reciprocal
+        rank fusion. `how` says which found it: 'words', 'meaning' or 'both'."""
+        want = document.strip().lower()
+        words = self._word_hits(query, want)[:50]
+        close = self._closeness(query, want)
+        top = max(close.values(), default=-1.0)
+        if top >= 0:
+            # Blend scores, not ranks: this model rates almost every passage fairly close, so a passage's place in
+            # the meaning list says little - how close it comes to the best one says a lot. Meaning counts from the
+            # floor (0) to the best passage (1); words from 0 to the best word match.
+            def meaning(row):
+                c = close.get(row, -1.0)
+                return 0.0 if c < 0 else (c / top if top > 0 else 1.0)
+            best_words = words[0][0] if words else 1.0
+            by_words = {(n, i): sc / best_words for sc, n, i in words}
+            rows = set(by_words) | {(n, i) for _v, n, i in self._meaning_hits(close)}
+            w = self.MEANING_WEIGHT
+            scored = []
+            for row in rows:
+                m, b = meaning(row), by_words.get(row, 0.0)
+                how = "both" if (m > 0 and b > 0) else ("meaning" if m > 0 else "words")
+                scored.append((w * m + (1 - w) * b, row[0], row[1], how))
+            scored.sort(reverse=True)
+        else:
+            scored = [(sc, name, i, "words") for sc, name, i in words]
         docs = self._load(); out = []; taken = collections.Counter()
-        for s, name, i in scored:
+        for s, name, i, how in scored:
             if taken[name] >= max(3, k - 1) and not want: continue            # do not let one document crowd out the rest
             p = docs[name]["passages"][i]
-            out.append({"doc": name, "at": p.get("at", ""), "text": p["t"], "score": round(s, 2)}); taken[name] += 1
+            out.append({"doc": name, "at": p.get("at", ""), "text": p["t"], "score": round(s, 4), "how": how}); taken[name] += 1
             if len(out) >= k: break
         return out
+
+
+def _vectors_for(cut_up: list):
+    """The stored form of a document's meaning vectors ({'model', 'data'}), or None (no model, or it failed)."""
+    import embeddings
+    if not cut_up or not embeddings.ready(): return None
+    try:
+        m = embeddings.embed_passages([p["t"] for p in cut_up])
+    except Exception as e:
+        log.warning("could not prepare a document for search by meaning: %s", e); return None
+    return {"model": embeddings.MODEL_ID, "data": base64.b64encode(m.astype("<f2").tobytes()).decode("ascii")}
+
+
+_CYR = re.compile(r"[\u0400-\u04FF]")
+_LETTER = re.compile(r"[^\W\d_]")
+
+
+def _cyrillic(text: str) -> bool:
+    """Is the text mostly written in Cyrillic letters (looked at over its first 600 characters)?"""
+    head = text[:600]
+    return len(_CYR.findall(head)) * 2 > max(1, len(_LETTER.findall(head)))
+
+
+def _has_vectors(doc: dict) -> bool:
+    """Does the document have one vector per passage from the installed model? (Checked without decoding them.)"""
+    import embeddings
+    v = doc.get("vec")
+    if not isinstance(v, dict) or v.get("model") != embeddings.MODEL_ID: return False
+    size = len(doc.get("passages", [])) * embeddings.DIM * 2                  # float16
+    return len(v.get("data", "")) == 4 * ((size + 2) // 3)                    # its base64 length
+
+
+def _decode(doc: dict, count: int):
+    """A document's meaning vectors as a float32 matrix, or None when it has none from the installed model."""
+    v = doc.get("vec")
+    import embeddings
+    if not isinstance(v, dict) or v.get("model") != embeddings.MODEL_ID or not count: return None
+    import numpy as np
+    try:
+        m = np.frombuffer(base64.b64decode(v["data"]), dtype="<f2").astype(np.float32).reshape(-1, embeddings.DIM)
+    except (ValueError, KeyError, TypeError):
+        return None
+    return m if len(m) == count else None
 
 
 def search_many(lib: "Library", queries: list, k: int = 6, document: str = "") -> list:
@@ -600,6 +755,7 @@ def search_many(lib: "Library", queries: list, k: int = 6, document: str = "") -
             key = (hit["doc"], hit["text"])
             entry = merged.setdefault(key, dict(hit, score=0.0))
             entry["score"] += 1.0 / (30 + rank)                          # reciprocal rank fusion
+            if hit.get("how") != entry.get("how"): entry["how"] = "both"
     return [dict(h, score=round(h["score"], 4)) for h in sorted(merged.values(), key=lambda h: -h["score"])[:k]]
 
 
@@ -623,4 +779,7 @@ def answer_material(query, k: int = 6, document: str = "") -> str:
     if not lib.names(): return ""
     hits = search_many(lib, query if isinstance(query, (list, tuple)) else [query], k, document)
     if not hits: return ""
-    return "\n\n".join(f"[{h['doc']}{', ' + h['at'] if h['at'] else ''}]\n{h['text']}" for h in hits)
+    def head(h):
+        where = f"[{h['doc']}{', ' + h['at'] if h['at'] else ''}]"
+        return where + (" (found by meaning - it may not answer the question)" if h.get("how") == "meaning" else "")
+    return "\n\n".join(f"{head(h)}\n{h['text']}" for h in hits)

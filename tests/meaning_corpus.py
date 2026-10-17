@@ -50,6 +50,16 @@ REWORDED = [
     ("How long are copies of our data stored?", "backup.txt"),
 ]
 
+# Bulgarian questions about the English passages (no shared words at all: only a multilingual model finds these)
+BULGARIAN = [
+    ("Колко пари трябва да дам предварително за квартирата?", "lease.txt"),
+    ("Кога тръгва самолетът за Португалия?", "travel.txt"),
+    ("Децата плащат ли вход за изложбата?", "museum.txt"),
+    ("Колко дни отпуска имат служителите?", "handbook.txt"),
+    ("Какво става, ако платя сметката късно?", "invoice.txt"),
+    ("Как да рестартирам рутера?", "router.txt"),
+]
+
 # exact: the question uses the passage's own words (searching by words already gets these right)
 EXACT = [
     ("security deposit two monthly rents", "lease.txt"),

@@ -3,7 +3,7 @@ import os, json
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
                                QPushButton, QInputDialog, QMessageBox, QTextEdit, QComboBox, QFormLayout, QTableWidget,
                                QTableWidgetItem, QHeaderView, QAbstractItemView)
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QImage
 from i18n import tr
 import storage
@@ -215,7 +215,10 @@ class MemoriesDialog(QDialog):
 
 # ── Document library ───────────────────────────────────────────────
 class DocumentsDialog(QDialog):
-    """The documents NOVA can answer questions about: add files or folders, remove them."""
+    """The documents NOVA can answer questions about: add files or folders, remove them, and switch on search by
+    meaning (embeddings.py: a one-time model download, then each document is prepared on this Mac)."""
+    meaning_progress = Signal(float, str)        # (fraction, "download" / "prepare" / "done" / an error) from the worker
+
     def __init__(self, theme: dict, library, parent=None):
         super().__init__(parent)
         self.t = theme; self.lib = library
@@ -224,6 +227,14 @@ class DocumentsDialog(QDialog):
         note = QLabel(tr("NOVA reads these documents on this Mac. When you ask a question, only the few passages that "
                          "match it are sent to the AI. You can also drop a file or a folder onto the NOVA window."))
         note.setWordWrap(True); v.addWidget(note)
+        mrow = QHBoxLayout(); mrow.setSpacing(10)
+        self.meaning_status = QLabel(""); self.meaning_status.setWordWrap(True)
+        self.meaning_btn = _btn("", self._toggle_meaning, True, theme)
+        self.meaning_btn.setAccessibleName(tr("Search by meaning"))
+        mrow.addWidget(self.meaning_status, 1); mrow.addWidget(self.meaning_btn, 0, Qt.AlignmentFlag.AlignTop)
+        v.addLayout(mrow)
+        self._meaning_job = None                 # {"cancel": bool} while a download / preparation runs
+        self.meaning_progress.connect(self._on_meaning_progress)
         self.listw = QListWidget(); self.listw.setAccessibleName(tr("Documents")); self.listw.setWordWrap(True)
         self.status = QLabel(""); self.status.setWordWrap(True)
         row = QHBoxLayout()
@@ -233,6 +244,66 @@ class DocumentsDialog(QDialog):
         row.addWidget(_btn(tr("Close"), self.accept, True, theme))
         v.addWidget(self.listw, 1); v.addWidget(self.status); v.addLayout(row)
         self._fill()
+        self._refresh_meaning()
+        import embeddings
+        if embeddings.ready() and self.lib.missing_vectors():
+            self._start_meaning(download=False)    # documents added before the model was there
+
+    # ── search by meaning ──
+    def _refresh_meaning(self):
+        import embeddings
+        if not embeddings.runtime_installed():
+            self.meaning_btn.setEnabled(False); self.meaning_btn.setText(tr("Not available"))
+            self.meaning_status.setText(tr("Search by meaning is not part of this build.")); return
+        self.meaning_btn.setEnabled(True)
+        if embeddings.installed():
+            self.meaning_btn.setText(tr("Remove"))
+            self.meaning_status.setText(tr("Search by meaning is on: a question also finds passages that say the same thing "
+                                           "in other words or in another language."))
+        else:
+            self.meaning_btn.setText(tr("Download ({} MB)").format(embeddings.MODEL_MB))
+            self.meaning_status.setText(tr("Search by meaning finds passages that say the same thing in other words or in "
+                                           "another language. It works on this Mac after a one-time download."))
+
+    def _toggle_meaning(self):
+        import embeddings
+        if self._meaning_job:                                       # running: the button is "Cancel"
+            self._meaning_job["cancel"] = True; return
+        if embeddings.installed():
+            if QMessageBox.question(self, tr("Search by meaning"), tr("Remove search by meaning? NOVA then finds passages by "
+                                    "their words only. You can download it again at any time."),
+                                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                    QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
+                embeddings.remove(); self._refresh_meaning()
+            return
+        self._start_meaning(download=True)
+
+    def _start_meaning(self, download: bool):
+        import threading, embeddings
+        job = self._meaning_job = {"cancel": False}
+        self.meaning_btn.setText(tr("Cancel"))
+        def emit(frac, state):
+            try: self.meaning_progress.emit(frac, state)
+            except RuntimeError: pass                                # the window was closed; the work goes on
+        def _bg():
+            try:
+                if download:
+                    embeddings.download(lambda f: emit(f, "download"), lambda: job["cancel"])
+                self.lib.embed_missing(lambda done, total, _name: emit(done / max(total, 1), "prepare"), lambda: job["cancel"])
+                emit(1.0, "done")
+            except Exception as e:
+                emit(-1.0, str(e))
+        threading.Thread(target=_bg, daemon=True).start()
+
+    def _on_meaning_progress(self, frac: float, state: str):
+        if state == "download":
+            self.meaning_status.setText(tr("Downloading… {}%").format(int(frac * 100)))
+        elif state == "prepare":
+            self.meaning_status.setText(tr("Preparing your documents for search by meaning… {}%").format(int(frac * 100)))
+        else:
+            self._meaning_job = None; self._refresh_meaning()
+            if frac < 0 and "cancelled" not in state:
+                self.meaning_status.setText(tr("Search by meaning could not be set up: {}").format(tr(state)))
 
     def _fill(self):
         self.listw.clear()

@@ -65,6 +65,16 @@ def run() -> int:
         finally:
             import shutil as _sh; _sh.rmtree(tmpd, ignore_errors=True)
     except Exception as e: problems.append(f"documents ({e})")
+    try:                                                                # search by meaning: the model runtime loads
+        import embeddings
+        assert embeddings.runtime_installed()
+        import onnxruntime, tokenizers                                    # native libraries in the bundle
+        assert "CPUExecutionProvider" in onnxruntime.get_available_providers() and tokenizers.Tokenizer
+        if embeddings.installed():                                        # the model itself runs (when downloaded)
+            p = embeddings.embed_passages(["The deposit is two monthly rents.", "The trail takes four hours."])
+            q = embeddings.embed_query("How much do I pay up front for the flat?")
+            assert p.shape == (2, embeddings.DIM) and float(p[0] @ q) > float(p[1] @ q)
+    except Exception as e: problems.append(f"search by meaning ({e})")
     try:
         import mcp_client, schedule, modes, usage
         assert schemas.select_tools("hello")[0] and ipc.server_name() and mcp_client.tool_id("a", "b") == "mcp__a__b"

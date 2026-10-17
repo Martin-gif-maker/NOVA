@@ -29,12 +29,17 @@ extra_datas += collect_data_files("numbers_parser")  # its empty-document templa
 hidden += collect_submodules("numbers_parser")
 hidden += ["xlrd"]                                     # old .xls files (imported only when one is opened)
 hidden += ["PySide6.QtSvg"]                            # the line icons are drawn from SVG
+hidden += ["onnxruntime", "tokenizers"]                # search by meaning (embeddings.py, imported when first used)
 
 a = Analysis(["main.py"], pathex=["."], binaries=vosk_bins, datas=[("nova.icns", ".")] + extra_datas,
-             hiddenimports=hidden, excludes=["tkinter", "matplotlib", "scipy", "pytest", "PyQt6", "PyQt5", "PySide2"], noarchive=False)
+             hiddenimports=hidden, excludes=["tkinter", "matplotlib", "scipy", "pytest", "PyQt6", "PyQt5", "PySide2",
+             # pulled in by `tokenizers` but never used: NOVA downloads the model itself (embeddings.py)
+             "huggingface_hub", "hf_xet", "fsspec", "onnxruntime.training", "onnxruntime.tools", "onnxruntime.transformers"], noarchive=False)
 # Qt's on-screen keyboard plugin is not used on a Mac, and it is the only thing that pulls in Qt Quick / QML / OpenGL (17 MB).
 _UNUSED_QT = ("QtQuick", "QtQml", "QtVirtualKeyboard", "QtOpenGL", "libqtvirtualkeyboardplugin")
-a.binaries = [b for b in a.binaries if not any(u in b[0] for u in _UNUSED_QT)]
+# onnxruntime also ships its C library for other programs (32 MB); the Python binding NOVA uses has it all built in.
+_UNUSED_LIBS = _UNUSED_QT + ("libonnxruntime.",)
+a.binaries = [b for b in a.binaries if not any(u in b[0] for u in _UNUSED_LIBS)]
 a.datas = [d for d in a.datas if not any(u in d[0] for u in _UNUSED_QT)]
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="NOVA", console=False,
