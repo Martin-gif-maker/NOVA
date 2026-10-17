@@ -655,14 +655,16 @@ class VisionWorker(QThread):
 class StatsWorker(QThread):
     updated = Signal(str)
     paused  = False                 # set while the window is hidden (saves battery)
+    def __init__(self):
+        super().__init__(); self._wake = threading.Event()
+    def requestInterruption(self):
+        """Stop now: the 2-second wait ends at once, so quitting NOVA does not wait for it."""
+        super().requestInterruption(); self._wake.set()
     def run(self):
         try:
             import psutil
             psutil.cpu_percent(interval=None)                 # prime: the next call reports usage since now
-            while not self.isInterruptionRequested():
-                for _ in range(20):                           # sample every 2 s, but notice "quit" within 0.1 s
-                    if self.isInterruptionRequested(): return
-                    self.msleep(100)
+            while not self._wake.wait(2.0):                   # sample every 2 s
                 if self.paused: continue
                 cpu=psutil.cpu_percent(interval=None); ram=psutil.virtual_memory().percent
                 self.updated.emit(f"CPU {cpu:.0f}%  ·  RAM {ram:.0f}%")

@@ -179,3 +179,14 @@ def test_a_failed_download_says_why_and_offers_it_again(app, lib, monkeypatch):
     d.meaning_btn.click()
     _wait(app, lambda: d._meaning_job is None)
     assert "No internet connection." in d.meaning_status.text() and d.meaning_btn.text().startswith("Download")
+
+
+def test_the_documents_window_shows_home_paths_short(app, lib, tmp_path, monkeypatch):
+    import os, themes, dialogs
+    monkeypatch.setattr(embeddings, "runtime_installed", lambda: False)
+    home = tmp_path / "home"; (home / "Documents").mkdir(parents=True)
+    monkeypatch.setattr(os.path, "expanduser", lambda p: str(home) if p == "~" else p)
+    f = home / "Documents" / "lease.txt"; f.write_text("The deposit is two monthly rents.")
+    lib.add_file(str(f))
+    d = dialogs.DocumentsDialog(themes.THEMES["soft"], lib)
+    assert d.listw.item(0).text().endswith("~/Documents/lease.txt")

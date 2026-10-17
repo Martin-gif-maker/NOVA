@@ -179,3 +179,9 @@ def test_the_ai_client_loads_its_sdk_on_first_use(provider, sdk):
                         "c.warm_up()\n"
                         f"print(before, {sdk!r} in sys.modules, c.chat.completions.create is not None)")
     assert out.split() == ["False", "True", "True"], out
+
+
+def test_quitting_does_not_wait_for_the_system_statistics(app):
+    w = workers.StatsWorker(); w.start(); time.sleep(0.3)
+    t0 = time.monotonic(); w.requestInterruption(); assert w.wait(2000)
+    assert time.monotonic() - t0 < 0.05

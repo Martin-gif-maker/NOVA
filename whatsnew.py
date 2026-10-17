@@ -4,6 +4,11 @@ import paths
 from i18n import tr
 
 NOTES = {
+    "6.3": [
+        "Search your documents by meaning: ＋ → Documents → Search by meaning (a one-time 135 MB download). A question then also finds passages that say the same thing in other words or in another language.",
+        "NOVA starts about a third faster, and quits at once.",
+        "Short messages stay on one line, and long chats no longer leave an empty gap under the last message.",
+    ],
     "6.2": [
         "NOVA has a new look: calmer colours, sharper details, and line icons instead of emoji.",
         "Under each reply you now see what NOVA did, as neat rows you can click for details.",

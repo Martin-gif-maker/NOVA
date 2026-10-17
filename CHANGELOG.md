@@ -1,11 +1,11 @@
 # NOVA — what changed
 
-## Unreleased
+## 6.3.0 — October 2026
 
-- **NOVA starts about a third faster** (0.83 s → 0.56 s from launch to a ready window, measured on this Mac). The AI
-  provider's library (0.1–0.35 s) now loads in the background right after the window appears, and the
-  typing/screenshot library (0.14 s) loads the first time NOVA types or takes a screenshot. A test keeps all of them
-  out of start-up.
+- **NOVA starts about a third faster** (0.83 s → 0.56 s from launch to a ready window, measured on this Mac), and
+  quits at once. The AI provider's library (0.1–0.35 s) now loads in the background right after the window
+  appears, and the typing/screenshot library (0.14 s) loads the first time NOVA types or takes a screenshot. A test
+  keeps all of them out of start-up.
 - **Search your documents by meaning.** ＋ → Documents → *Search by meaning* downloads a small multilingual model once
   (135 MB). After that a question also finds passages that say the same thing in other words ("how much do I put
   down up front?" → "security deposit") or in another language (a Bulgarian question → an English contract). It runs
@@ -13,6 +13,7 @@
   words alone found 2.
 - Word search ignores question words ("how", "when", "does", "кога", "колко" …). "When does the plane leave?" no
   longer finds a passage just because it also says "when".
+- The document list shows paths in your home folder as `~/…`.
 - The chat no longer leaves an empty gap under the last message. The gap grew by 20–40 px with every message
   on screen.
 - Short messages stay on one line in their bubble instead of wrapping early.
@@ -23,6 +24,8 @@
   keyword gaps: "find my resume pdf" and "пусни прекия път …" now get their tools without an extra round.
 - The README now shows NOVA (light and dark), what it does, how it works and why it is built that way.
   NOVA is MIT-licensed.
+- Under the hood: lint with ruff and a type check of the core modules (mypy) run with every `./check.sh`; the type
+  check found a voice-monitor attribute that hid Qt's own `started` signal.
 
 ## 6.2.0 — October 2026
 

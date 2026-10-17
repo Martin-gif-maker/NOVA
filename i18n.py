@@ -593,6 +593,12 @@ BG.update({
     "No image-capable model is available with this AI provider.": "Тази AI услуга няма модел, който разбира изображения.",
     "Image analysis is rate-limited - try again in {}s.": "Анализът на изображения е ограничен за момента — опитай пак след {} с.",
     "Image analysis is rate-limited - try again shortly.": "Анализът на изображения е ограничен за момента — опитай пак след малко.",
+    # what's new in 6.3
+    "Search your documents by meaning: ＋ → Documents → Search by meaning (a one-time 135 MB download). A question then also finds passages that say the same thing in other words or in another language.":
+        "Търси в документите си по смисъл: ＋ → Документи → Търсене по смисъл (еднократно изтегляне от 135 MB). Тогава въпросът намира и откъси, които казват същото с други думи или на друг език.",
+    "NOVA starts about a third faster, and quits at once.": "NOVA се стартира с около една трета по-бързо и се затваря веднага.",
+    "Short messages stay on one line, and long chats no longer leave an empty gap under the last message.":
+        "Кратките съобщения остават на един ред, а дългите разговори вече не оставят празно място под последното съобщение.",
     # search by meaning (Documents)
     "Search by meaning": "Търсене по смисъл",
     "Search by meaning is not part of this build.": "Търсенето по смисъл не е включено в тази версия.",

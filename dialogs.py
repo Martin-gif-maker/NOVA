@@ -309,7 +309,8 @@ class DocumentsDialog(QDialog):
         self.listw.clear()
         for d in self.lib.info():
             gone = "  ·  ⚠ " + tr("the file is no longer there") if d.get("missing") else ""
-            it = QListWidgetItem(f"{d['name']}\n{d['parts']} {tr('passages')}  ·  {d['added']}{gone}  ·  {d['path']}")
+            where = d["path"].replace(os.path.expanduser("~"), "~", 1) if d["path"].startswith(os.path.expanduser("~") + os.sep) else d["path"]
+            it = QListWidgetItem(f"{d['name']}\n{d['parts']} {tr('passages')}  ·  {d['added']}{gone}  ·  {where}")
             it.setData(Qt.ItemDataRole.UserRole, d["name"]); self.listw.addItem(it)
         if not self.listw.count():
             self.listw.addItem(QListWidgetItem(tr("No documents yet"))); self.listw.item(0).setFlags(Qt.ItemFlag.NoItemFlags)
