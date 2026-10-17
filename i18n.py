@@ -583,6 +583,16 @@ BG.update({
     "NOVA runs these while it is open. If it was closed at the set time, a task still runs when you open NOVA within a few hours. You can also just ask: “every morning at 8 give me the news”.":
         "NOVA ги изпълнява, докато е отворена. Ако е била затворена в зададения час, задачата пак се изпълнява, когато отвориш NOVA до няколко часа след това. Можеш и просто да кажеш: „всяка сутрин в 8 ми дай новините“.",
     "Explain, translate or rewrite the text selected in any app": "Обясни, преведи или пренапиши текста, избран във всяко приложение",
+    # answers the AI worker writes itself
+    "The AI declined this request. Try rephrasing it, or switch the model in the menu.":
+        "AI отказа тази заявка. Опитай да я кажеш по друг начин или смени модела от менюто.",
+    "(Safety category: {})": "(Категория за безопасност: {})",
+    "I stopped after {} steps without finishing. Try splitting the request into smaller ones.":
+        "Спрях след {} стъпки, без да завърша. Опитай да разделиш заявката на по-малки.",
+    "The AI declined to analyse this image.": "AI отказа да анализира това изображение.",
+    "No image-capable model is available with this AI provider.": "Тази AI услуга няма модел, който разбира изображения.",
+    "Image analysis is rate-limited - try again in {}s.": "Анализът на изображения е ограничен за момента — опитай пак след {} с.",
+    "Image analysis is rate-limited - try again shortly.": "Анализът на изображения е ограничен за момента — опитай пак след малко.",
 })
 
 TABLES = {"bg": BG}

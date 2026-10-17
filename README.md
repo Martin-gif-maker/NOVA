@@ -1,4 +1,66 @@
-# NOVA — desktop AI assistant (v6)
+# NOVA
+
+**An AI assistant for the Mac that does things, not just talks.** It opens apps, answers from your documents,
+manages your calendar and reminders, acts on text you select in any app, and listens and speaks. It works with
+Groq, Claude, OpenAI or a model running offline on your Mac, and it asks before anything risky.
+
+[![CI](https://github.com/Martin-gif-maker/NOVA/actions/workflows/ci.yml/badge.svg)](https://github.com/Martin-gif-maker/NOVA/actions/workflows/ci.yml)
+![macOS](https://img.shields.io/badge/platform-macOS-lightgrey)
+![Python](https://img.shields.io/badge/python-3.13%20%7C%203.14-blue)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+<p align="center">
+  <img src="design/nova-light.png" width="380" alt="NOVA in the light Paper look: opening Paris in Maps, the weather, a reminder and an answer from a PDF">
+  &nbsp;
+  <img src="design/nova-dark.png" width="380" alt="The same conversation in the dark Graphite look">
+</p>
+
+## Highlights
+* **A real agent loop.** 52 tools (apps, files, web, Calendar, Reminders, Mail drafts, Shortcuts, documents,
+  schedules, screen) and any [MCP](https://modelcontextprotocol.io) tool server. The model chains them;
+  NOVA's own code runs them.
+* **Safe by design.** Shell, code, deleting, typing and shutting down always ask first, with a diff of what
+  will change. After NOVA has read a web page, file or email, every action asks again, so text hidden in a
+  page cannot trigger anything (prompt-injection defence).
+* **Answers from your files.** PDFs, Word, PowerPoint, Excel, Numbers and scanned pages are indexed on the
+  Mac (BM25). Only the few passages that match a question go to the AI, and answers name the page.
+* **Any model, any budget.** Groq, Anthropic, OpenAI, Ollama (fully offline) or any OpenAI-compatible
+  server, behind one interface. NOVA tracks each model's per-minute token allowance and switches models
+  before a request would be refused.
+* **Voice.** Push-to-talk, a "Hey NOVA" wake word that runs on the Mac, hands-free conversation, and talking
+  over NOVA to interrupt it, even without headphones.
+* **Private.** Optional AES-256-GCM encryption of everything stored, keys in the Keychain, a log of every
+  request that left the Mac, plugins in the macOS sandbox.
+* **Tested.** 550+ tests run headless on every push: rendering in every theme, accessibility names,
+  complete translations (English and Bulgarian), the plugin sandbox, and the MCP client against the
+  official MCP server.
+
+## How it works
+```mermaid
+flowchart LR
+    A[You type or speak] --> B[Pick the tool groups<br/>this request needs]
+    B --> C[Model call<br/>streamed]
+    C -->|tool calls| D{Risky, or after<br/>untrusted text?}
+    D -->|yes| E[Ask you, with a diff]
+    D -->|no| F[Run the tool on the Mac]
+    E -->|allowed| F
+    F -->|results| C
+    C -->|answer| G[Reply + what NOVA did]
+```
+
+## Design decisions
+* **Tools are sent only when needed.** Every tool definition costs tokens on every request, and Groq's free
+  tier allows 8,000 a minute. Ten everyday tools always go along. Groups like calendar, mail and documents
+  are added when the conversation is about them. If the model needs a missing group it calls `more_tools`.
+* **One round for plain commands.** "Open Spotify" finishes after the tool runs, without a second model call
+  to say "Done". That halves the time and the cost of most commands.
+* **Taint tracking instead of trust.** A request that has read outside text (web, files, email, MCP) is
+  marked. From then on no action runs without asking, and "always allow" is switched off.
+* **Rate limits are planned for, not caught.** NOVA counts the tokens each model has used in the last
+  minute. It switches to the other model, or waits exactly as long as needed, instead of sending a request
+  that will get a 429.
+* **The UI never waits.** Model calls, voice, the wake word and indexing run in their own threads. Calendar
+  and Reminders run in a helper process, so a macOS permission prompt can't freeze the window.
 
 ## Run from source
 ```
@@ -119,9 +181,10 @@ checked against the feed's SHA-256, the app inside must be intact and — if you
 developer; if anything fails the working app is put back.
 
 ## Development
-* The project is a git repository; the tag `before-additions` marks the state before the October 2026 feature pass.
 * `./check.sh` runs lint and every test (`./check.sh --screen` adds the few that briefly open a real window).
-  `.github/workflows/ci.yml` does the same on GitHub for every push, once the repository is pushed there.
+  `.github/workflows/ci.yml` does the same on GitHub for every push, then builds the app.
+* The README pictures come from the real window with a sample chat (fake AI, nothing shown on screen):
+  `NOVA_SCREENSHOTS=1 QT_QPA_PLATFORM=cocoa .venv/bin/python -m pytest -q tests/test_screenshots.py`.
 * Python **3.14** (`.python-version`) is what NOVA is tested on. `requirements.txt` lists minimum versions;
   `requirements.lock` pins the exact tested set (`pip install -r requirements.lock`; refresh it with
   `.venv/bin/python packaging/make_lock.py`).
@@ -142,12 +205,6 @@ developer; if anything fails the working app is put back.
   Weather uses Open-Meteo (free for non-commercial use; a commercial product needs their paid plan).
 * Review your AI provider's terms for sending user text/audio, and publish a privacy policy matching the first-run screen.
 * Optional update check: set `"update_feed"` in config.json to a JSON URL like `{"version":"6.1.0","url":"…","sha256":"…"}`.
-
-## How tools reach the AI
-Every tool definition is sent with every request and counts against the provider's limits (Groq's free tier allows
-8,000 tokens a minute). The everyday tools always go along; the groups for calendar, mail, browser, documents,
-schedules, Shortcuts and each MCP server are added when the conversation is about them, and stay on once used. If the
-model needs a group that is not there it calls `more_tools` — one small extra step instead of a permanent cost.
 
 ## Code layout
 | File | Purpose |

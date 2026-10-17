@@ -1,5 +1,15 @@
 # NOVA — what changed
 
+## Unreleased
+
+- The chat no longer leaves an empty gap under the last message. The gap grew by 20–40 px with every message
+  on screen.
+- Short messages stay on one line in their bubble instead of wrapping early.
+- What NOVA says by itself when it stops after too many steps, or when the AI declines, is now in plain words,
+  in Bulgarian too, and without a warning emoji.
+- The README now shows NOVA (light and dark), what it does, how it works and why it is built that way.
+  NOVA is MIT-licensed.
+
 ## 6.2.0 — October 2026
 
 **A new look.** NOVA now looks like a quiet, carefully made Mac app:

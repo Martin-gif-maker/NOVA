@@ -263,8 +263,8 @@ class AIWorker(QThread):
 
                     # ── The model (or its safety system) declined: never run that turn's tools ──
                     if finish == "content_filter":
-                        note = "⚠️ The AI declined this request" + (f" (safety category: {refusal})" if refusal else "") + \
-                               ". Try rephrasing it, or switch model with ⚡."
+                        note = tr("The AI declined this request. Try rephrasing it, or switch the model in the menu.")
+                        if refusal: note += " " + tr("(Safety category: {})").format(refusal)
                         log.warning("refusal: model=%s category=%s", self.model_id, refusal)
                         self.messages.append({"role": "assistant", "content": note})
                         self.response_ready.emit(note, self.messages)
@@ -310,8 +310,10 @@ class AIWorker(QThread):
                     # Loop → NOVA will now respond to the tool results
 
                 # Hit MAX_ROUNDS without a final answer
-                self.messages.append({"role": "assistant", "content": "[Max tool rounds reached]"})
-                self.response_ready.emit("[Max tool rounds reached]", self.messages)
+                note = tr("I stopped after {} steps without finishing. Try splitting the request into smaller ones.").format(MAX_ROUNDS)
+                log.warning("max tool rounds reached: model=%s rounds=%d", self.model_id, rounds)
+                self.messages.append({"role": "assistant", "content": note})
+                self.response_ready.emit(note, self.messages)
                 return
 
             except Exception as e:
@@ -631,7 +633,7 @@ class VisionWorker(QThread):
                     resp=self.client.chat.completions.create(model=mid, messages=msgs, max_tokens=1024)
                     text = resp.choices[0].message.content or ""
                     if getattr(resp.choices[0], "finish_reason", None) == "content_filter":
-                        text = "⚠️ The AI declined to analyse this image."
+                        text = tr("The AI declined to analyse this image.")
                     self.result_ready.emit(text, note); return
                 except Exception as e:
                     last_err = e; kind, wait = providers.classify_error(e)
@@ -639,9 +641,10 @@ class VisionWorker(QThread):
                     if kind not in ("rate_limit", "not_found", "bad_request") and "model" not in low: break
                     log.warning("vision model %s failed (%s) - trying next", mid, str(e)[:120])
             if last_err is None:
-                raise RuntimeError("No image-capable model is available with this AI provider.")
+                raise RuntimeError(tr("No image-capable model is available with this AI provider."))
             if kind == "rate_limit":
-                raise RuntimeError("Image analysis is rate-limited" + (f" - try again in {wait:.0f}s." if wait else " - try again shortly."))
+                raise RuntimeError(tr("Image analysis is rate-limited - try again in {}s.").format(f"{wait:.0f}") if wait
+                                   else tr("Image analysis is rate-limited - try again shortly."))
             raise last_err
         except Exception as e: self.error.emit(str(e))
 

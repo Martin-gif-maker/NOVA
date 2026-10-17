@@ -50,6 +50,31 @@ def test_bubbles_are_not_clipped_and_stay_inside_the_window(win):
     assert u._label.height() >= u._label.needed_height() - 1 and u.width() <= win.chat_area.viewport().width()
 
 
+def test_no_empty_gap_grows_under_the_last_message(win):
+    win.resize(420, 640); win.show(); win._pump(150)
+    for i in range(6):
+        win.chat_area.add_message(f"question number {i}: " + "what about this? " * 6, "user", win._theme)
+        win.chat_area.add_message("A reply that wraps over a few lines. " * 8, "assistant", win._theme, markdown=True)
+    win._pump(400)
+    lay = win.chat_area._layout
+    last = lay.itemAt(lay.count() - 1).geometry()
+    gap = win.chat_area.widget().height() - last.bottom()
+    assert gap <= lay.contentsMargins().bottom() + 2, gap          # was 20-40 px more for every message on screen
+
+
+def test_a_short_question_stays_on_one_line(win):
+    win.resize(420, 640); win.show(); win._pump(150)
+    short = win.chat_area.add_message("remind me at 5 to call Ivan", "user", win._theme)
+    marked = win.chat_area.add_message("what is **2+2**", "user", win._theme)
+    long = win.chat_area.add_message("a long question that cannot fit on one line " * 4, "user", win._theme)
+    win._pump(300)
+    line = short._label.fontMetrics().lineSpacing()
+    assert short._label.height() < line * 1.6 and marked._label.height() < line * 1.6     # one line, not two
+    assert long._label.height() > line * 2.5                                               # long text still wraps…
+    assert long.width() <= win.chat_area._bubble_max_width("user")                         # …at the bubble's width cap
+    assert short.width() < long.width()                                                    # and a short bubble hugs its text
+
+
 def test_streamed_reply_keeps_growing_to_fit(win):
     win.resize(380, 560); win.show(); win._pump(150)
     b = win.chat_area.add_message("", "assistant", win._theme)

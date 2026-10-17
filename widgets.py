@@ -1,8 +1,9 @@
 # widgets.py — chat widgets: message bubbles, the scrolling chat area and the input box.
-import re, json, time, datetime
+import re, json, math, time, datetime
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QLabel, QScrollArea, QFrame, QSizePolicy
 from PySide6.QtCore import Qt, Signal, QTimer, QSize
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QTextDocument
+from PySide6.QtGui import Qt as _QtGui
 import platform_utils as plat
 from i18n import tr
 import uistate
@@ -22,6 +23,23 @@ class _WrapLabel(QLabel):
     _sized = False
     _fitting = False
     exact = False            # True: the label is exactly as tall as its text (no slack to centre the text in)
+    hug = False              # True: as wide as its text on one line, up to what the layout allows (a chat bubble).
+                             # Qt's own guess for a wrapped label is narrower, so "remind me at 5 to call Ivan"
+                             # wrapped onto two lines in a bubble with room for one.
+    _hug_cache = (None, 0)
+
+    def sizeHint(self) -> QSize:
+        s = super().sizeHint()
+        if not (self.hug and self.wordWrap()): return s
+        key = (self.text(), self.font().key(), self.textFormat())
+        if self._hug_cache[0] != key:
+            doc = QTextDocument(); doc.setDefaultFont(self.font()); doc.setDocumentMargin(0)
+            rich = self.textFormat() == Qt.TextFormat.RichText or (
+                self.textFormat() == Qt.TextFormat.AutoText and _QtGui.mightBeRichText(self.text()))
+            doc.setHtml(self.text()) if rich else doc.setPlainText(self.text())
+            self._hug_cache = (key, int(math.ceil(doc.idealWidth())) + 2 * self.margin() + 2)
+        w = self._hug_cache[1]
+        return QSize(w, max(s.height(), self.heightForWidth(w)))
 
     def needed_height(self, width: int = None) -> int:
         """The height the text really needs at `width` (QLabel.heightForWidth never answers less than the
@@ -132,6 +150,7 @@ class MessageBubble(QFrame):
             self.setMaximumWidth(max_width or 360)
         elif role == "user":
             outer.setContentsMargins(12, 7, 12, 7)
+            self._label.hug = True
             outer.addWidget(self._label)
             self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
             self.setMaximumWidth(max_width or 300)
@@ -336,6 +355,21 @@ class _ElideLabel(QLabel):
 # ──────────────────────────────────────────────────────────────────
 #  Chat Area
 # ──────────────────────────────────────────────────────────────────
+class _ChatColumn(QWidget):
+    """The widget inside the chat's scroll area.
+
+    Qt's minimum height for a column of word-wrapped messages is the height at the narrowest possible width
+    (every message wrapped at its tallest), and the scroll area never makes its widget shorter than that. Each
+    message reserved 20-40 px it did not use, so an empty gap opened under the last message and grew with every
+    message. The height for the real width (the layout's heightForWidth) is what the scroll area should use."""
+    def minimumSizeHint(self) -> QSize:
+        s = super().minimumSizeHint()
+        lay = self.layout()
+        if lay is not None and lay.hasHeightForWidth():
+            return QSize(s.width(), 0)
+        return s
+
+
 class ChatArea(QScrollArea):
     edit_requested = Signal(object)
     STAMP_GAP = 600           # seconds of silence after which the next message gets a time above it
@@ -353,7 +387,7 @@ class ChatArea(QScrollArea):
             QScrollBar::handle:vertical:hover{background:rgba(128,128,128,0.5);}
             QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical{height:0;}
         """)
-        self._container = QWidget()
+        self._container = _ChatColumn()
         self._container.setStyleSheet("background:transparent;")
         self._layout = QVBoxLayout(self._container)
         self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
