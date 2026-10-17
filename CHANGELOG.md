@@ -7,6 +7,9 @@
 - Short messages stay on one line in their bubble instead of wrapping early.
 - What NOVA says by itself when it stops after too many steps, or when the AI declines, is now in plain words,
   in Bulgarian too, and without a warning emoji.
+- An evaluation set of 86 requests in English and Bulgarian (`evals/`), with a harness that measures whether
+  NOVA sends the right tools and whether the model then picks and fills them in correctly. It found two
+  keyword gaps: "find my resume pdf" and "пусни прекия път …" now get their tools without an extra round.
 - The README now shows NOVA (light and dark), what it does, how it works and why it is built that way.
   NOVA is MIT-licensed.
 

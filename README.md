@@ -48,6 +48,19 @@ flowchart LR
     C -->|answer| G[Reply + what NOVA did]
 ```
 
+## Measuring it
+`evals/` holds 86 everyday requests in English and Bulgarian, each with the action NOVA should take ("open
+paris on the map" → `open_maps`, location Paris). It also has plain questions that need no tool, and two pages
+with hidden instructions that NOVA must not follow.
+
+* `python -m evals routing` needs no AI. It checks that every request is sent with the tools it needs, since
+  a missing tool costs an extra round. It found two keyword gaps ("…pdf" without a dot, the Bulgarian
+  "прекия път"). Now 79 of 79 requests get their tools at an average of about 1,100 tokens of tool definitions,
+  and a test keeps it that way.
+* `python -m evals live` sends each request through NOVA's real prompt and agent loop to the real model. The
+  tools are stand-ins, so nothing happens on the Mac. It reports right tool, right details, time, tokens,
+  and whether hidden instructions were ignored. Results are saved in `evals/results/`.
+
 ## Design decisions
 * **Tools are sent only when needed.** Every tool definition costs tokens on every request, and Groq's free
   tier allows 8,000 a minute. Ten everyday tools always go along. Groups like calendar, mail and documents
@@ -230,6 +243,7 @@ developer; if anything fails the working app is put back.
 | `mcp_client.py` · `ipc.py` | MCP tool servers (stdio and HTTP), requests handed over from other programs |
 | `win_docs.py` · `win_selection.py` · `win_schedule.py` · `win_persona.py` · `win_mcp.py` | the window's side of those features |
 | `updater.py` · `diagnostics.py` · `platform_utils.py` · `games.py` | verified updates, support report, macOS glue, mini-games |
+| `evals/` | the evaluation set (`cases.jsonl`) and harness: tool routing offline, tool choice with the real model |
 
 ## Handy settings (Settings window, or config.json)
 `provider` · `base_url` · `models_by_provider` · `reasoning` low/medium/high · `ui_lang` auto/en/bg · `home_city` ·

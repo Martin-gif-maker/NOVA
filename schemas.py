@@ -123,7 +123,7 @@ GROUPS = {
     "files":     {"tools": ("manage_files", "read_file", "write_file", "search_files", "open_in_explorer", "empty_recycle_bin"),
                   "about": "files and folders, the Trash",
                   "words": ("file", "folder", "director", "desktop", "downloads", "delete", "rename", "move ", "copy ", "trash",
-                            "finder", ".txt", ".pdf", ".doc", ".csv", ".md", ".py", ".json", ".png", ".jpg", "~/", " /", "path",
+                            "finder", ".txt", "pdf", ".doc", "docx", "xlsx", ".csv", ".md", ".py", ".json", ".png", ".jpg", "~/", " /", "path",
                             "файл", "папк", "изтрий", "изтри", "премест", "преимен", "копир", "кошче", "работния плот", "изтеглян")},
     "system":    {"tools": ("control_volume", "control_system", "get_system_stats", "get_battery", "get_network_info",
                             "list_processes", "kill_process", "take_screenshot", "set_wallpaper", "send_notification"),
@@ -169,7 +169,7 @@ GROUPS = {
                             "всеки ", "всяка ", "всяко ", "ежедневн", "планира", "насроч")},
     "shortcuts": {"tools": ("list_shortcuts", "run_shortcut"),
                   "about": "Apple Shortcuts",
-                  "words": ("shortcut", "пряк път", "шорткът")},
+                  "words": ("shortcut", "пряк път", "прекия път", "преки пътища", "шорткът")},
 }
 _GROUP_OF = {t: g for g, spec in GROUPS.items() for t in spec["tools"]}
 import re as _re
