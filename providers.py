@@ -226,16 +226,45 @@ def metered(client, kw: dict, result):
 
 
 # ── Clients ────────────────────────────────────────────────────────
-class _GroqAdapter:
+class _LazySDK:
+    """The provider's SDK is imported and its client made on first use (warm_up() does it in the background
+    after start-up). Importing an SDK takes 0.1-0.35 s, which every start used to wait for before the window."""
+    _sdk_client = None
+
+    def _make_sdk_client(self):
+        raise NotImplementedError
+
+    @property
+    def _c(self):
+        with _sdk_lock:
+            if self._sdk_client is None: self._sdk_client = self._make_sdk_client()
+            return self._sdk_client
+
+    def warm_up(self) -> None:
+        try: _ = self._c
+        except Exception as e: log.info("AI client warm-up failed (the first request will say why): %s", e)
+
+
+_sdk_lock = threading.Lock()
+
+
+class _GroqAdapter(_LazySDK):
     """Groq's own SDK, with the one Groq-specific request quirk applied."""
     host = "api.groq.com"
 
     def __init__(self, api_key: str):
-        from groq import Groq
-        self._c = Groq(api_key=api_key, timeout=60.0, max_retries=0)     # the worker does its own, smarter retries
+        self._key = api_key
         self.chat = _NS(completions=_NS(create=self._create))
-        self.audio = self._c.audio
-        self.models = self._c.models
+
+    def _make_sdk_client(self):
+        from groq import Groq
+        return Groq(api_key=self._key, timeout=60.0, max_retries=0)       # the worker does its own, smarter retries
+
+    @property
+    def audio(self): return self._c.audio
+
+    @property
+    def models(self): return self._c.models
 
     def _create(self, **kw):
         effort = kw.pop("reasoning_effort", None)

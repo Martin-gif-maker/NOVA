@@ -153,3 +153,29 @@ def test_a_long_streamed_reply_is_repainted_less_often(win):
     try: b._flush()
     finally: widgets.time.perf_counter = real
     assert b._flush_timer.interval() == 1500                                  # but never slower than this
+
+
+# ── start-up: heavy libraries load when first needed, not before the window appears ──
+def _fresh_python(code: str) -> str:
+    import os, subprocess, sys, tempfile
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    env = dict(os.environ, NOVA_DATA_DIR=tempfile.mkdtemp(prefix="nova_test_"), NOVA_NO_MIGRATE="1", QT_QPA_PLATFORM="offscreen")
+    r = subprocess.run([sys.executable, "-c", code], cwd=root, env=env, capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, r.stderr[-2000:]
+    return r.stdout
+
+
+def test_starting_nova_loads_no_heavy_library():
+    out = _fresh_python("import sys, main\n"
+                        "print(sorted(m for m in ('pyautogui', 'groq', 'openai', 'anthropic', 'onnxruntime', 'tokenizers') if m in sys.modules))")
+    assert out.strip() == "[]", out                  # 0.1-0.35 s each: typing/screenshots, the AI SDKs, meaning search
+
+
+@pytest.mark.parametrize("provider,sdk", [("groq", "groq"), ("openai", "openai"), ("anthropic", "anthropic")])
+def test_the_ai_client_loads_its_sdk_on_first_use(provider, sdk):
+    out = _fresh_python("import sys, providers\n"
+                        f"c = providers.make_client({provider!r}, 'test-key')\n"
+                        f"before = {sdk!r} in sys.modules\n"
+                        "c.warm_up()\n"
+                        f"print(before, {sdk!r} in sys.modules, c.chat.completions.create is not None)")
+    assert out.split() == ["False", "True", "True"], out

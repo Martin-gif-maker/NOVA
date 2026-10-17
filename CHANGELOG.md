@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **NOVA starts about a third faster** (0.83 s → 0.56 s from launch to a ready window, measured on this Mac). The AI
+  provider's library (0.1–0.35 s) now loads in the background right after the window appears, and the
+  typing/screenshot library (0.14 s) loads the first time NOVA types or takes a screenshot. A test keeps all of them
+  out of start-up.
 - **Search your documents by meaning.** ＋ → Documents → *Search by meaning* downloads a small multilingual model once
   (135 MB). After that a question also finds passages that say the same thing in other words ("how much do I put
   down up front?" → "security deposit") or in another language (a Bulgarian question → an English contract). It runs

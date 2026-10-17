@@ -78,6 +78,9 @@ with hidden instructions that NOVA must not follow.
 * **Rate limits are planned for, not caught.** NOVA counts the tokens each model has used in the last
   minute. It switches to the other model, or waits exactly as long as needed, instead of sending a request
   that will get a 429.
+* **Start-up loads only what the window needs.** The AI provider's SDK (0.1–0.35 s to import), the typing and
+  screenshot library, and the meaning model all load on first use or in the background after the window is up.
+  Launch-to-window went from 0.83 s to 0.56 s, and a test fails if one of them sneaks back into start-up.
 * **The UI never waits.** Model calls, voice, the wake word and indexing run in their own threads. Calendar
   and Reminders run in a helper process, so a macOS permission prompt can't freeze the window.
 

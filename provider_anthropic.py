@@ -19,8 +19,12 @@
 #   • Prompt caching: the stable part of the system prompt (plus the tool list in front of it) gets a
 #     cache breakpoint; the growing conversation uses automatic caching.
 import json, logging
-import anthropic
-from providers import ProviderError
+from providers import ProviderError, _LazySDK
+
+
+def _anthropic():
+    import anthropic                                   # 0.35 s: imported on first use, not at start-up
+    return anthropic
 
 log = logging.getLogger("nova")
 
@@ -57,14 +61,13 @@ def _bget(block, key):
     return block.get(key) if isinstance(block, dict) else getattr(block, key, None)
 
 
-class AnthropicClient:
+class AnthropicClient(_LazySDK):
     def __init__(self, api_key: str | None = None, http_client=None):
         # No key given -> the SDK resolves ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN / an `ant auth login` profile.
         # max_retries=0: NOVA's worker decides what to do on a rate limit (switch to the fast model at once).
-        kw = {"max_retries": 0}
-        if api_key: kw["api_key"] = api_key
-        if http_client is not None: kw["http_client"] = http_client          # tests inject a simulated server
-        self._client = anthropic.Anthropic(**kw)
+        self._kw: dict = {"max_retries": 0}
+        if api_key: self._kw["api_key"] = api_key
+        if http_client is not None: self._kw["http_client"] = http_client    # tests inject a simulated server
         self.chat = _NS(completions=_NS(create=self._create))
         self.audio = None                                   # Claude has no speech-to-text endpoint
         self.models = _NS(list=self._list_models)
@@ -73,6 +76,12 @@ class AnthropicClient:
         self._betas_ok = True       # switched off if this organisation rejects a beta header
 
     # ── hooks used by the worker ──────────────────────────────────
+    def _make_sdk_client(self):
+        return _anthropic().Anthropic(**self._kw)
+
+    @property
+    def _client(self): return self._c
+
     def begin_request(self):
         """A new user request starts: thinking blocks from the previous tool loop are no longer replayed."""
         self._raw_turns.clear()
@@ -258,7 +267,7 @@ class AnthropicClient:
                 with self._open(req, betas) as stream:        # streaming under the hood: no HTTP timeout on long answers
                     final = stream.get_final_message()
                 break
-            except anthropic.BadRequestError as e:
+            except _anthropic().BadRequestError as e:
                 if attempt == 1 and self._beta_rejected(e, betas): continue
                 raise
         refused = final.stop_reason == "refusal"
@@ -300,7 +309,7 @@ class AnthropicClient:
                             elif d.type == "input_json_delta" and event.index in tool_at and d.partial_json:
                                 yield _chunk(tool_calls=[_tc(tool_at[event.index], None, None, d.partial_json)])
                     final = stream.get_final_message()
-            except anthropic.BadRequestError as e:
+            except _anthropic().BadRequestError as e:
                 if attempt == 1 and not started and self._beta_rejected(e, betas): continue
                 raise
             except ValueError as e:

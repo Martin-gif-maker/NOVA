@@ -1,14 +1,17 @@
 # toolbase.py — the few things every group of tools shares (see tools.py for the list of tools).
 import os
+import importlib.util
 
 HOME = os.path.expanduser("~")
 
-try:
-    import pyautogui                       # screenshots and typing
-    PYAUTOGUI_AVAILABLE = True
-except ImportError:
-    pyautogui = None
-    PYAUTOGUI_AVAILABLE = False
+# pyautogui (screenshots and typing) pulls in Quartz and AppKit: about 140 ms that every start-up paid for two tools.
+# It is loaded the first time one of them runs.
+PYAUTOGUI_AVAILABLE = importlib.util.find_spec("pyautogui") is not None
+
+
+def load_pyautogui():
+    import pyautogui
+    return pyautogui
 
 
 class ToolFailure(str):

@@ -43,6 +43,9 @@ class AccountMixin:
         if key is None: key = _get_api_key(prov)
         try:
             self.client = providers.make_client(prov, key, self.config.get("base_url", ""))
+            warm = getattr(self.client, "warm_up", None)
+            if callable(warm):                     # the SDK loads in the background once the window is up
+                QTimer.singleShot(250, lambda: threading.Thread(target=warm, daemon=True, name="sdk-warm-up").start())
             return True
         except Exception as e:
             self.client = None

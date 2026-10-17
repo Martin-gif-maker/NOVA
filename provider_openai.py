@@ -7,6 +7,7 @@
 # and remember the answer for that model.
 import logging
 import ledger
+from providers import _LazySDK
 
 log = logging.getLogger("nova")
 
@@ -15,19 +16,29 @@ class _NS:
     def __init__(self, **kw): self.__dict__.update(kw)
 
 
-class OpenAICompatClient:
+class OpenAICompatClient(_LazySDK):
     def __init__(self, api_key: str, base_url: str | None = None, local: bool = False, http_client=None):
-        import openai
-        self._sdk = openai
-        # local models can take a while to load into memory on the first request
-        kw = {"http_client": http_client} if http_client is not None else {}      # tests inject a simulated server
-        self._c = openai.OpenAI(api_key=api_key, base_url=base_url, timeout=300.0 if local else 60.0, max_retries=0, **kw)
+        self._args = (api_key, base_url, http_client)
         self.local = local
         self.host = ledger.host_of(base_url) if base_url else "api.openai.com"
         self.chat = _NS(completions=_NS(create=self._create))
         self.audio = _NS(transcriptions=_NS(create=self._transcribe))
-        self.models = self._c.models
-        self._quirks = {}            # model id -> set of things this model/server does not accept
+        self._quirks: dict[str, set] = {}   # model id -> set of things this model/server does not accept
+
+    def _make_sdk_client(self):
+        import openai
+        api_key, base_url, http_client = self._args
+        kw = {"http_client": http_client} if http_client is not None else {}      # tests inject a simulated server
+        # local models can take a while to load into memory on the first request
+        return openai.OpenAI(api_key=api_key, base_url=base_url, timeout=300.0 if self.local else 60.0, max_retries=0, **kw)
+
+    @property
+    def _sdk(self):
+        import openai
+        return openai
+
+    @property
+    def models(self): return self._c.models
 
     def begin_request(self): pass
 

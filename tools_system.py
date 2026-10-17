@@ -2,10 +2,17 @@
 # clipboard, processes, battery, network, notifications, wallpaper.
 import os, time, threading, subprocess
 import platform_utils as plat
-from toolbase import HOME, PYAUTOGUI_AVAILABLE, pyautogui, fail
+from toolbase import HOME, PYAUTOGUI_AVAILABLE, load_pyautogui, fail
 import logging
 
 log = logging.getLogger("nova")
+pyautogui = None                           # loaded on first use (see toolbase.py)
+
+
+def _gui():
+    global pyautogui
+    if pyautogui is None: pyautogui = load_pyautogui()
+    return pyautogui
 
 # ── TOOL: take_screenshot ─────────────────────────────────────────
 def take_screenshot(save_path: str = None) -> str:
@@ -17,7 +24,7 @@ def take_screenshot(save_path: str = None) -> str:
         if not save_path:
             save_path = os.path.join(HOME, "Desktop", f"screenshot_{time.strftime('%Y%m%d_%H%M%S')}.png")
         save_path = os.path.expandvars(os.path.expanduser(save_path))
-        pyautogui.screenshot().save(save_path)
+        _gui().screenshot().save(save_path)
         return f"Screenshot saved: {save_path} ✓"
     except Exception as e: return fail(f"Error: {e}")
 
@@ -39,11 +46,11 @@ def type_text_keyboard(text: str, press_enter: bool = False) -> str:
             except Exception: old_clip = None
             import pyperclip
             pyperclip.copy(text)
-            pyautogui.hotkey("command", "v")
+            _gui().hotkey("command", "v")
             time.sleep(0.3)
         except ImportError:
-            pyautogui.write(text, interval=0.04)
-        if press_enter: pyautogui.press("enter")
+            _gui().write(text, interval=0.04)
+        if press_enter: _gui().press("enter")
         return f"Typed {len(text)} characters ✓"
     except Exception as e: return fail(f"Error: {e}")
     finally:
