@@ -1,6 +1,6 @@
 # Everything NOVA can do
 
-*Version 6.5.0 · macOS. For each thing: what you type or click, what happens, and how NOVA does it.*
+*Version 6.5.1 · macOS. For each thing: what you type or click, what happens, and how NOVA does it.*
 
 ## First: how NOVA works
 

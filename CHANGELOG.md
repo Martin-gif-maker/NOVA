@@ -1,6 +1,6 @@
 # NOVA — what changed
 
-## Unreleased
+## 6.5.1 — October 2026
 
 - Quitting NOVA within its first half minute no longer starts the delayed start-up jobs (update check, document
   refresh) on the way out.
