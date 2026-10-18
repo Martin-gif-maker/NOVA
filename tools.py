@@ -185,7 +185,11 @@ def delete_memory(keyword: str) -> str:
             items = mem.load(MEMORY_FILE)
             kept = mem.remove(items, keyword)
             if len(kept) == len(items):
-                return f"No facts containing '{keyword}'."
+                near = mem.closest(items, keyword)
+                if not near: return fail(f"No facts containing '{keyword}'. Nothing was deleted.")
+                return fail(f"No facts contain '{keyword}', so nothing was deleted. The closest: "
+                            + "; ".join(f"“{it['text']}”" for it in near)
+                            + ". If one of these is meant, call delete_memory again with a word from it.")
             mem.save(MEMORY_FILE, kept)
         return f"Deleted {len(items) - len(kept)} fact(s) containing '{keyword}' \u2713"
     except Exception as e:

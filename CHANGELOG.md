@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- When a model writes a tool call out as text (`save_memory({"fact": …})`, or `<tool_call>{…}</tool_call>`) instead
+  of making it, NOVA runs it as the call it is - through the same checks and approvals - and takes the raw text back
+  off the screen. Smaller local models (Ollama, LM Studio) do this.
+- "Forget that …" in other words than the memory was saved with no longer fails silently: NOVA is told the closest
+  memories and tries again with the right words.
 - **Measured with a real model.** The 86-request evaluation ran against a 4B model on this Mac: 87.2 % correct at
   first, **94.2 %** after the fixes it pointed to (Bulgarian 96.2 %). It also reports whether NOVA's approval rules
   would have stopped every action that came from hidden instructions (they would have: 4/4).

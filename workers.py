@@ -32,6 +32,32 @@ _PARALLEL_SAFE = {"search_web_and_read", "read_webpage", "get_weather", "get_sys
                   "search_documents", "list_documents", "list_scheduled_tasks"}
 
 
+_WRITTEN_CALL = (re.compile(r"^\s*`*\s*(?:<tool_call>\s*)?(\{.*\})\s*(?:</tool_call>)?\s*`*\s*$", re.DOTALL),   # {"name": …, "arguments": …}
+                 re.compile(r"^\s*`*\s*([A-Za-z_]\w*)\s*\(\s*(\{.*\})\s*\)\s*`*\s*\.?\s*$", re.DOTALL))  # name({…})
+
+
+def _written_tool_call(text: str, offered: list):
+    """(name, arguments JSON) when the whole reply is one call of an offered tool written out as text, else None.
+    It runs like any call the model makes properly: through the same checks and approvals."""
+    names = {t["function"]["name"] for t in offered or [] if t.get("function")}
+    if not text or not names: return None
+    m = _WRITTEN_CALL[1].match(text)
+    if m and m.group(1) in names:
+        try:
+            if isinstance(json.loads(m.group(2)), dict): return m.group(1), m.group(2)
+        except ValueError:
+            return None
+    m = _WRITTEN_CALL[0].match(text)
+    if m:
+        try:
+            obj = json.loads(m.group(1))
+        except ValueError:
+            return None
+        if isinstance(obj, dict) and obj.get("name") in names and isinstance(obj.get("arguments", {}), dict):
+            return obj["name"], json.dumps(obj.get("arguments", {}), ensure_ascii=False)
+    return None
+
+
 def _shorten_tool_content(content: str, limit: int) -> str:
     """Trim a stored tool result without breaking its JSON envelope."""
     try:
@@ -72,6 +98,7 @@ class AIWorker(QThread):
     error_occurred = Signal(str, str)       # (message, kind) - kind as in providers.classify_error
     chunk_ready    = Signal(str)
     usage_ready    = Signal(int, int)       # (prompt tokens, completion tokens) of this request
+    text_retracted = Signal(int)            # n: the last n streamed characters were a tool call written as text
     tool_finished  = Signal(str, str, bool, str)   # (tool name, arguments, succeeded, result text)
 
     def __init__(self, client, messages, model_id, max_tokens=2048, compress=True, reasoning="low", untrusted="", groups=()):
@@ -260,6 +287,7 @@ class AIWorker(QThread):
                                     if tc.function.arguments:
                                         tc_acc[i]["args"] += tc.function.arguments
 
+                    raw_round = content
                     content = _strip_think(content)
 
                     # ── The model (or its safety system) declined: never run that turn's tools ──
@@ -275,6 +303,13 @@ class AIWorker(QThread):
                         self.error_occurred.emit(tr("The reply was cut off before a tool call was complete. "
                                                     "Try again, or set the response length to Detailed."), "other")
                         return
+
+                    # ── A tool call written out as text (smaller models do this) is run as the call it is ──
+                    if not tc_acc and (written := _written_tool_call(content, tools_)):
+                        log.info("tool call written as text by %s: %s", self.model_id, written[0])
+                        self.text_retracted.emit(len(raw_round))
+                        tc_acc = {0: {"id": "", "name": written[0], "args": written[1]}}
+                        content = ""
 
                     # ── No tool calls → final response ───────────────────
                     if not tc_acc:

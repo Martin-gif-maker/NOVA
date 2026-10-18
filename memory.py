@@ -141,6 +141,23 @@ def remove(items: list, keyword: str) -> list:
     return [x for x in items if k not in x["text"].lower()]
 
 
+def closest(items: list, text: str, n: int = 3) -> list:
+    """The memories most like `text`: words that start alike ("суша" ~ "суши", "peanut" ~ "peanuts") and, with the
+    on-device model, meaning. For "forget that …" phrased differently from how the memory was saved."""
+    words = lambda s: [w for w in _WORD.findall(s.lower()) if len(w) >= 3 and w not in _STOP]
+
+    def alike(a: str, b: str) -> bool:                     # same start, different ending: суша ~ суши, peanut ~ peanuts
+        k = 0
+        while k < min(len(a), len(b)) and a[k] == b[k]: k += 1
+        return k >= max(3, min(len(a), len(b)) - 2)
+
+    want = words(text)
+    close = _meaning_scores(items, text)
+    scored = [(sum(any(alike(q, w) for w in words(it["text"])) for q in want) + 2.0 * close.get(i, 0.0), i)
+              for i, it in enumerate(items)]
+    return [items[i] for s, i in sorted(scored, reverse=True)[:n] if s > 0]
+
+
 # ── choosing what goes into the prompt ─────────────────────────────
 def _tokens(text: str) -> set:
     return {w for w in (t.lower() for t in _WORD.findall(text or "")) if len(w) >= 3 and w not in _STOP}

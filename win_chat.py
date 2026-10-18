@@ -113,6 +113,7 @@ class ChatMixin:
                      groups=self._tool_groups)
         w.chunk_ready.connect(self._on_chunk); w.response_ready.connect(self._on_response)
         w.tool_executing.connect(self._on_tool); w.error_occurred.connect(self._on_error)
+        w.text_retracted.connect(self._on_text_retracted)
         w.usage_ready.connect(self._on_usage); w.tool_finished.connect(self._on_tool_finished)
         self._tool_log = []
         self._worker = w
@@ -470,6 +471,10 @@ class ChatMixin:
                 rows = ToolActivity(list(self._tool_log), self._theme)        # does not jump down when the reply ends
                 if rows.rows: self._streaming_bubble.set_actions(rows)
         self._streaming_bubble.append_text(chunk)
+
+    def _on_text_retracted(self, n: int):
+        if self._from_stale_worker() or not self._streaming_bubble: return
+        self._streaming_bubble.take_back(n)
 
     def _on_response(self, text: str, updated: list):
         if self._from_stale_worker(): return

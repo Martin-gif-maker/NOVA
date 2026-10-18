@@ -297,3 +297,11 @@ def test_the_row_shows_the_value_that_was_really_used(monkeypatch):
     assert r.ok and r.args == {"action": "up"} and r.text.endswith("(up)")
     bad = tools.run_tool("control_volume", {"action": "explode"})
     assert not bad.ok and bad.args == {"action": "explode"}                     # what the model sent, when it was refused
+
+
+def test_forgetting_with_other_words_suggests_the_memory_instead_of_failing_silently(data_dir):
+    tools.save_memory("обича суши", "preference"); tools.save_memory("lives in Plovdiv", "about_me")
+    out = tools.delete_memory("любя суша")                                     # how a model rephrased "обичам суши"
+    assert isinstance(out, tools.ToolFailure) and "nothing was deleted" in out and "“обича суши”" in out
+    assert "Plovdiv" not in out.split("The closest:")[1]                      # only what is alike
+    assert "Deleted 1" in tools.delete_memory("суши")                          # the second try works

@@ -208,6 +208,11 @@ class MessageBubble(QFrame):
         if not self._flush_timer.isActive():
             self._flush_timer.start()
 
+    def take_back(self, n: int):
+        """Remove the last `n` streamed characters (a tool call the model wrote out as text, now run as a call)."""
+        if n > 0: self._full_text = self._full_text[:-n].rstrip()
+        self._flush()
+
     def _flush(self):
         started = time.perf_counter()
         shown = _strip_think(self._full_text)
