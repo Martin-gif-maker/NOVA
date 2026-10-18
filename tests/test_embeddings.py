@@ -96,7 +96,7 @@ def test_alphabet_detection():
 
 # ── the download ──
 class _Response:
-    def __init__(self, data): self.data = data
+    def __init__(self, data): self.data = data; self.headers = {"content-length": str(len(data))}
     def __enter__(self): return self
     def __exit__(self, *a): return False
     def raise_for_status(self): pass

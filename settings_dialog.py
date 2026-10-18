@@ -90,6 +90,7 @@ class SettingsDialog(QDialog):
         ("ru-RU-SvetlanaNeural","Russian — Svetlana"),
     ]
     voice_progress  = Signal(float, str)     # (fraction done or -1, status text) from the download thread
+    whisper_progress = Signal(float, str)    # the same for the speech model that knows every language
     connection_done = Signal(bool, str)
 
     def __init__(self, config, theme, parent=None, available_models=None, key_lookup=None):
@@ -138,6 +139,7 @@ class SettingsDialog(QDialog):
                              f"border-radius:6px;padding:5px 16px;}}QPushButton:hover{{border-color:{t['sys_fg']};}}")
         layout.addWidget(btns)
         self.voice_progress.connect(self._on_voice_progress)
+        self.whisper_progress.connect(self._on_whisper_progress)
         self.connection_done.connect(self._on_connection_done)
 
     # ── small helpers ─────────────────────────────────────────────
@@ -342,14 +344,21 @@ class SettingsDialog(QDialog):
         self._stt_engine_cb = QComboBox()
         self._stt_engine_cb.addItem(tr("Automatic"), "auto")
         self._stt_engine_cb.addItem(tr("AI provider (best quality)"), "cloud")
-        self._stt_engine_cb.addItem(tr("On this Mac (offline, English)"), "local")
-        self._stt_engine_cb.setToolTip(tr("Automatic uses the AI provider's speech recognition when it has one (any language), otherwise this Mac. On this Mac is private and works offline, English only."))
+        self._stt_engine_cb.addItem(tr("On this Mac (offline)"), "local")
+        self._stt_engine_cb.setToolTip(tr("Automatic uses the speech model on this Mac when you have downloaded it (any language, nothing leaves the Mac), otherwise the AI provider's, otherwise the small English model. On this Mac never sends your voice anywhere."))
         self._select(self._stt_engine_cb, c.get("stt_engine", "auto"))
         self._row(form, "Speech recognition:", self._stt_engine_cb)
 
+        self._whisper_btn = self._small_btn(""); self._whisper_status = self._hint("")
+        self._whisper_btn.clicked.connect(self._toggle_whisper)
+        self._whisper_job = None
+        form.addRow(tr("Any language, on this Mac:"), self._hbox(self._whisper_btn))
+        form.addRow("", self._whisper_status)
+        self._refresh_whisper()
+
         self._voice_dl_btn = self._small_btn(""); self._voice_status = self._hint("")
         self._voice_dl_btn.clicked.connect(self._toggle_voice_model)
-        form.addRow(tr("Offline voice model:"), self._hbox(self._voice_dl_btn))
+        form.addRow(tr("Wake word, on this Mac:"), self._hbox(self._voice_dl_btn))
         form.addRow("", self._voice_status)
         self._refresh_voice_model()
 
@@ -378,8 +387,8 @@ class SettingsDialog(QDialog):
         ready = speech.local_ready()
         self._voice_dl_btn.setEnabled(True)
         self._voice_dl_btn.setText(tr("Remove") if ready else tr("Download ({} MB)").format(speech.MODEL_MB))
-        self._voice_status.setText(tr("Installed ✓ — English speech recognition and the wake word work offline.") if ready else
-                                   tr("Lets NOVA recognise English speech and the wake word on this Mac, with no audio leaving it."))
+        self._voice_status.setText(tr("Installed ✓ — the wake word (and English speech) work offline.") if ready else
+                                   tr("Lets the “Hey NOVA” wake word (and English speech) work on this Mac, with no audio leaving it."))
 
     def _toggle_voice_model(self):
         if speech.local_ready():
@@ -399,6 +408,43 @@ class SettingsDialog(QDialog):
             if frac < 0: self._voice_status.setText("✗ " + status)
         else:
             self._voice_status.setText(tr("Downloading… {}%").format(int(frac * 100)))
+
+    def _refresh_whisper(self):
+        if not speech.whisper_installed():
+            self._whisper_btn.setEnabled(False); self._whisper_btn.setText(tr("Not available"))
+            self._whisper_status.setText(tr("The on-device speech engine is not part of this build.")); return
+        ready = speech.whisper_ready()
+        self._whisper_btn.setEnabled(True)
+        self._whisper_btn.setText(tr("Remove") if ready else tr("Download ({} MB)").format(speech.WHISPER_MB))
+        self._whisper_status.setText(
+            tr("Installed ✓ — Bulgarian, English and 97 more languages are recognised on this Mac. Nothing you say leaves it.")
+            if ready else
+            tr("Recognises Bulgarian, English and 97 more languages on this Mac, as well as the cloud does (it is the same model), with no audio leaving it."))
+
+    def _toggle_whisper(self):
+        if self._whisper_job:                                   # downloading: the button is "Cancel"
+            self._whisper_job["cancel"] = True; return
+        if speech.whisper_ready():
+            speech.remove_whisper(); self._refresh_whisper(); return
+        job = self._whisper_job = {"cancel": False}
+        self._whisper_btn.setText(tr("Cancel"))
+        def emit(frac, status):
+            try: self.whisper_progress.emit(frac, status)
+            except RuntimeError: pass                          # Settings was closed; the download goes on
+        def _bg():
+            try:
+                speech.download_whisper(lambda f: emit(f, ""), lambda: job["cancel"])
+                emit(1.0, "ok")
+            except Exception as e:
+                emit(-1.0, str(e))
+        threading.Thread(target=_bg, daemon=True).start()
+
+    def _on_whisper_progress(self, frac, status):
+        if status == "ok" or frac < 0:
+            self._whisper_job = None; self._refresh_whisper()
+            if frac < 0 and "cancelled" not in status: self._whisper_status.setText("✗ " + tr(status))
+        else:
+            self._whisper_status.setText(tr("Downloading… {}%").format(int(frac * 100)))
 
     # ── Privacy ───────────────────────────────────────────────────
     def _tab_privacy(self, form):

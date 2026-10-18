@@ -175,9 +175,6 @@ BG.update({
     "Online voices sound better but send the text to Microsoft's speech service (unofficial). The system voice works offline and nothing leaves this Mac.":
         "Онлайн гласовете звучат по-добре, но изпращат текста към гласовата услуга на Microsoft (неофициално). Системният глас работи офлайн и нищо не напуска този Mac.",
     "Automatic": "Автоматично", "AI provider (best quality)": "AI доставчик (най-добро качество)",
-    "On this Mac (offline, English)": "На този Mac (офлайн, английски)",
-    "Automatic uses the AI provider's speech recognition when it has one (any language), otherwise this Mac. On this Mac is private and works offline, English only.":
-        "„Автоматично“ използва разпознаването на реч на AI доставчика, когато има такова (всеки език), иначе този Mac. „На този Mac“ е поверително и работи офлайн, само на английски.",
     "Offline voice model": "Офлайн гласов модел", "Listen for “Hey NOVA”": "Слушай за „Hey NOVA“",
     "Loudness threshold — lower = more sensitive (default 700). Not used by the on-device detector.":
         "Праг на силата на звука — по-ниско = по-чувствително (по подразбиране 700). Не се използва от разпознаването на устройството.",
@@ -200,10 +197,6 @@ BG.update({
     "Not available": "Не е налично",
     "The on-device speech engine is not part of this build.": "Разпознаването на реч на устройството не е включено в тази версия.",
     "Remove": "Премахни",
-    "Installed ✓ — English speech recognition and the wake word work offline.":
-        "Инсталиран ✓ — разпознаването на английска реч и активиращата дума работят офлайн.",
-    "Lets NOVA recognise English speech and the wake word on this Mac, with no audio leaving it.":
-        "Позволява на NOVA да разпознава английска реч и активиращата дума на този Mac, без звукът да го напуска.",
     "What NOVA sent today": "Какво е изпратила NOVA днес",
     "Everything NOVA stores lives in one folder in your Library. Export makes a zip of it (without the API key); Delete removes it and the saved keys.":
         "Всичко, което NOVA пази, е в една папка в твоята Library. Експортът прави zip архив от нея (без API ключа); изтриването я премахва заедно със запазените ключове.",
@@ -595,6 +588,19 @@ BG.update({
     "{} did not accept the API key - it may have expired or been revoked. Get a new one at {}, then choose ≡ → Change API key.":
         "{} не прие API ключа - може да е изтекъл или отменен. Вземи нов от {} и после избери ≡ → Смени API ключа.",
     "Looking at the image": "Разглеждам изображението",
+    # speech on this Mac (Settings → Voice)
+    "On this Mac (offline)": "На този Mac (офлайн)",
+    "Automatic uses the speech model on this Mac when you have downloaded it (any language, nothing leaves the Mac), otherwise the AI provider's, otherwise the small English model. On this Mac never sends your voice anywhere.":
+        "Автоматично използва гласовия модел на този Mac, ако си го изтеглил (всеки език, нищо не напуска Mac-а), иначе този на AI доставчика, иначе малкия английски модел. „На този Mac“ никога не изпраща гласа ти.",
+    "Any language, on this Mac:": "Всеки език, на този Mac:",
+    "Wake word, on this Mac:": "Активираща дума, на този Mac:",
+    "Installed ✓ — Bulgarian, English and 97 more languages are recognised on this Mac. Nothing you say leaves it.":
+        "Инсталиран ✓ — български, английски и още 97 езика се разпознават на този Mac. Нищо от казаното не го напуска.",
+    "Recognises Bulgarian, English and 97 more languages on this Mac, as well as the cloud does (it is the same model), with no audio leaving it.":
+        "Разпознава български, английски и още 97 езика на този Mac толкова добре, колкото облакът (моделът е същият), без звукът да го напуска.",
+    "Installed ✓ — the wake word (and English speech) work offline.": "Инсталиран ✓ — активиращата дума (и английската реч) работят офлайн.",
+    "Lets the “Hey NOVA” wake word (and English speech) work on this Mac, with no audio leaving it.":
+        "Позволява активиращата дума „Hey NOVA“ (и английската реч) да работят на този Mac, без звукът да го напуска.",
     "New line": "Нов ред", "Length": "Дължина", "Double-click": "Двойно щракване",
     "Drag the title bar": "Влачене на заглавната лента", "Drag a corner": "Влачене на ъгъл",
     "The menu: new chat, sessions, theme, model, settings": "Менюто: нов чат, сесии, тема, модел, настройки",

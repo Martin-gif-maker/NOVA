@@ -32,6 +32,7 @@ the full texts ship with the packages (inside the app bundle under `Contents/Res
 | numbers-parser | 4.19.0 | MIT |
 | xlrd | 2.0.2 | BSD |
 | onnxruntime | 1.31.0 | MIT |
+| pywhispercpp | 1.5.1 | MIT |
 | tokenizers | 0.23.3 | Apache-2.0 |
 | flatbuffers | 25.12.19 | Apache-2.0 |
 | protobuf, cramjam, python-snappy (used by numbers-parser) | 7.36.2, 2.13.0, 0.7.3 | BSD-3-Clause, MIT, BSD |
@@ -52,6 +53,12 @@ Source code for PySide6 and Qt is available from https://code.qt.io and https://
 ## Offline voice model (downloaded on request, not bundled)
 `vosk-model-small-en-us-0.15` from https://alphacephei.com/vosk/models — Apache-2.0. NOVA downloads it only when you
 press *Download* in Settings → Voice, and verifies its SHA-256 before unpacking.
+
+## Speech model for any language (downloaded on request, not bundled)
+OpenAI's Whisper `large-v3-turbo` (https://github.com/openai/whisper, MIT) in the 5-bit `ggml` form published by the
+whisper.cpp project (https://huggingface.co/ggerganov/whisper.cpp, MIT). NOVA downloads it only when you press
+*Download* in Settings → Voice, from a pinned revision, and verifies its SHA-256 before using it. It runs with
+`pywhispercpp` (MIT), which contains whisper.cpp and ggml (MIT).
 
 ## Search-by-meaning model (downloaded on request, not bundled)
 `multilingual-e5-small` by Liang Wang et al. (https://huggingface.co/intfloat/multilingual-e5-small), in the 8-bit ONNX

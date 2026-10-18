@@ -31,8 +31,9 @@ source (below).
 * **Any model, any budget.** Groq, Anthropic, OpenAI, Ollama (fully offline) or any OpenAI-compatible
   server, behind one interface. NOVA tracks each model's per-minute token allowance and switches models
   before a request would be refused.
-* **Voice.** Push-to-talk, a "Hey NOVA" wake word that runs on the Mac, hands-free conversation, and talking
-  over NOVA to interrupt it, even without headphones.
+* **Voice, private.** Speech recognition in Bulgarian, English and 97 more languages runs on the Mac (Whisper
+  large-v3-turbo via whisper.cpp), plus a "Hey NOVA" wake word, hands-free conversation, and talking over NOVA to
+  interrupt it, even without headphones.
 * **Private.** Optional AES-256-GCM encryption of everything stored, keys in the Keychain, a log of every
   request that left the Mac, plugins in the macOS sandbox.
 * **Tested.** 550+ tests run headless on every push: rendering in every theme, accessibility names,
@@ -141,9 +142,13 @@ and switches to one that exists.
   kept in the Keychain; `config.json` (and an export of your data) only notes that they exist.
 
 ## Voice
-* **Speech recognition**: the AI provider's (Groq / OpenAI, any language) or **on this Mac** (Settings → Voice →
-  *Download offline voice model*, 41 MB, English). With the offline model the "Hey NOVA" wake word is detected
-  on the Mac and no audio is uploaded while listening.
+* **Speech recognition on this Mac, any language**: Settings → Voice → *Any language, on this Mac* → Download
+  (574 MB, once). OpenAI's Whisper large-v3-turbo runs with whisper.cpp on the Mac: Bulgarian, English and 97 more
+  languages, as well as the cloud does it (it is the same model), in about a second, with nothing leaving the Mac.
+  NOVA then prefers it; silence never turns into words (Whisper's "Thank you." / "Абонирайте се!" are filtered).
+  Without it: the AI provider's speech-to-text (Groq / OpenAI).
+* **Wake word**: Settings → Voice → *Wake word, on this Mac* (41 MB) detects "Hey NOVA" on the Mac, so no audio is
+  uploaded while listening.
 * **Read aloud**: Microsoft's online neural voices, or the Mac's built-in voice (offline).
 * **Hands-free conversation**: ＋ → Voice conversation. NOVA listens, answers aloud and listens again; say "stop
   listening" (or "стоп"), tap the mic, or stay quiet to end. Talking over NOVA interrupts it. NOVA compares what the

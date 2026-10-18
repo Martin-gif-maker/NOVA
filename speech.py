@@ -1,11 +1,13 @@
 # speech.py — speech-to-text, in the cloud or entirely on this Mac.
 #
-#   cloud  the active AI provider's transcription endpoint (Groq / OpenAI Whisper): best quality, many languages
-#   local  Vosk with a small English model stored in NOVA's data folder: private, works offline, English only
+#   cloud    the active AI provider's transcription endpoint (Groq / OpenAI Whisper): many languages
+#   whisper  whisper.cpp with OpenAI's large-v3-turbo model on this Mac (574 MB, downloaded on request): Bulgarian,
+#            English and 97 more languages, as well as the cloud does it (it is the same model), nothing leaves the Mac
+#   vosk     a small English model (41 MB): English only - and the wake word
 #
 # The on-device model also powers the wake word: a recogniser restricted to the words "nova" / "hey nova"
 # listens continuously without any audio leaving the computer.
-import os, json, wave, zipfile, hashlib, logging, threading
+import os, re, json, wave, zipfile, hashlib, logging, threading
 import paths
 import ledger
 import models as model_registry
@@ -129,6 +131,87 @@ def heard_wake_word(text: str) -> bool:
     return "nova" in (text or "").split()
 
 
+# ── on-device Whisper: any language ────────────────────────────────
+WHISPER_FILE   = "ggml-large-v3-turbo-q5_0.bin"
+WHISPER_URL    = ("https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/"
+                  + WHISPER_FILE)
+WHISPER_SHA256 = "394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2"
+WHISPER_BYTES  = 574041195
+WHISPER_MB     = 574
+_whisper_lock  = threading.Lock()
+# What Whisper "hears" in silence (it learned them from subtitles). Dropped when they are all there is and there
+# was hardly any speech - a real "thank you" said to NOVA still gets through.
+_PHANTOMS = {"thank you", "thanks for watching", "thank you for watching", "thank you very much", "you", "bye",
+             "абонирайте се", "благодаря за гледането", "благодаря", "субтитри", "продължава",
+             "продолжение следует", "спасибо за просмотр", "untertitel im auftrag des zdf", "sous-titrage"}
+
+
+def whisper_path() -> str:
+    return os.environ.get("NOVA_WHISPER_MODEL") or os.path.join(models_dir(), WHISPER_FILE)
+
+
+def whisper_installed() -> bool:
+    import importlib.util
+    try:
+        return importlib.util.find_spec("pywhispercpp") is not None
+    except Exception:
+        return False
+
+
+def whisper_ready() -> bool:
+    try:
+        size = os.path.getsize(whisper_path())
+    except OSError:
+        return False
+    return whisper_installed() and (size == WHISPER_BYTES or "NOVA_WHISPER_MODEL" in os.environ)
+
+
+def download_whisper(progress=None, cancelled=None) -> str:
+    """Fetch the model (574 MB), check its SHA-256, put it in place. progress(fraction). Returns the file."""
+    import downloads
+    report = (lambda done, total: progress(done / (total or WHISPER_BYTES))) if progress else None
+    try:
+        return downloads.fetch(WHISPER_URL, whisper_path(), WHISPER_SHA256, "voice model download", report, cancelled)
+    except downloads.DownloadError as e:
+        raise SpeechError(str(e))
+
+
+def remove_whisper() -> None:
+    try: os.remove(whisper_path())
+    except OSError: pass
+
+
+def speech_seconds(samples) -> float:
+    """How long the recording is louder than its own background, in seconds (30 ms steps)."""
+    import numpy as np
+    n = 480
+    k = len(samples) // n
+    if k == 0: return 0.0
+    rms = np.sqrt((samples[:k * n].reshape(k, n) ** 2).mean(1))
+    floor = float(np.percentile(rms, 10))
+    return float((rms > max(0.012, floor * 4)).sum()) * n / RATE
+
+
+def transcribe_whisper(pcm: bytes, language: str = "") -> str:
+    """16 kHz mono 16-bit audio -> text with the on-device Whisper model. The model is loaded for this recording
+    (0.2 s) and let go afterwards, so its memory (~0.8 GB) is only in use while it works."""
+    import numpy as np
+    audio = np.frombuffer(pcm, dtype="<i2").astype(np.float32) / 32768.0
+    voiced = speech_seconds(audio)
+    if voiced < 0.25: return ""                                   # silence or a cough: nothing to send
+    from pywhispercpp.model import Model
+    with _whisper_lock:
+        m = Model(whisper_path(), n_threads=max(1, min(8, (os.cpu_count() or 4) - 1)), print_progress=False,
+                  print_realtime=False, redirect_whispercpp_logs_to=None)
+        try:
+            text = " ".join(s.text.strip() for s in m.transcribe(audio, language=language or "auto")).strip()
+        finally:
+            del m
+    plain = re.sub(r"[^\w\s-]", "", text.lower()).strip()
+    if not plain or (plain in _PHANTOMS and voiced < 0.8): return ""
+    return text
+
+
 # ── cloud ──────────────────────────────────────────────────────────
 def cloud_available(client) -> bool:
     return bool(client is not None and getattr(client, "audio", None) is not None and model_registry.stt_model())
@@ -148,12 +231,13 @@ def transcribe_cloud(client, wav_path: str, language: str = "") -> str:
 
 # ── choosing ───────────────────────────────────────────────────────
 def pick_engine(client, engine: str = "auto", language: str = "") -> str:
-    """'local' | 'cloud' | '' (nothing usable).  auto = cloud when the provider has it (better quality, any
-    language), otherwise the on-device model."""
+    """'local' | 'cloud' | '' (nothing usable).  auto = Whisper on this Mac when it is installed (the same model as
+    the cloud, and private), otherwise the provider's speech-to-text, otherwise the small English model."""
     if engine == "local":
-        return "local" if local_ready() else ""
+        return "local" if whisper_ready() or local_ready() else ""
     if engine == "cloud":
         return "cloud" if cloud_available(client) else ""
+    if whisper_ready(): return "local"
     if cloud_available(client): return "cloud"
     return "local" if local_ready() else ""
 
@@ -161,6 +245,11 @@ def pick_engine(client, engine: str = "auto", language: str = "") -> str:
 def transcribe(client, wav_path: str, language: str = "", engine: str = "auto") -> str:
     which = pick_engine(client, engine, language)
     if which == "cloud": return transcribe_cloud(client, wav_path, language)
+    if which == "local" and whisper_ready():
+        with wave.open(wav_path, "rb") as wf:
+            if wf.getframerate() != RATE or wf.getnchannels() != 1 or wf.getsampwidth() != 2:
+                raise SpeechError("Local speech recognition needs 16 kHz mono 16-bit audio.")
+            return transcribe_whisper(wf.readframes(wf.getnframes()), language)
     if which == "local": return transcribe_local(wav_path)
     if engine == "local":
         raise SpeechError("The offline voice model is not installed. Download it in Settings → Voice.")

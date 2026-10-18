@@ -4,7 +4,8 @@
 groq>=0.4.0
 anthropic>=1.0                  # Claude (optional provider)
 openai>=3.0                     # OpenAI, Ollama and any OpenAI-compatible server (optional providers)
-vosk>=0.3.44                    # on-device speech recognition + wake word (offline voice)
+vosk>=0.3.44                    # on-device wake word + English speech (offline voice)
+pywhispercpp>=1.5               # on-device speech in any language (whisper.cpp; the model is downloaded on request)
 cryptography>=43                # optional encryption of chats / memories on disk
 numbers-parser>=4.10            # reads Apple Numbers spreadsheets (document library)
 xlrd>=2.0                       # reads old Excel files (.xls)

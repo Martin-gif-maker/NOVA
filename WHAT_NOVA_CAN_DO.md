@@ -130,7 +130,7 @@ How: NOVA asks macOS (Accessibility) for the selected text; for apps that do not
 
 | You do | What happens | How it works |
 |---|---|---|
-| Click the microphone (or hold it to talk) | Your speech becomes text in the message box | Recorded on the Mac, then recognised either by your AI provider (any language) or **on the Mac itself** with the offline model (English; Settings → Voice → Download, 41 MB) |
+| Click the microphone (or hold it to talk) | Your speech becomes text in the message box | Recorded on the Mac, then recognised **on the Mac itself** once you have downloaded the speech model (Settings → Voice → *Any language, on this Mac*, 574 MB: Bulgarian, English and 97 more languages, about a second per sentence), otherwise by your AI provider |
 | Say **"Hey NOVA"** (Settings → Voice → Wake word) | NOVA wakes up and listens | With the offline model the word is detected on the Mac and nothing is uploaded while it listens |
 | 🔊 on any reply, or *Read every reply aloud* | NOVA speaks | Microsoft's online voices (English, Bulgarian, German …) or the Mac's built-in voice (offline) |
 | ＋ → **Voice conversation** | Hands-free: you talk, NOVA answers aloud, listens again | Ends when you say "stop listening" / "стоп", tap the mic, or stay quiet. **You can talk over NOVA to interrupt it** — it compares the microphone with the sound it is playing, so it does not interrupt itself |

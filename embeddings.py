@@ -7,9 +7,8 @@
 # from a pinned revision and checked against its SHA-256; without it NOVA searches by words alone.
 # (Apple's built-in NaturalLanguage embeddings were tried first and found only 6 of 12 reworded questions; this
 # model finds 11 of 12 - see tests/meaning_corpus.py.)
-import os, hashlib, logging, threading
+import os, logging, threading
 import paths
-import ledger
 
 log = logging.getLogger("nova")
 
@@ -64,29 +63,18 @@ def ready() -> bool:
 def download(progress=None, cancelled=None) -> str:
     """Fetch the model files, verify each one's SHA-256, then move them into place. Returns the model folder.
     progress(fraction) is called while downloading; cancelled() returning True stops it."""
-    import requests
+    import downloads
     d = model_dir()
-    os.makedirs(d, mode=0o700, exist_ok=True)
-    total = sum(size for _p, _h, size in FILES.values()); done = 0
+    total = sum(size for _p, _h, size in FILES.values()); before = 0
     for name, (remote, sha, size) in FILES.items():
         target = os.path.join(d, name)
-        if os.path.exists(target) and os.path.getsize(target) == size: done += size; continue
-        part = target + ".part"; h = hashlib.sha256()
-        url = BASE_URL + remote
-        ledger.record(url, "meaning search model download")
-        try:
-            with requests.get(url, stream=True, timeout=30) as r:
-                r.raise_for_status()
-                with open(part, "wb") as f:
-                    for chunk in r.iter_content(1 << 16):
-                        if cancelled and cancelled(): raise EmbeddingError("The download was cancelled.")
-                        f.write(chunk); h.update(chunk); done += len(chunk)
-                        if progress: progress(min(1.0, done / total))
-            if h.hexdigest() != sha:
-                raise EmbeddingError("The downloaded model is corrupt or was tampered with (checksum mismatch).")
-            os.replace(part, target)
-        finally:
-            if os.path.exists(part): os.remove(part)
+        if not (os.path.exists(target) and os.path.getsize(target) == size):
+            report = (lambda got, _all, b=before: progress(min(1.0, (b + got) / total))) if progress else None
+            try:
+                downloads.fetch(BASE_URL + remote, target, sha, "meaning search model download", report, cancelled)
+            except downloads.DownloadError as e:
+                raise EmbeddingError(str(e))
+        before += size
     return d
 
 

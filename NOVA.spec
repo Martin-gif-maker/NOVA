@@ -30,6 +30,7 @@ hidden += collect_submodules("numbers_parser")
 hidden += ["xlrd"]                                     # old .xls files (imported only when one is opened)
 hidden += ["PySide6.QtSvg"]                            # the line icons are drawn from SVG
 hidden += ["onnxruntime", "tokenizers"]                # search by meaning (embeddings.py, imported when first used)
+hidden += ["pywhispercpp", "pywhispercpp.model", "_pywhispercpp"]   # speech in any language (speech.py, on first use)
 
 a = Analysis(["main.py"], pathex=["."], binaries=vosk_bins, datas=[("nova.icns", ".")] + extra_datas,
              hiddenimports=hidden, excludes=["tkinter", "matplotlib", "scipy", "pytest", "PyQt6", "PyQt5", "PySide2",

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Speak Bulgarian (or any of 99 languages) to NOVA without anything leaving your Mac.** Settings → Voice → *Any
+  language, on this Mac* downloads OpenAI's Whisper large-v3-turbo (574 MB, once, checksum-verified); whisper.cpp
+  runs it on the Mac in about a second per sentence. It is the same model the cloud uses, so NOVA prefers it once it
+  is there. Silence never becomes words: Whisper's habit of "hearing" "Thank you." or "Абонирайте се!" in a quiet
+  room is filtered out. Tested with the Mac's own Bulgarian and English voices: every sentence right.
 - Messages and help that still pointed at old buttons (the "⋯" menu, "press ✕", "⊘ Quick cmds") now name what is
   on screen today; the keyboard-shortcuts list is translated and has no emoji.
 - While NOVA works, the line under your message says what it is doing ("Opening Maps…", "Checking the weather…")
