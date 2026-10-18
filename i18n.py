@@ -159,10 +159,7 @@ BG.update({
         "Глобалната клавишна комбинация ({}) и въвеждането на текст изискват разрешение за Accessibility. Разреши го в System Settings → Privacy & Security → Accessibility (за приложението, което стартира NOVA) и рестартирай NOVA.",
     # first-run wizard
     "AI provider": "AI доставчик", "Server address": "Адрес на сървъра", "API key": "API ключ", "Test": "Провери",
-    "Enable the “Hey NOVA” wake word (on this Mac with the offline voice model, otherwise via the AI provider)":
-        "Включи активиращата дума „Hey NOVA“ (на този Mac с офлайн гласовия модел, иначе през AI доставчика)",
-    "Read replies aloud automatically (uses Microsoft online voices)":
-        "Чети отговорите на глас автоматично (използва онлайн гласовете на Microsoft)",
+    "Read replies aloud automatically": "Чети отговорите на глас автоматично",
     "Key already saved ✓  (paste a new one to replace it)": "Ключът вече е запазен ✓  (постави нов, за да го замениш)",
     "API key (optional)": "API ключ (по избор)", "  (a key is already saved)": "  (вече има запазен ключ)",
     # settings
@@ -536,7 +533,11 @@ BG.update({
     "✓ NOVA {} is installed — restarting…": "✓ NOVA {} е инсталирана — рестартирам…",
     "Updates": "Обновления", "Tell me when there is a new version": "Кажи ми, когато има нова версия",
     "Install new versions by themselves": "Инсталирай новите версии автоматично", "Do not check": "Не проверявай",
-    "No update address is set for this copy of NOVA, so there is nothing to check yet.": "За това копие на NOVA няма зададен адрес за обновления, така че все още няма какво да се проверява.",
+    "NOVA checks your own update address once a day.": "NOVA проверява твоя адрес за обновления веднъж на ден.",
+    "NOVA checks its releases on GitHub once a day and verifies every download before installing it.":
+        "NOVA проверява версиите си в GitHub веднъж на ден и проверява всяко изтегляне, преди да го инсталира.",
+    "This NOVA runs from source: update it with git pull. Check for updates still shows if there is a new release.":
+        "Тази NOVA работи от изходния код: обновявай я с git pull. „Провери за обновления“ пак показва дали има нова версия.",
     # usage and cost
     "Usage and cost": "Използване и разходи", "Usage": "Използване", "Provider": "Доставчик", "Tokens in": "Входящи токени",
     "Tokens out": "Изходящи токени", "Est. cost": "Прибл. разход", "Last 12 months": "Последните 12 месеца",
@@ -597,6 +598,31 @@ BG.update({
     "NOVA starts about a third faster, and quits at once.": "NOVA се стартира с около една трета по-бързо и се затваря веднага.",
     "Short messages stay on one line, and long chats no longer leave an empty gap under the last message.":
         "Кратките съобщения остават на един ред, а дългите разговори вече не оставят празно място под последното съобщение.",
+    "Auto (system)": "Автоматично (като системата)",
+    "On this Mac with the offline voice model, otherwise through the AI provider.":
+        "На този Mac с офлайн гласовия модел, иначе чрез AI доставчика.",
+    "With Microsoft's online voices; Settings → Voice can use the Mac's own voice instead.":
+        "С онлайн гласовете на Microsoft; в Настройки → Гласов вход можеш да избереш гласа на Mac.",
+    # first-run wizard
+    "{} runs AI models on this Mac - nothing you type leaves your computer, and it works offline. Install it from {}, download a model (for example {}), then press Test.":
+        "{} изпълнява AI модели на този Mac - нищо от написаното не напуска компютъра ти и работи без интернет. Инсталирай го от {}, изтегли модел (например {}) и натисни Провери.",
+    "Any server that speaks the OpenAI chat API (LM Studio, a company gateway…). Enter its address; the key is optional.":
+        "Всеки сървър, който поддържа чат API на OpenAI (LM Studio, фирмен шлюз…). Въведи адреса му; ключът не е задължителен.",
+    "NOVA will use {} to think. Create an API key at {} and paste it below. It is stored in your {}, never in a plain file.":
+        "NOVA ще мисли с {}. Създай API ключ на {} и го постави отдолу. Пази се в {}, никога в обикновен файл.",
+    "Everything here is optional - NOVA works without it, and macOS only asks when a feature needs it. Grant what you want to use:":
+        "Всичко тук е по избор - NOVA работи и без него, а macOS пита само когато дадена функция има нужда. Разреши каквото ще ползваш:",
+    "Accessibility": "Достъпност", "Screen Recording": "Запис на екрана", "Microphone": "Микрофон",
+    "global hotkey, typing into other apps, lock screen": "глобална клавишна комбинация, писане в други приложения, заключване на екрана",
+    "“look at my screen” and screenshots": "„погледни екрана ми“ и екранни снимки",
+    "voice input and the wake word": "гласов вход и активиращата дума",
+    "Show or hide NOVA anywhere with {}": "Покажи или скрий NOVA отвсякъде с {}",
+    "Type a question, or press the microphone button to speak": "Напиши въпрос или натисни бутона с микрофона, за да говориш",
+    "Start a message with {} for a quick calculation (e.g. {})": "Започни съобщение с {} за бързо пресмятане (напр. {})",
+    "New chat: {} · Settings: the menu at the top right": "Нов чат: {} · Настройки: менюто горе вдясно",
+    "NOVA asks before it runs commands, deletes files or types for you.": "NOVA пита, преди да изпълни команди, да изтрие файлове или да пише вместо теб.",
+    "You can re-run this setup, export your data or delete everything from Settings at any time.":
+        "Можеш да пуснеш тази настройка отново, да експортираш данните си или да изтриеш всичко от Настройки по всяко време.",
     # search by meaning (Documents)
     "Search by meaning": "Търсене по смисъл",
     "Search by meaning is not part of this build.": "Търсенето по смисъл не е включено в тази версия.",
@@ -634,6 +660,25 @@ def set_language(code: str) -> str:
 
 def language() -> str:
     return _LANG
+
+
+_qt_translator = None
+
+
+def install_qt_translations(app=None) -> bool:
+    """Qt's own words in the interface language: standard buttons (Save, Cancel, Yes, No), the right-click menu of
+    text fields (Copy, Paste, Select All) and file dialogs. They come with Qt as qtbase_<lang>.qm. True if loaded."""
+    global _qt_translator
+    from PySide6.QtCore import QCoreApplication, QLibraryInfo, QTranslator
+    app = app or QCoreApplication.instance()
+    if app is None: return False
+    if _qt_translator is not None:
+        app.removeTranslator(_qt_translator); _qt_translator = None
+    if _LANG == "en": return False
+    tr_ = QTranslator(app)
+    if not tr_.load(f"qtbase_{_LANG}", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)): return False
+    app.installTranslator(tr_); _qt_translator = tr_
+    return True
 
 
 _EDGE = re.compile(r"^([^\w{]*)(.*?)([^\w}]*)$", re.DOTALL)

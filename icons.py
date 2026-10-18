@@ -21,6 +21,7 @@ PATHS = {
     "cross":     '<path d="M4 4l8 8M12 4l-8 8"/>',
     "chevron":   '<path d="M6 4l4 4-4 4"/>',
     "caret":     '<path d="M4.500 6.500 8 10l3.500-3.500"/>',
+    "caret-up":  '<path d="M4.500 9.500 8 6l3.500 3.500"/>',
     "pin":       '<path d="M8 14s4.500-4 4.500-7.500a4.500 4.500 0 0 0-9 0C3.500 10 8 14 8 14z"/><circle cx="8" cy="6.500" r="1.500"/>',
     "bell":      '<path d="M4 11V7a4 4 0 0 1 8 0v4l1 1.500H3L4 11zM6.500 14h3"/>',
     "clock":     '<circle cx="8" cy="8" r="5.500"/><path d="M8 5v3l2 1.500"/>',
@@ -76,6 +77,24 @@ def svg(name: str, color: str, stroke: float = 1.5) -> bytes:
     body = PATHS.get(name) or PATHS["info"]
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="{color}" color="{color}" '
             f'stroke-width="{stroke}" stroke-linecap="round" stroke-linejoin="round">{body}</svg>').encode()
+
+
+def file(name: str, color: str, size: int = 16, stroke: float = 1.5) -> str:
+    """The icon as a PNG file (style sheets take a file, not a picture): `<name>.png` plus a sharp `@2x` twin that Qt
+    picks on Retina screens. Made once, in a private temporary folder. Returns the path of the 1x file."""
+    import os, tempfile
+    from PySide6.QtGui import QImage
+    from PySide6.QtSvg import QSvgRenderer
+    folder = os.path.join(tempfile.gettempdir(), f"nova-icons-{os.getuid()}")
+    base = os.path.join(folder, f"{name}-{color.lstrip('#')}-{size}-{stroke:g}")
+    if not (os.path.exists(base + ".png") and os.path.exists(base + "@2x.png")):
+        os.makedirs(folder, mode=0o700, exist_ok=True)
+        for scale, suffix in ((1, ""), (2, "@2x")):
+            img = QImage(size * scale, size * scale, QImage.Format.Format_ARGB32); img.fill(Qt.GlobalColor.transparent)
+            painter = QPainter(img); painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            QSvgRenderer(QByteArray(svg(name, color, stroke))).render(painter, QRectF(0, 0, size * scale, size * scale))
+            painter.end(); img.save(base + suffix + ".png", "PNG")
+    return base + ".png"
 
 
 def pixmap(name: str, color: str, size: int = 16, stroke: float = 1.5) -> QPixmap:

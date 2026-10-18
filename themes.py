@@ -80,6 +80,43 @@ def readable_on(color: str, backgrounds, target: float = 4.6) -> str:
     return end
 
 
+def controls_css(t: dict) -> str:
+    """Check boxes and pop-up menus in the Crafted look, the same in every window: a hairline box that fills with the
+    accent and shows a white tick when checked, and a field with a small chevron for a pop-up menu."""
+    import icons
+    tick, caret = icons.file("check", "#ffffff", 14, 2.2), icons.file("caret", t["sys_fg"], 12, 1.6)
+    up = icons.file("caret-up", t["sys_fg"], 12, 1.6)
+    return (f"QCheckBox{{color:{t['ai_fg']};spacing:8px;}}"
+            f"QCheckBox::indicator{{width:14px;height:14px;border:1px solid {t['sys_fg']};border-radius:4px;background:{t['ai_bg']};}}"
+            f"QCheckBox::indicator:hover{{border-color:{t['accent']};}}"
+            f"QCheckBox::indicator:checked{{background:{t['accent']};border-color:{t['accent']};image:url(\"{tick}\");}}"
+            f"QCheckBox::indicator:disabled{{border-color:{t['ai_br']};}}"
+            f"QCheckBox::indicator:checked:disabled{{background:{t['ai_br']};border-color:{t['ai_br']};}}"
+            f"QCheckBox:disabled{{color:{t['sys_fg']};}}"
+            f"QAbstractSpinBox{{background:{t['ai_bg']};color:{t['ai_fg']};border:1px solid {t['ai_br']};border-radius:6px;"
+            f"padding:4px 22px 4px 8px;selection-background-color:{t['send_bg']};selection-color:#ffffff;}}"
+            f"QAbstractSpinBox:focus{{border-color:{t['accent']};}}"
+            "QAbstractSpinBox::up-button,QAbstractSpinBox::down-button{subcontrol-origin:border;width:18px;border:none;background:transparent;}"
+            "QAbstractSpinBox::up-button{subcontrol-position:top right;}"
+            "QAbstractSpinBox::down-button{subcontrol-position:bottom right;}"
+            f"QAbstractSpinBox::up-arrow{{image:url(\"{up}\");width:10px;height:10px;}}"
+            f"QAbstractSpinBox::down-arrow{{image:url(\"{caret}\");width:10px;height:10px;}}"
+            f"QComboBox{{background:{t['ai_bg']};color:{t['ai_fg']};border:1px solid {t['ai_br']};border-radius:6px;"
+            f"padding:5px 26px 5px 9px;}}"
+            f"QComboBox:focus{{border-color:{t['accent']};}}"
+            f"QComboBox::drop-down{{border:none;width:22px;subcontrol-origin:padding;subcontrol-position:center right;}}"
+            f"QComboBox::down-arrow{{image:url(\"{caret}\");width:12px;height:12px;}}"
+            f"QComboBox QAbstractItemView{{background:{t['ai_bg']};color:{t['ai_fg']};border:1px solid {t['ai_br']};"
+            f"selection-background-color:{t['send_bg']};selection-color:#ffffff;outline:none;}}"
+            # thin rounded scroll bars like the chat's (a style sheet otherwise brings back boxy ones with arrows)
+            "QScrollBar:vertical{width:8px;background:transparent;margin:3px 1px;}"
+            "QScrollBar:horizontal{height:8px;background:transparent;margin:1px 3px;}"
+            "QScrollBar::handle{background:rgba(128,128,128,0.32);border-radius:3px;min-height:28px;min-width:28px;}"
+            "QScrollBar::handle:hover{background:rgba(128,128,128,0.5);}"
+            "QScrollBar::add-line,QScrollBar::sub-line{width:0;height:0;}"
+            "QScrollBar::add-page,QScrollBar::sub-page{background:transparent;}")
+
+
 def surfaces(t: dict):
     return [t["frame_bg"], t["ai_bg"], t["bar_bg"]]
 

@@ -53,6 +53,7 @@ import tts
 import storage
 import crash
 import ipc
+import i18n
 from i18n import tr, set_language
 from models import MODELS, MODEL_ORDER
 from themes import THEMES, THEME_ORDER, readable_on, surfaces
@@ -176,6 +177,7 @@ class AssistantWindow(WindowModesMixin, VoiceMixin, ApprovalsMixin, DataMixin, D
 
         self.config     = self._load_config()
         set_language(self.config.get("ui_lang", "auto"))
+        i18n.install_qt_translations()                   # Qt's own buttons and menus in the same language
         if storage.configure(self.config.get("encrypt_data", False)) != self.config.get("encrypt_data", False):
             self._encryption_failed = True          # told to the user once the chat area exists
         crash.install(lambda: bool(self.config.get("crash_reports", False))); crash.enable_fault_log()

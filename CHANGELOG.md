@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- **A cleaner first start.** In the setup wizard the AI-provider menu was almost invisible and the "I understand
+  and agree" box had no visible check box; both are fixed. Pages that are too long now scroll instead of
+  cutting off their last lines, and the permission page no longer pushes its "Allow…" buttons out of sight.
+- **Check boxes show a tick**, and pop-up menus and number fields show a small chevron, in every window and
+  every theme.
+- **Bulgarian everywhere:** Qt's own buttons and menus (Save, Cancel, Yes, No, Copy, Paste …), the setup
+  wizard's provider help, permissions and last page, and the language menu. Table headings in "Usage and cost"
+  and "What NOVA sent" are no longer cut off.
+- The scheduled-task window: the text field uses the full width, the time field looks like the other fields,
+  and the weekdays appear only for "Chosen days".
+- Settings → Data says where updates come from (GitHub, your own address, or `git pull` when run from source).
+
 - **Updates come from GitHub by themselves.** The app checks NOVA's GitHub releases once a day and offers the new
   version (Settings → Data: tell me / install by itself / do not check). The download is checked against the SHA-256
   GitHub publishes, a stalled download resumes where it stopped, and a failed one no longer leaves a half-downloaded

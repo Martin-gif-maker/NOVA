@@ -113,3 +113,16 @@ def test_approval_prompt_is_translated(bulgarian):
     assert loc("Type into Notes:\nhello") == "Type into Notes:\nhello"          # unknown heading: left as it is
     template, arg = tools.approval_label_parts("files:dir:/tmp/proj")
     assert i18n.tr(template).format(arg) == "Винаги разрешавай в /tmp/proj"
+
+
+def test_qts_own_buttons_follow_the_interface_language(app):
+    from PySide6.QtWidgets import QDialogButtonBox
+    B = QDialogButtonBox.StandardButton
+    i18n.set_language("bg")
+    try:
+        assert i18n.install_qt_translations(app)
+        box = QDialogButtonBox(B.Save | B.Cancel)
+        assert box.button(B.Cancel).text() == "Отказ" and box.button(B.Save).text() not in ("Save", "&Save")
+    finally:
+        i18n.set_language("en"); i18n.install_qt_translations(app)
+    assert QDialogButtonBox(B.Cancel).button(B.Cancel).text() == "Cancel"        # back to English when switched back

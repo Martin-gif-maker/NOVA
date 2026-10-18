@@ -6,12 +6,13 @@ from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QD
 from PySide6.QtCore import Qt, Signal, QRect, QSize, QPoint
 from PySide6.QtGui import QFont, QColor
 import platform_utils as plat
+import paths
 import providers
 import speech
 import tools as computer_tools
 from i18n import tr
 from models import MODELS, MODEL_ORDER
-from themes import THEMES, THEMES_BASE
+from themes import THEMES, THEMES_BASE, controls_css
 from widgets import WrapLabel
 
 
@@ -103,20 +104,15 @@ class SettingsDialog(QDialog):
         self.setStyleSheet(f"""
             QDialog{{background:{t['frame_bg']};color:{t['ai_fg']};}}
             QLabel{{color:{t['ai_fg']};}}
-            QComboBox,QSpinBox,QLineEdit,QListWidget{{background:{t['ai_bg']};color:{t['ai_fg']};
+            QLineEdit,QListWidget{{background:{t['ai_bg']};color:{t['ai_fg']};
                 border:1px solid {t['ai_br']};border-radius:6px;padding:4px 8px;}}
-            QComboBox::drop-down{{border:none;}}
-            QCheckBox{{color:{t['ai_fg']};}}
-            QCheckBox::indicator{{border:1px solid {t['ai_br']};border-radius:3px;
-                background:{t['ai_bg']};width:14px;height:14px;}}
-            QCheckBox::indicator:checked{{background:{t['accent']};}}
             QPushButton{{background:{t['send_bg']};color:#ffffff;border:none;
                 border-radius:6px;padding:5px 16px;}}
             QPushButton:hover{{background:{t['send_hv']};}}
             QTabWidget::pane{{border:1px solid {t['ai_br']};border-radius:8px;top:-1px;background:{t['frame_bg']};}}
             QTabBar::tab{{background:transparent;color:{t['sys_fg']};padding:7px 14px;border:none;}}
             QTabBar::tab:selected{{color:{t['ai_fg']};border-bottom:2px solid {t['accent']};}}
-        """)
+        """ + controls_css(t))
         layout = QVBoxLayout(self)
         layout.setSpacing(12); layout.setContentsMargins(18, 16, 18, 14)
         title = QLabel(tr("NOVA Settings"))
@@ -218,7 +214,7 @@ class SettingsDialog(QDialog):
         self._row(form, "Font size:", self._font_sb)
 
         self._ui_lang_cb = QComboBox()
-        for code, label in (("auto", "Auto (system)"), ("en", "English"), ("bg", "Български")):
+        for code, label in (("auto", tr("Auto (system)")), ("en", "English"), ("bg", "Български")):
             self._ui_lang_cb.addItem(label, code)
         self._select(self._ui_lang_cb, c.get("ui_lang", "auto"))
         self._ui_lang_cb.setToolTip(tr("Applies after restart"))
@@ -461,8 +457,13 @@ class SettingsDialog(QDialog):
             self._update_cb.addItem(tr(label), value)
         self._select(self._update_cb, self._config.get("auto_update", "notify"))
         self._row(form, "Updates:", self._update_cb)
-        if not self._config.get("update_feed", ""):
-            form.addRow("", self._hint(tr("No update address is set for this copy of NOVA, so there is nothing to check yet.")))
+        if self._config.get("update_feed", ""):
+            hint = tr("NOVA checks your own update address once a day.")
+        elif paths.IS_FROZEN:
+            hint = tr("NOVA checks its releases on GitHub once a day and verifies every download before installing it.")
+        else:
+            hint = tr("This NOVA runs from source: update it with git pull. Check for updates still shows if there is a new release.")
+        form.addRow("", self._hint(hint))
         form.addRow(tr("Danger zone:"), self._hbox(self._data_wipe_btn))
         form.addRow("", self._hint(tr("Everything NOVA stores lives in one folder in your Library. Export makes a zip of it "
                                        "(without the API key); Delete removes it and the saved keys.")))

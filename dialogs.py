@@ -10,12 +10,13 @@ import storage
 import memory
 import ledger
 import platform_utils as plat
+import themes
 
 
 def _style(t: dict) -> str:
     """The shared look of NOVA's dialogs: the window's surface, white fields with a hairline, one accent button."""
     return (f"QDialog{{background:{t['frame_bg']};}} QLabel{{color:{t['ai_fg']};}}"
-            f"QLineEdit,QTextEdit,QListWidget,QComboBox,QTableWidget{{background:{t['ai_bg']};color:{t['ai_fg']};"
+            f"QLineEdit,QTextEdit,QListWidget,QTableWidget{{background:{t['ai_bg']};color:{t['ai_fg']};"
             f"border:1px solid {t['ai_br']};border-radius:6px;padding:5px 7px;"
             f"selection-background-color:{t['send_bg']};selection-color:#ffffff;}}"
             f"QLineEdit:focus,QTextEdit:focus{{border-color:{t['accent']};}}"
@@ -24,7 +25,15 @@ def _style(t: dict) -> str:
             f"QListWidget::item:selected{{background:{t['send_bg']};color:#ffffff;}}"
             f"QPushButton{{background:{t['send_bg']};color:#ffffff;border:none;border-radius:6px;padding:5px 14px;}}"
             f"QPushButton:hover{{background:{t['send_hv']};}}"
-            f"QPushButton:disabled{{background:{t['ai_br']};color:{t['sys_fg']};}}")
+            f"QPushButton:disabled{{background:{t['ai_br']};color:{t['sys_fg']};}}" + themes.controls_css(t))
+
+
+def _fit_columns(table, stretch: int) -> None:
+    """One column takes the spare width; the others are as wide as their heading or content (Bulgarian headings
+    are longer than the English ones and were cut off at a fixed width)."""
+    head = table.horizontalHeader()
+    for c in range(table.columnCount()):
+        head.setSectionResizeMode(c, QHeaderView.ResizeMode.Stretch if c == stretch else QHeaderView.ResizeMode.ResizeToContents)
 
 
 def _btn(text, fn, secondary=False, t=None):
@@ -386,22 +395,25 @@ class ScheduleEditDialog(QDialog):
         from PySide6.QtWidgets import QTimeEdit, QCheckBox
         from PySide6.QtCore import QTime
         self._sched = sched
-        self.setWindowTitle(tr("New scheduled task")); self.setMinimumWidth(440); self.setStyleSheet(_style(theme))
+        self.setWindowTitle(tr("New scheduled task")); self.setMinimumWidth(520); self.setStyleSheet(_style(theme))
         form = QFormLayout(self); form.setContentsMargins(16, 14, 16, 14); form.setSpacing(10)
+        form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.kind = QComboBox(); self.kind.setAccessibleName(tr("Kind"))
         self.kind.addItem(tr("Ask NOVA (it answers at that time)"), "ask"); self.kind.addItem(tr("Reminder (just show the text)"), "reminder")
         self.text = QLineEdit(); self.text.setAccessibleName(tr("What"))
         self.text.setPlaceholderText(tr("e.g. Give me today's news and the weather"))
         self.time = QTimeEdit(QTime(8, 0)); self.time.setDisplayFormat("HH:mm"); self.time.setAccessibleName(tr("Time"))
+        self.time.setMaximumWidth(110)
         self.repeat = QComboBox(); self.repeat.setAccessibleName(tr("Repeat"))
         for label, value in self.REPEATS: self.repeat.addItem(tr(label), value)
-        days = QHBoxLayout(); self.day_boxes = []
+        days = QHBoxLayout(); days.setSpacing(14); self.day_boxes = []
         for i, name in enumerate(("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")):
             cb = QCheckBox(tr(name)); cb.setChecked(i < 5); self.day_boxes.append(cb); days.addWidget(cb)
         days.addStretch()
         self.problem = QLabel(""); self.problem.setWordWrap(True)
         form.addRow(tr("Kind") + ":", self.kind); form.addRow(tr("What") + ":", self.text)
-        form.addRow(tr("Time") + ":", self.time); form.addRow(tr("Repeat") + ":", self.repeat); form.addRow("", days)
+        form.addRow(tr("Time") + ":", self.time); form.addRow(tr("Repeat") + ":", self.repeat)
+        form.addRow(days)                                    # the whole width: seven days fit in Bulgarian too
         form.addRow(self.problem)
         row = QHBoxLayout(); row.addStretch()
         row.addWidget(_btn(tr("Cancel"), self.reject, True, theme)); row.addWidget(_btn(tr("Save"), self._ok))
@@ -410,8 +422,10 @@ class ScheduleEditDialog(QDialog):
         self.task = None
 
     def _toggle_days(self, *_a):
+        """The weekdays only matter for "Chosen days": shown (and usable) only then."""
         on = self.repeat.currentData() == "custom"
-        for cb in self.day_boxes: cb.setEnabled(on)
+        for cb in self.day_boxes: cb.setEnabled(on); cb.setVisible(on)
+        self.adjustSize()
 
     def _ok(self):
         repeat = self.repeat.currentData()
@@ -773,7 +787,7 @@ class UsageDialog(QDialog):
         self.period.currentIndexChanged.connect(self._fill)
         self.table = QTableWidget(0, 6); self.table.setAccessibleName(tr("Usage and cost"))
         self.table.setHorizontalHeaderLabels([tr("Provider"), tr("Model"), tr("Requests"), tr("Tokens in"), tr("Tokens out"), tr("Est. cost")])
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        _fit_columns(self.table, stretch=1)
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -867,7 +881,7 @@ class SentDialog(QDialog):
         self.period.currentIndexChanged.connect(self._fill)
         self.table = QTableWidget(0, 4); self.table.setAccessibleName(tr("What NOVA sent"))
         self.table.setHorizontalHeaderLabels([tr("Destination"), tr("What"), tr("Requests"), tr("Data sent")])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        _fit_columns(self.table, stretch=0)
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)

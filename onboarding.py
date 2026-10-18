@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushB
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QFont
 import platform_utils as plat
+import themes
 import providers
 from i18n import tr, language, BG
 
@@ -61,7 +62,7 @@ class OnboardingDialog(QDialog):
         self._key_ok = self._has_key
         self.setWindowTitle(tr("Welcome to NOVA"))
         self.setModal(True)
-        self.setMinimumSize(460, 440)
+        self.setMinimumSize(460, 440); self.resize(560, 600)
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
         t = theme
         self.setStyleSheet(
@@ -72,12 +73,12 @@ class OnboardingDialog(QDialog):
             f"border-radius:6px;padding:6px 9px;}}"
             f"QPushButton{{background:{t['send_bg']};color:#ffffff;border:none;border-radius:6px;padding:7px 18px;}}"
             f"QPushButton:hover{{background:{t['send_hv']};}}"
-            f"QPushButton:disabled{{background:{t['ai_br']};color:{t['sys_fg']};}}")
+            f"QPushButton:disabled{{background:{t['ai_br']};color:{t['sys_fg']};}}" + themes.controls_css(t))
 
         root = QVBoxLayout(self); root.setContentsMargins(26, 22, 26, 18); root.setSpacing(12)
         self._stack = QStackedWidget(); root.addWidget(self._stack, 1)
         self._pages = [self._page_welcome(), self._page_key(), self._page_permissions(), self._page_done()]
-        for p in self._pages: self._stack.addWidget(p)
+        for p in self._pages: self._stack.addWidget(self._scrolling(p))
 
         nav = QHBoxLayout()
         self._dots = QLabel(""); self._dots.setStyleSheet(f"color:{t['sys_fg']};")
@@ -96,6 +97,15 @@ class OnboardingDialog(QDialog):
         self._show_page(0)
 
     # ── helpers ───────────────────────────────────────────────
+    @staticmethod
+    def _scrolling(page):
+        """A page that scrolls when the window is too short for it, instead of cutting off its last lines."""
+        from PySide6.QtWidgets import QScrollArea, QFrame
+        area = QScrollArea(); area.setWidget(page); area.setWidgetResizable(True); area.setFrameShape(QFrame.Shape.NoFrame)
+        area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        area.setStyleSheet("QScrollArea{background:transparent;} QScrollArea > QWidget > QWidget{background:transparent;}")
+        return area
+
     def _title(self, text):
         l = QLabel(text); l.setFont(QFont(plat.UI_FONT, 19, QFont.Weight.DemiBold))
         l.setStyleSheet(f"color:{self.t['ai_fg']};"); return l
@@ -146,14 +156,14 @@ class OnboardingDialog(QDialog):
         self._key_ok = self._has_key
         self.api_key = ""; self.keyless = False
         if p.get("local"):
-            text = (f"<b>{name}</b> runs AI models on this Mac - nothing you type leaves your computer, and it works "
-                    f"offline. Install it from <a href='{p['key_url']}'>ollama.com</a>, download a model "
-                    "(for example <code>ollama pull llama3.1</code>), then press Test.")
+            text = tr("{} runs AI models on this Mac - nothing you type leaves your computer, and it works offline. "
+                      "Install it from {}, download a model (for example {}), then press Test.").format(
+                f"<b>{name}</b>", f"<a href='{p['key_url']}'>ollama.com</a>", "<code>ollama pull llama3.1</code>")
         elif p.get("needs_url"):
-            text = "Any server that speaks the OpenAI chat API (LM Studio, a company gateway…). Enter its address; the key is optional."
+            text = tr("Any server that speaks the OpenAI chat API (LM Studio, a company gateway…). Enter its address; the key is optional.")
         else:
-            text = (f"NOVA will use <b>{name}</b> to think. Create an API key at <a href='{p['key_url']}'>{p['key_url'].split('//')[-1].rstrip('/')}</a> "
-                    f"and paste it below. It is stored in your {plat.KEYSTORE_NAME}, never in a plain file.")
+            text = tr("NOVA will use {} to think. Create an API key at {} and paste it below. It is stored in your {}, never in a plain file.").format(
+                f"<b>{name}</b>", f"<a href='{p['key_url']}'>{p['key_url'].split('//')[-1].rstrip('/')}</a>", plat.KEYSTORE_NAME)
         self.key_help.setText(text)
         needs_url = bool(p.get("local") or p.get("needs_url"))
         self.url_edit.setVisible(needs_url)
@@ -173,8 +183,8 @@ class OnboardingDialog(QDialog):
         v.addWidget(self._title(tr("Permissions")))
         if not plat.IS_MAC:
             v.addWidget(self._body("No extra permissions are needed on this system.")); v.addStretch(); return w
-        v.addWidget(self._body("Everything here is optional - NOVA works without it, and macOS only "
-                               "asks when a feature needs it. Grant what you want to use:"))
+        v.addWidget(self._body(tr("Everything here is optional - NOVA works without it, and macOS only "
+                                  "asks when a feature needs it. Grant what you want to use:")))
         self._perm_rows = {}
         for key, name, why in (
             ("accessibility", "Accessibility", "global hotkey, typing into other apps, lock screen"),
@@ -183,15 +193,18 @@ class OnboardingDialog(QDialog):
             f = QFrame(); f.setStyleSheet(f"QFrame{{border:1px solid {self.t['ai_br']};border-radius:10px;}}")
             h = QHBoxLayout(f); h.setContentsMargins(12, 8, 12, 8)
             col = QVBoxLayout()
-            a = QLabel(f"<b>{name}</b>"); a.setStyleSheet("border:none;")
-            b = QLabel(why); b.setStyleSheet(f"border:none;color:{self.t['sys_fg']};")
+            a = QLabel(f"<b>{tr(name)}</b>"); a.setStyleSheet("border:none;")
+            b = QLabel(tr(why)); b.setWordWrap(True); b.setStyleSheet(f"border:none;color:{self.t['sys_fg']};")
             col.addWidget(a); col.addWidget(b); h.addLayout(col, 1)
             st = QLabel(""); st.setStyleSheet("border:none;"); h.addWidget(st)
             btn = QPushButton(tr("Allow…")); btn.clicked.connect(lambda _=False, k=key: self._request_permission(k)); h.addWidget(btn)
             self._perm_rows[key] = (st, btn); v.addWidget(f)
-        self.wake_chk = QCheckBox(tr("Enable the “Hey NOVA” wake word (on this Mac with the offline voice model, otherwise via the AI provider)"))
-        self.tts_chk  = QCheckBox(tr("Read replies aloud automatically (uses Microsoft online voices)"))
-        v.addWidget(self.wake_chk); v.addWidget(self.tts_chk)
+        self.wake_chk = QCheckBox(tr("Listen for “Hey NOVA”"))
+        self.tts_chk  = QCheckBox(tr("Read replies aloud automatically"))
+        for chk, hint in ((self.wake_chk, tr("On this Mac with the offline voice model, otherwise through the AI provider.")),
+                          (self.tts_chk, tr("With Microsoft's online voices; Settings → Voice can use the Mac's own voice instead."))):
+            note = self._body(hint); note.setStyleSheet(f"color:{self.t['sys_fg']};margin-left:24px;")
+            v.addWidget(chk); v.addWidget(note)
         v.addStretch()
         self._refresh_permissions()
         return w
@@ -199,13 +212,13 @@ class OnboardingDialog(QDialog):
     def _page_done(self):
         w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(10)
         v.addWidget(self._title(tr("You're all set")))
-        v.addWidget(self._body(
-            f"• Show or hide NOVA anywhere with <b>{plat.HOTKEY_LABEL}</b><br>"
-            "• Type a question, or press 🎤 to speak<br>"
-            f"• Start a message with <b>=</b> for a quick calculation (e.g. <i>= 15% of 200</i>)<br>"
-            f"• New chat: <b>{plat.shortcut_label('N')}</b> · Settings: the ⋯ menu<br>"
-            "• NOVA asks before it runs commands, deletes files or types for you.<br><br>"
-            "You can re-run this setup, export your data or delete everything from Settings at any time."))
+        lines = [tr("Show or hide NOVA anywhere with {}").format(f"<b>{plat.HOTKEY_LABEL}</b>"),
+                 tr("Type a question, or press the microphone button to speak"),
+                 tr("Start a message with {} for a quick calculation (e.g. {})").format("<b>=</b>", "<i>= 15% of 200</i>"),
+                 tr("New chat: {} · Settings: the menu at the top right").format(f"<b>{plat.shortcut_label('N')}</b>"),
+                 tr("NOVA asks before it runs commands, deletes files or types for you.")]
+        v.addWidget(self._body("<br>".join("• " + line for line in lines) + "<br><br>" +
+                               tr("You can re-run this setup, export your data or delete everything from Settings at any time.")))
         v.addStretch()
         return w
 
