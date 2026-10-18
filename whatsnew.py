@@ -4,6 +4,11 @@ import paths
 from i18n import tr
 
 NOTES = {
+    "6.5": [
+        "Speak Bulgarian, English or 97 more languages with nothing leaving your Mac: Settings → Voice → Any language, on this Mac (a one-time 574 MB download).",
+        "While NOVA works, the line under your message says what it is doing, and replies no longer jump when they finish.",
+        "If your AI service refuses the API key, NOVA tells you where to get a new one.",
+    ],
     "6.4": [
         "NOVA keeps itself up to date: once a day it looks for a new version and, when you agree, installs it (Settings → Data).",
         "The setup wizard and every settings window are fully in Bulgarian, and check boxes now show a tick.",

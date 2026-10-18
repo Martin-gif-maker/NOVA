@@ -604,6 +604,13 @@ BG.update({
     "New line": "Нов ред", "Length": "Дължина", "Double-click": "Двойно щракване",
     "Drag the title bar": "Влачене на заглавната лента", "Drag a corner": "Влачене на ъгъл",
     "The menu: new chat, sessions, theme, model, settings": "Менюто: нов чат, сесии, тема, модел, настройки",
+    # what's new in 6.5
+    "Speak Bulgarian, English or 97 more languages with nothing leaving your Mac: Settings → Voice → Any language, on this Mac (a one-time 574 MB download).":
+        "Говори на български, английски или още 97 езика, без нищо да напуска Mac-а ти: Настройки → Гласов вход → Всеки език, на този Mac (еднократно изтегляне от 574 MB).",
+    "While NOVA works, the line under your message says what it is doing, and replies no longer jump when they finish.":
+        "Докато NOVA работи, редът под съобщението ти казва какво прави, а отговорите вече не подскачат, когато свършат.",
+    "If your AI service refuses the API key, NOVA tells you where to get a new one.":
+        "Ако AI услугата откаже API ключа, NOVA ти казва откъде да вземеш нов.",
     # what's new in 6.4
     "NOVA keeps itself up to date: once a day it looks for a new version and, when you agree, installs it (Settings → Data).":
         "NOVA се обновява сама: веднъж на ден проверява за нова версия и, ако се съгласиш, я инсталира (Настройки → Данни).",

@@ -1,6 +1,6 @@
 # NOVA — what changed
 
-## Unreleased
+## 6.5.0 — October 2026
 
 - **Speak Bulgarian (or any of 99 languages) to NOVA without anything leaving your Mac.** Settings → Voice → *Any
   language, on this Mac* downloads OpenAI's Whisper large-v3-turbo (574 MB, once, checksum-verified); whisper.cpp
