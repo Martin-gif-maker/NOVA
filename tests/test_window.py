@@ -238,3 +238,30 @@ def test_paste_clipboard_offers_what_you_pasted_before(win, monkeypatch):
     monkeypatch.setattr(win_chat, "QMenu", Menu)
     win._paste_clipboard()
     assert picked["items"] == ["second thing", "first thing"] and win.input_field.toPlainText() == "first thing"
+
+
+def test_a_rectangle_is_kept_on_screen(app):
+    from PySide6.QtCore import QRect
+    from PySide6.QtWidgets import QApplication
+    from win_modes import on_screen
+    area = QApplication.primaryScreen().availableGeometry()
+    corner = on_screen(QRect(area.right() - 30, area.bottom() - 30, 370, 540))
+    assert area.contains(corner) and corner.size().width() == min(370, area.width())
+    huge = on_screen(QRect(area.x(), area.y(), area.width() + 500, area.height() + 500))
+    assert huge == area                                                      # too big: shrunk to fit
+    inside = QRect(area.x() + 10, area.y() + 10, 200, 200)
+    assert on_screen(inside) == inside                                       # already fine: untouched
+
+
+def test_the_bubble_opens_on_screen_from_a_corner(win):
+    import time
+    from PySide6.QtWidgets import QApplication
+    from uistate import MODE_BUBBLE, MODE_NORMAL
+    area = QApplication.primaryScreen().availableGeometry()
+    win.show(); win._pump(100)
+    win.move(area.right() - 60, area.bottom() - 60); win._pump(100)
+    for mode in (MODE_BUBBLE, MODE_NORMAL):
+        win._set_mode(mode)
+        end = time.time() + 3
+        while win._mode != mode and time.time() < end: win._pump(50)
+    assert win._mode == MODE_NORMAL and area.contains(win.geometry()), (win.geometry(), area)

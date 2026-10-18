@@ -146,8 +146,8 @@ class ChatMixin:
         if not hasattr(self, "_ctx_lbl"): return
         n = len(_plain_messages(self.messages))
         tok = self._tokens_in + self._tokens_out
-        txt = f"{n} msgs" if n else ""
-        if tok: txt += (" · " if txt else "") + (f"{tok/1000:.1f}k tok" if tok >= 1000 else f"{tok} tok")
+        txt = (tr("1 message") if n == 1 else tr("{} messages").format(n)) if n else ""
+        if tok: txt += (" · " if txt else "") + tr("{} tokens").format(f"{tok/1000:.1f}k" if tok >= 1000 else tok)
         self._ctx_lbl.setText(txt)
         self._ctx_lbl.setToolTip(tr("Messages in context · tokens this session: {} in / {} out").format(self._tokens_in, self._tokens_out))
 

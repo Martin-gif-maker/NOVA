@@ -588,6 +588,8 @@ BG.update({
     "{} did not accept the API key - it may have expired or been revoked. Get a new one at {}, then choose ≡ → Change API key.":
         "{} не прие API ключа - може да е изтекъл или отменен. Вземи нов от {} и после избери ≡ → Смени API ключа.",
     "Looking at the image": "Разглеждам изображението",
+    "NOVA — click to expand": "NOVA — кликни, за да се отвори",
+    "1 message": "1 съобщение", "{} messages": "{} съобщения", "{} tokens": "{} токена",
     # speech on this Mac (Settings → Voice)
     "On this Mac (offline)": "На този Mac (офлайн)",
     "Automatic uses the speech model on this Mac when you have downloaded it (any language, nothing leaves the Mac), otherwise the AI provider's, otherwise the small English model. On this Mac never sends your voice anywhere.":

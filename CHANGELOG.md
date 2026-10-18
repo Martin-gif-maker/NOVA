@@ -1,5 +1,12 @@
 # NOVA — what changed
 
+## Unreleased
+
+- The window always opens fully on screen: shrinking NOVA to a bubble, parking it in a corner and opening it again
+  used to put most of the window off the edge of the screen (a 61-pixel corner was all that showed).
+- The counter in the title bar says "6 messages · 1.2k tokens" (and in Bulgarian), not "6 msgs · 1.2k tok"; the
+  bubble's tooltip is translated.
+
 ## 6.5.0 — October 2026
 
 - **Speak Bulgarian (or any of 99 languages) to NOVA without anything leaving your Mac.** Settings → Voice → *Any

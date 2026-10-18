@@ -9,7 +9,7 @@ import re
 import logging
 from PySide6.QtWidgets import (QApplication, QVBoxLayout, QHBoxLayout, QPushButton, QWidget,
     QLabel, QFrame, QSystemTrayIcon, QMenu, QMenuBar)
-from PySide6.QtCore import Qt, QPoint, QTimer, QSize
+from PySide6.QtCore import Qt, QPoint, QRect, QTimer, QSize
 from PySide6.QtGui import QFont, QIcon, QPixmap, QPainter, QColor, QAction, QKeySequence, QPalette
 import platform_utils as plat
 import paths
@@ -192,11 +192,12 @@ class BuildMixin:
         h = min(self.config.get("win_h", 540), 800)   # cap at 800px tall
         w = max(w, 280)
         h = max(h, 300)
-        # a saved position can be off-screen after a monitor change - pull it back
+        # a saved position can be off-screen after a monitor change - pull it back, and keep all of it on screen
         if not any(sc.availableGeometry().contains(QPoint(x + 60, y + 10)) for sc in QApplication.screens()):
             sc = QApplication.primaryScreen().availableGeometry()
             x, y = sc.x() + 40, sc.y() + 80
-        self.setGeometry(x, y, w, h)
+        from win_modes import on_screen
+        self.setGeometry(on_screen(QRect(x, y, w, h)))
         self.setMinimumSize(280, 46)
 
         self._frame=QFrame(self); self._frame.setObjectName("mainFrame")

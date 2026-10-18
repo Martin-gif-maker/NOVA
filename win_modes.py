@@ -6,9 +6,20 @@ from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QRect, QEasingCurve, 
 from PySide6.QtGui import QGuiApplication
 import platform_utils as plat
 from uistate import MODE_BUBBLE, MODE_NORMAL, MODE_FULL
+from i18n import tr
 
 log = logging.getLogger("nova")
 
+
+def on_screen(rect: QRect) -> QRect:
+    """`rect` moved (and if need be shrunk) so that all of it is on the screen it starts on."""
+    screens = QApplication.screens()
+    home = next((sc for sc in screens if sc.availableGeometry().contains(rect.topLeft())), QApplication.primaryScreen())
+    area = home.availableGeometry()
+    w, h = min(rect.width(), area.width()), min(rect.height(), area.height())
+    x = min(max(rect.x(), area.x()), area.x() + area.width() - w)
+    y = min(max(rect.y(), area.y()), area.y() + area.height() - h)
+    return QRect(x, y, w, h)
 
 class WindowModesMixin:
     # ── THREE-MODE window management ─────────────────────────────
@@ -49,7 +60,7 @@ class WindowModesMixin:
                 self._bubble.show(); self._pulse_timer.start(600)
                 self._max_btn.setText("□")
                 _last = next((m["content"][:280] for m in reversed(self.messages)
-                              if m.get("role") == "assistant"), "NOVA — click to expand")
+                              if m.get("role") == "assistant"), tr("NOVA — click to expand"))
                 self._bubble.setToolTip(_last)
             self._run_geometry_anim(_start, _end, 220, QEasingCurve.Type.InCubic, _done_bubble)
 
@@ -61,7 +72,7 @@ class WindowModesMixin:
                 self.setMinimumSize(0,0); self.setMaximumSize(16777215,16777215)
                 self._frame.show(); self._resize_grip.show()
                 _start=QRect(self.x(),self.y(),36,36)
-                _end=QRect(self.x(),self.y(),w,h)
+                _end=on_screen(QRect(self.x(),self.y(),w,h))      # a bubble parked in a corner opens fully on screen
                 def _done_normal():
                     self._mode=MODE_NORMAL; self.setMinimumSize(280,46); self._reposition_grip()
                     self._max_btn.setText("□")
