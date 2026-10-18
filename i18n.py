@@ -138,8 +138,8 @@ BG.update({
     "Response length: Normal — click to cycle Short / Normal / Detailed":
         "Дължина на отговора: нормална — кликни за смяна: кратка / нормална / подробна",
     "Keychain unavailable — key saved to a private file.": "Keychain не е достъпен — ключът е запазен в личен файл.",
-    "No API key — NOVA won't work. Open ⋯ → Settings → Run setup again.":
-        "Няма API ключ — NOVA няма да работи. Отвори ⋯ → Настройки → Пусни настройката отново.",
+    "No API key yet, so NOVA cannot answer. Choose ≡ → Change API key.":
+        "Все още няма API ключ, затова NOVA не може да отговаря. Избери ≡ → Смени API ключа.",
     "Hi, I'm NOVA. Ask me anything, or press + to see what I can do.":
         "Здравей, аз съм NOVA. Питай ме каквото и да е или натисни +, за да видиш какво мога.",
     "to a private file (keychain unavailable)": "в личен файл (Keychain не е достъпен)",
@@ -249,7 +249,7 @@ BG.update({
         "Да редактирам ли това съобщение? То и всичко след него ще бъде премахнато от чата.",
     "Screen Recording permission is missing - allow it in System Settings → Privacy & Security → Screen Recording, then restart NOVA.":
         "Липсва разрешение за Screen Recording — разреши го в System Settings → Privacy & Security → Screen Recording и рестартирай NOVA.",
-    "Still working on your previous request - wait for it or press ✕.": "Все още работя по предишната ти заявка — изчакай или натисни ✕.",
+    "Still working on your previous request - wait for it or press the stop button.": "Все още работя по предишната ти заявка - изчакай или натисни бутона за спиране.",
     "Messages in context · tokens this session: {} in / {} out": "Съобщения в контекста · токени за тази сесия: {} входящи / {} изходящи",
     "The model returned an empty reply (it may have run out of tokens). Try again or switch to 'Detailed'.":
         "Моделът върна празен отговор (може да са свършили токените). Опитай отново или превключи на „Подробна“.",
@@ -595,6 +595,9 @@ BG.update({
     "{} did not accept the API key - it may have expired or been revoked. Get a new one at {}, then choose ≡ → Change API key.":
         "{} не прие API ключа - може да е изтекъл или отменен. Вземи нов от {} и после избери ≡ → Смени API ключа.",
     "Looking at the image": "Разглеждам изображението",
+    "New line": "Нов ред", "Length": "Дължина", "Double-click": "Двойно щракване",
+    "Drag the title bar": "Влачене на заглавната лента", "Drag a corner": "Влачене на ъгъл",
+    "The menu: new chat, sessions, theme, model, settings": "Менюто: нов чат, сесии, тема, модел, настройки",
     # what's new in 6.4
     "NOVA keeps itself up to date: once a day it looks for a new version and, when you agree, installs it (Settings → Data).":
         "NOVA се обновява сама: веднъж на ден проверява за нова версия и, ако се съгласиш, я инсталира (Настройки → Данни).",

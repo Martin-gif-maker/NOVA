@@ -50,7 +50,7 @@ class AccountMixin:
         except Exception as e:
             self.client = None
             kind, _ = providers.classify_error(e)
-            msg = tr("⚠️  No API key — NOVA won't work. Open ⋯ → Settings → Run setup again.") if kind == "auth" else f"⚠️  {e}"
+            msg = tr("⚠️  No API key yet, so NOVA cannot answer. Choose ≡ → Change API key.") if kind == "auth" else f"⚠️  {e}"
             self.chat_area.add_message(msg, "system", self._theme)
             log.warning("could not create the %s client: %s", prov, e)
             return False
@@ -94,7 +94,7 @@ class AccountMixin:
         if self._needs_key(key) or not self.config.get("onboarded"):
             key = self._run_onboarding(key)
         if self._needs_key(key):
-            self.chat_area.add_message(tr("⚠️  No API key — NOVA won't work. Open ⋯ → Settings → Run setup again."), "system", self._theme)
+            self.chat_area.add_message(tr("⚠️  No API key yet, so NOVA cannot answer. Choose ≡ → Change API key."), "system", self._theme)
             return
         if not self._connect(key): return
         if not any(m["role"] == "assistant" for m in self.messages):

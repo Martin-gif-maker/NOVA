@@ -130,7 +130,7 @@ How: NOVA asks macOS (Accessibility) for the selected text; for apps that do not
 
 | You do | What happens | How it works |
 |---|---|---|
-| Click 🎤 (or hold it to talk) | Your speech becomes text in the message box | Recorded on the Mac, then recognised either by your AI provider (any language) or **on the Mac itself** with the offline model (English; Settings → Voice → Download, 41 MB) |
+| Click the microphone (or hold it to talk) | Your speech becomes text in the message box | Recorded on the Mac, then recognised either by your AI provider (any language) or **on the Mac itself** with the offline model (English; Settings → Voice → Download, 41 MB) |
 | Say **"Hey NOVA"** (Settings → Voice → Wake word) | NOVA wakes up and listens | With the offline model the word is detected on the Mac and nothing is uploaded while it listens |
 | 🔊 on any reply, or *Read every reply aloud* | NOVA speaks | Microsoft's online voices (English, Bulgarian, German …) or the Mac's built-in voice (offline) |
 | ＋ → **Voice conversation** | Hands-free: you talk, NOVA answers aloud, listens again | Ends when you say "stop listening" / "стоп", tap the mic, or stay quiet. **You can talk over NOVA to interrupt it** — it compares the microphone with the sound it is playing, so it does not interrupt itself |
@@ -167,7 +167,7 @@ How: NOVA asks macOS (Accessibility) for the selected text; for apps that do not
 ## 14. More tools from outside
 
 - **Tool servers (MCP)** — ＋ → Tool servers: connect ready-made servers (GitHub, Notion, databases …) by command or web address, or paste the JSON other apps use. Their tools appear to the AI like NOVA's own. NOVA asks the first time each one is used, treats what they return as outside content, and keeps their tokens in the Keychain.
-- **Plugins** — drop a small Python file into NOVA's `plugins` folder to add your own tool (example: `examples/plugins/word_count.py`). NOVA asks for your consent per file, and plugins run **sealed in a sandbox** with only the permissions they declare (internet / read files / write files). ⋯ → Plugins lists every tool.
+- **Plugins** — drop a small Python file into NOVA's `plugins` folder to add your own tool (example: `examples/plugins/word_count.py`). NOVA asks for your consent per file, and plugins run **sealed in a sandbox** with only the permissions they declare (internet / read files / write files). ≡ → Plugins lists every tool.
 - **Run code** — "calculate the first 20 primes in Python", "run `ls -la ~/Desktop`": tools `execute_python_code` (10-second limit, separate process) and `run_shell_command`. **Both always ask first.**
 
 ## 15. Safety and privacy

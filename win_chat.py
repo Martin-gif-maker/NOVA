@@ -325,7 +325,7 @@ class ChatMixin:
         if not self.client:
             self.chat_area.add_message(tr("⚠️  No API key."), "system",self._theme); return
         if self._busy:
-            self.chat_area.add_message(tr("Still working on your previous request - wait for it or press ✕."), "system",self._theme); return
+            self.chat_area.add_message(tr("Still working on your previous request - wait for it or press the stop button."), "system",self._theme); return
         self.input_field.clear()
         outside = getattr(self, "_pending_external", False) or getattr(self, "_request_untrusted", "") == "another program"
         if self._try_calculate(text) or self._check_shortcut(text):

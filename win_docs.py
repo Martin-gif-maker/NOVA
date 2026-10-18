@@ -85,7 +85,7 @@ class DocsMixin:
             return
         # short enough to send whole
         if self._busy:
-            self.chat_area.add_message(tr("Still working on your previous request - wait for it or press ✕."), "system", self._theme); return
+            self.chat_area.add_message(tr("Still working on your previous request - wait for it or press the stop button."), "system", self._theme); return
         name, text = r["name"], r["text"]
         if self.config.get("confirm_uploads", True) and not confirm_text_upload(self, self._theme, name, text):
             return

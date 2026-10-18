@@ -107,7 +107,7 @@ class SelectionMixin:
         if not self.client:
             self.chat_area.add_message(tr("⚠️  No API key."), "system", self._theme); return
         if self._busy:
-            self.chat_area.add_message(tr("Still working on your previous request - wait for it or press ✕."), "system", self._theme); return
+            self.chat_area.add_message(tr("Still working on your previous request - wait for it or press the stop button."), "system", self._theme); return
         self._last_user_msg = f"{instruction}\n\n{text}"
         self.chat_area.add_message(f"**{shown}:**\n\n{text}", "user", self._theme)
         self.messages.append({"role": "user", "content": f"{instruction}\n\n\"\"\"\n{text}\n\"\"\""})
