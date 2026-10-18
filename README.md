@@ -23,8 +23,9 @@ source (below).
   schedules, screen) and any [MCP](https://modelcontextprotocol.io) tool server. The model chains them;
   NOVA's own code runs them.
 * **Safe by design.** Shell, code, deleting, typing and shutting down always ask first, with a diff of what
-  will change. After NOVA has read a web page, file or email, every action asks again, so text hidden in a
-  page cannot trigger anything (prompt-injection defence).
+  will change. After NOVA has read a web page, file or email, every action asks again, and so does opening any
+  web address that did not come from you or from what NOVA read, so text hidden in a page can neither trigger
+  anything nor send your data out (prompt-injection defence).
 * **Answers from your files.** PDFs, Word, PowerPoint, Excel, Numbers and scanned pages are indexed on the
   Mac. Search is hybrid: words (BM25) plus meaning, from a multilingual model that runs on the Mac. Only the
   few passages that match a question go to the AI, and answers name the page.
@@ -36,9 +37,9 @@ source (below).
   interrupt it, even without headphones.
 * **Private.** Optional AES-256-GCM encryption of everything stored, keys in the Keychain, a log of every
   request that left the Mac, plugins in the macOS sandbox.
-* **Tested.** 550+ tests run headless on every push: rendering in every theme, accessibility names,
-  complete translations (English and Bulgarian), the plugin sandbox, and the MCP client against the
-  official MCP server.
+* **Tested.** 600+ tests run headless on every push, none of them touching the internet: rendering in every
+  theme, accessibility names, complete translations (English and Bulgarian), the approval rules, the plugin
+  sandbox, and the MCP client against the official MCP server.
 
 ## How it works
 ```mermaid

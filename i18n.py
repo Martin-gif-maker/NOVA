@@ -593,6 +593,8 @@ BG.update({
     "no permissions": "без разрешения", "NOT sandboxed (no MANIFEST)": "НЕ е в пясъчник (няма MANIFEST)",
     "Plugin files: {}": "Файлове с добавки: {}", "No plugins loaded.": "Няма заредени добавки.",
     "Drop .py files into: {}": "Сложи .py файлове в: {}",
+    "NOVA {} is on GitHub (you have {}). This NOVA runs from its source code: update it with git pull in its folder.":
+        "NOVA {} е в GitHub (ти имаш {}). Тази NOVA работи от изходния си код: обнови я с git pull в папката ѝ.",
     "1 message": "1 съобщение", "{} messages": "{} съобщения", "{} tokens": "{} токена",
     # speech on this Mac (Settings → Voice)
     "On this Mac (offline)": "На този Mac (офлайн)",

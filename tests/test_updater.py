@@ -206,3 +206,14 @@ def test_a_busy_disk_image_helper_is_waited_for(monkeypatch):
     def broken(cmd, timeout=120): raise updater.UpdateError("hdiutil failed: image not recognized")
     monkeypatch.setattr(updater, "_run", broken)
     with pytest.raises(updater.UpdateError, match="not recognized"): updater._attach("x.dmg", "/tmp/m")   # real errors at once
+
+
+def test_nova_from_source_is_told_to_git_pull_not_to_download_an_app(win, monkeypatch):
+    import paths
+    monkeypatch.setattr(paths, "IS_FROZEN", False); win.config.pop("update_feed", None)
+    monkeypatch.setattr(updater, "download", lambda *a, **k: pytest.fail("nothing to download for a source checkout"))
+    win._offer_update({"version": "9.9.9", "url": "https://x/NOVA.dmg", "sha256": "0" * 64})
+    from widgets import MessageBubble
+    lay = win.chat_area._layout
+    last = [w for w in (lay.itemAt(i).widget() for i in range(lay.count())) if isinstance(w, MessageBubble)][-1]
+    assert "git pull" in last._label.text() and "9.9.9" in last._label.text()

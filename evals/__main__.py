@@ -4,6 +4,8 @@
     .venv/bin/python -m evals live                         the real model (the provider's key from the Keychain)
     .venv/bin/python -m evals live --model fast --lang bg  the fast model, Bulgarian requests only
     .venv/bin/python -m evals live --only en-maps,en-lock  just these cases
+    .venv/bin/python -m evals live --provider custom --base-url http://127.0.0.1:8080/v1 --model <id>
+                                                           any OpenAI-compatible server (Ollama, LM Studio, mlx-lm …)
 
 NOVA's real data is never touched: everything runs with an empty temporary data folder, and the tools are
 stand-ins (nothing happens on the Mac). Live results are saved in evals/results/.
@@ -32,6 +34,7 @@ def main(argv=None) -> int:
     ap.add_argument("--lang", choices=("en", "bg"))
     ap.add_argument("--only", help="comma-separated case ids")
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--base-url", default="", help="server address for the custom / ollama providers")
     args = ap.parse_args(argv)
 
     cases = harness.load_cases()
@@ -53,9 +56,11 @@ def main(argv=None) -> int:
     import models, providers, keystore
     models.activate(args.provider)
     model_id = models.MODELS[args.model][0] if args.model in models.MODELS else args.model
+    if args.model not in models.MODELS:                    # one named model for every slot: no switching mid-run
+        models.apply_overrides({slot: model_id for slot in models.MODELS})
     key = os.environ.get("NOVA_EVAL_KEY") or keystore._get_api_key(args.provider)
     try:
-        client = providers.make_client(args.provider, key)
+        client = providers.make_client(args.provider, key, args.base_url)
     except providers.ProviderError as e:
         print(f"No working {args.provider} key: {e}"); return 2
 

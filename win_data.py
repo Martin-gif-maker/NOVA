@@ -247,6 +247,11 @@ class DataMixin:
 
     def _offer_update(self, info: dict):
         ver = info.get("version", "?")
+        if not paths.IS_FROZEN and not self.config.get("update_feed", ""):      # running from the source code
+            self.chat_area.add_message(tr("NOVA {} is on GitHub (you have {}). This NOVA runs from its source code: "
+                                          "update it with git pull in its folder.").format(ver, paths.__version__),
+                                       "system", self._theme)
+            return
         in_place, _why = updater.can_self_update()
         silent = bool(info.get("_quiet")) and in_place and self.config.get("auto_update", "notify") == "install"
         if not silent:

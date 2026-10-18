@@ -1,5 +1,12 @@
 # NOVA — what changed
 
+## Unreleased
+
+- NOVA run from its source code no longer offers to download the app when a new version is out; it says to
+  update with `git pull`.
+- `python -m evals live --provider custom --base-url …` measures any OpenAI-compatible server (Ollama, LM Studio,
+  mlx-lm) with the same 86 requests.
+
 ## 6.5.1 — October 2026
 
 - Quitting NOVA within its first half minute no longer starts the delayed start-up jobs (update check, document
