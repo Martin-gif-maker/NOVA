@@ -184,8 +184,9 @@ class DataMixin:
 
     def _maybe_whats_new(self):
         """After an update, say once what is new (people who just installed NOVA get the wizard instead)."""
-        if whatsnew.should_show(self.config.get("seen_version", ""), self.config.get("onboarded", False)):
-            self.chat_area.add_message(whatsnew.text(), "assistant", self._theme, markdown=True)
+        seen = self.config.get("seen_version", "")
+        if whatsnew.should_show(seen, self.config.get("onboarded", False)):
+            self.chat_area.add_message(whatsnew.text(since=seen), "assistant", self._theme, markdown=True)
         if self.config.get("seen_version", "") != paths.__version__:
             self.config["seen_version"] = paths.__version__; self._save_config()
 

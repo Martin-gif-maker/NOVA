@@ -479,7 +479,7 @@ BG.update({
     "📚  Documents brought up to date: {} changed, {} new.": "📚  Документите са обновени: {} променени, {} нови.",
     "the file is no longer there": "файлът вече го няма",
     # what's new
-    "✨  What's new in NOVA {}": "✨  Какво ново в NOVA {}", "What's new": "Какво ново",
+    "What's new in NOVA {}": "Какво ново в NOVA {}", "What's new": "Какво ново",
     "Nothing new to report for this version.": "За тази версия няма нищо ново за отбелязване.",
     "Ask about your calendar, reminders and mail — NOVA can add events and draft replies (you press Send).":
         "Питай за календара, напомнянията и пощата си — NOVA може да добавя събития и да подготвя отговори (ти натискаш „Изпрати“).",

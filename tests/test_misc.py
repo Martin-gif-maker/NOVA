@@ -102,7 +102,7 @@ def test_whats_new_is_for_updaters_once_per_release():
     assert not whatsnew.should_show("", False, "6.1.0")                  # brand-new users get the wizard instead
     assert not whatsnew.should_show("6.1.0", True, "9.9.0")              # nothing written for that release
     t = whatsnew.text("6.1.0")
-    assert t.startswith("**✨  What's new in NOVA 6.1**") and t.count("• ") == len(whatsnew.notes("6.1.0")) and whatsnew.text("9.9.0") == ""
+    assert t.startswith("**What's new in NOVA 6.1**") and t.count("• ") == len(whatsnew.notes("6.1.0")) and whatsnew.text("9.9.0") == ""
 
 
 def test_the_feature_guide_names_every_tool_and_no_tool_that_does_not_exist():
@@ -116,3 +116,12 @@ def test_the_feature_guide_names_every_tool_and_no_tool_that_does_not_exist():
     assert not missing, f"tools the guide does not mention: {missing}"
     assert not unknown, f"the guide names tools that do not exist: {unknown}"
     assert paths.__version__ in text
+
+
+def test_whats_new_covers_every_release_since_the_last_one_used(monkeypatch):
+    import whatsnew
+    monkeypatch.setattr(whatsnew, "NOTES", {"6.5": ["Voice."], "6.4": ["Updates."], "6.3": ["Search."], "6.2": ["Look."]})
+    t = whatsnew.text("6.5.1", since="6.2.0")
+    assert t.index("6.5") < t.index("6.4") < t.index("6.3") and "Look." not in t      # newest first, nothing already seen
+    assert "Updates." not in whatsnew.text("6.5.0", since="6.4.0") and "Voice." in whatsnew.text("6.5.0", since="6.4.0")
+    assert whatsnew.text("6.5.0") == whatsnew.text("6.5.0", since="6.4.9")              # one release behind: just this one

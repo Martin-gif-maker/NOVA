@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- After an update, "What's new" covers every version since the one you used last (newest first), not only the
+  latest - coming from 6.2 you now hear about 6.3, 6.4 and 6.5. Its title has no emoji.
 - With *Search by meaning* installed, NOVA also picks the memories it sends by meaning: asked "what should I order
   at the Thai restaurant tonight?", it now includes "is allergic to peanuts", which word matching left out.
 - NOVA run from its source code no longer offers to download the app when a new version is out; it says to

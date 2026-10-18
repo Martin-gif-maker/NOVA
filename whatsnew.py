@@ -48,11 +48,23 @@ def notes(version: str = None) -> list:
     return NOTES.get(release(version), [])
 
 
-def text(version: str = None) -> str:
-    """The note as markdown in the interface language ('' if there is nothing to say about this version)."""
-    lines = notes(version)
-    if not lines: return ""
-    return "**" + tr("✨  What's new in NOVA {}").format(release(version)) + "**\n\n" + "\n".join("• " + tr(l) for l in lines)
+def _key(rel: str) -> tuple:
+    return tuple(int(p) for p in rel.split(".") if p.isdigit())
+
+
+def text(version: str = None, since: str = "") -> str:
+    """The note as markdown in the interface language ('' if there is nothing to say). With `since` (the version
+    used before), every release after it is included, newest first - someone coming from 6.2 hears about 6.3 and
+    6.4 too, not only about this one."""
+    current = release(version)
+    if since:
+        older = _key(release(since))
+        rels = sorted((r for r in NOTES if older < _key(r) <= _key(current)), key=_key, reverse=True)
+    else:
+        rels = [current] if notes(version) else []
+    parts = ["**" + tr("What's new in NOVA {}").format(r) + "**\n\n" + "\n".join("• " + tr(l) for l in NOTES[r])
+             for r in rels]
+    return "\n\n".join(parts)
 
 
 def should_show(seen: str, onboarded: bool, version: str = None) -> bool:
