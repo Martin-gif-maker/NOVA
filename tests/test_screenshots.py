@@ -2,7 +2,9 @@
 
 Opt-in, because it needs the Mac's real fonts:
     NOVA_SCREENSHOTS=1 QT_QPA_PLATFORM=cocoa .venv/bin/python -m pytest -q tests/test_screenshots.py
-The window is painted without ever appearing on screen (WA_DontShowOnScreen); the AI and every tool are fakes.
+The window is painted without ever appearing on screen: it shows itself while it is built, so `invisible` makes that
+show() off-screen and keeps the menu-bar icon away - and the test asks the window server that nothing of this process
+was on screen. The AI and every tool are fakes.
 """
 import datetime, os
 import pytest
@@ -34,15 +36,32 @@ class _Morning(datetime.datetime):
 
 
 @pytest.fixture
+def invisible(monkeypatch):
+    """Before the window exists (request it before `win`): its own show() stays off-screen, and no tray icon."""
+    import main
+    from PySide6.QtWidgets import QSystemTrayIcon
+    real_show = main.AssistantWindow.show
+    def off_screen(self):
+        self.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen, True); real_show(self)
+    monkeypatch.setattr(main.AssistantWindow, "show", off_screen)
+    monkeypatch.setattr(QSystemTrayIcon, "show", lambda self: None)
+
+
+def _on_screen_windows_of_this_process() -> list:
+    import Quartz
+    infos = Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListOptionOnScreenOnly, Quartz.kCGNullWindowID) or []
+    return [dict(i) for i in infos if i.get("kCGWindowOwnerPID") == os.getpid()]
+
+
+@pytest.fixture
 def morning(monkeypatch):
     monkeypatch.setattr(datetime, "datetime", _Morning)          # before the window (and its greeting) exists
 
 
 @pytest.mark.parametrize("theme_key,name", [("soft", "nova-light.png"), ("nova", "nova-dark.png")])
-def test_readme_screenshot(morning, win, monkeypatch, theme_key, name):
+def test_readme_screenshot(morning, invisible, win, monkeypatch, theme_key, name):
     monkeypatch.setattr(tools, "run_tool", lambda tool, args: tools.ToolResult(tool, args, True, "ok"))
     win._theme_key = theme_key; win._theme = win._resolve_theme(); win._apply_theme()
-    win.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen, True)
     win.resize(440, 860); win.show(); win._pump(300)
     for question, script in CHAT:
         FakeCompletions.script = [list(step) for step in script]
@@ -51,3 +70,4 @@ def test_readme_screenshot(morning, win, monkeypatch, theme_key, name):
     img = win.grab().toImage()
     assert img.width() >= 420
     assert img.save(os.path.join(ROOT, "design", name))
+    assert _on_screen_windows_of_this_process() == []                # nothing appeared on the Mac's screen
