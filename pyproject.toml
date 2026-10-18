@@ -27,7 +27,8 @@ ignore = [
 [tool.mypy]
 # The core is type-checked: the AI loop, providers, models, documents and their search, memory, storage, evals.
 # (./check.sh runs it on these files; the UI modules are not annotated yet.)
-files = ["workers.py", "providers.py", "models.py", "docs.py", "embeddings.py", "memory.py", "storage.py", "evals/harness.py"]
+files = ["workers.py", "providers.py", "models.py", "docs.py", "embeddings.py", "memory.py", "storage.py", "updater.py",
+         "evals/harness.py"]
 ignore_missing_imports = true
 follow_imports = "silent"
 warn_unused_ignores = true

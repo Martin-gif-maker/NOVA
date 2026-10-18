@@ -106,3 +106,88 @@ def test_relaunch_starts_the_app_after_a_moment(monkeypatch):
     cmd, detached = seen[0]
     assert cmd[:2] == ["/bin/sh", "-c"] and "open -n" in cmd[2] and cmd[-1] == "/Applications/My Apps/NOVA.app" and detached is True
     assert "My Apps" not in cmd[2]                                             # the path is an argument, never part of the script
+
+
+# ── the update source: NOVA's GitHub releases ──
+def _release(*names, digest=True):
+    return {"tag_name": "v6.4.0", "body": "**Download:** below.\n\n- **Faster** search.\n- Fixes.",
+            "assets": [dict({"name": n, "browser_download_url": f"https://github.com/x/{n}"},
+                            **({"digest": "sha256:" + "ab" * 32} if digest else {})) for n in names]}
+
+
+def test_a_github_release_becomes_an_update():
+    info = updater.from_github_release(_release("NOVA-6.4.0.dmg", "notes.txt"), machine="arm64")
+    assert info == {"version": "6.4.0", "url": "https://github.com/x/NOVA-6.4.0.dmg", "sha256": "ab" * 32,
+                    "notes": "- Faster search.\n- Fixes."}
+    assert updater.is_newer(info["version"], "6.3.0")
+
+
+def test_the_right_build_for_the_processor_is_picked():
+    both = _release("NOVA-6.4.0-arm64.dmg", "NOVA-6.4.0-x86_64.dmg")
+    assert updater.from_github_release(both, machine="x86_64")["url"].endswith("x86_64.dmg")
+    assert updater.from_github_release(both, machine="arm64")["url"].endswith("arm64.dmg")
+    only_apple = _release("NOVA-6.4.0.dmg")                      # an unnamed image is an Apple Silicon build
+    assert updater.from_github_release(only_apple, machine="x86_64")["version"] == "0"     # nothing for an Intel Mac
+
+
+def test_a_release_without_a_checksum_is_refused():
+    with pytest.raises(ValueError, match="SHA-256"):
+        updater.from_github_release(_release("NOVA-6.4.0.dmg", digest=False), machine="arm64")
+
+
+class _Stream:
+    """A fake download: serves `data`, optionally stalling after `stall_at` bytes, and honours Range requests."""
+    def __init__(self, data, stall_at=None, ranges=True, always=False):
+        self.data, self.stall_at, self.ranges, self.always, self.calls = data, stall_at, ranges, always, []
+
+    def get(self, url, stream=True, timeout=30, headers=None):
+        import requests
+        start = int((headers or {}).get("Range", "bytes=0-")[6:-1] or 0) if self.ranges else 0
+        self.calls.append(start); outer = self
+        class R:
+            status_code = 206 if start else 200
+            headers = {"content-length": str(len(outer.data) - start)}
+            def __enter__(s): return s
+            def __exit__(s, *a): return False
+            def raise_for_status(s): pass
+            def iter_content(s, n):
+                pos = start
+                while pos < len(outer.data):
+                    if outer.stall_at is not None and pos >= outer.stall_at and (outer.always or len(outer.calls) == 1):
+                        raise requests.ConnectionError("Read timed out.")
+                    yield outer.data[pos:pos + 1000]; pos += 1000
+        return R()
+
+
+def test_a_stalled_download_is_resumed_and_verified(tmp_path, monkeypatch):
+    import hashlib, requests
+    data = bytes(range(256)) * 40
+    fake = _Stream(data, stall_at=3000); monkeypatch.setattr(requests, "get", fake.get)
+    path = updater.download("https://x/NOVA-6.4.0.dmg", hashlib.sha256(data).hexdigest(), dest_dir=str(tmp_path))
+    assert open(path, "rb").read() == data and fake.calls == [0, 3000]          # picked up where it stopped
+
+
+def test_a_failed_download_leaves_nothing_behind(tmp_path, monkeypatch):
+    import hashlib, requests
+    data = b"x" * 5000
+    stuck = _Stream(data, stall_at=2000, always=True); monkeypatch.setattr(requests, "get", stuck.get)
+    with pytest.raises(ValueError, match="interrupted"):
+        updater.download("https://x/NOVA-6.4.0.dmg", hashlib.sha256(data).hexdigest(), dest_dir=str(tmp_path))
+    assert stuck.calls == [0, 2000, 2000, 2000]                                # gave up after 3 tries that brought nothing
+    monkeypatch.setattr(requests, "get", _Stream(data).get)
+    with pytest.raises(ValueError, match="checksum"):
+        updater.download("https://x/NOVA-6.4.0.dmg", "0" * 64, dest_dir=str(tmp_path))
+    assert list(tmp_path.iterdir()) == []                                      # no .part file, no bad .dmg
+
+
+def test_nova_from_source_leaves_updates_to_git_but_the_app_checks_daily(win, monkeypatch):
+    import paths
+    checked = []
+    monkeypatch.setattr(win, "_check_updates", lambda quiet=False: checked.append(quiet))
+    win.config.pop("update_feed", None); win.config["update_checked"] = ""
+    monkeypatch.setattr(paths, "IS_FROZEN", False); win._auto_update_check()
+    assert checked == []
+    monkeypatch.setattr(paths, "IS_FROZEN", True); win._auto_update_check()
+    assert checked == [True]
+    win.config["update_checked"] = ""; win.config["auto_update"] = "off"; win._auto_update_check()
+    assert checked == [True]                                                   # "do not check" is respected

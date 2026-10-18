@@ -222,13 +222,9 @@ class DataMixin:
             threading.Thread(target=lambda: self._sys_msg_ready.emit(crash.send(path, url)[1]), daemon=True).start()
 
     def _check_updates(self, quiet: bool = False):
-        """Look for a newer NOVA. `quiet` (the automatic daily check) says nothing unless there is one."""
-        feed = self.config.get("update_feed", "")
-        if not feed:
-            if not quiet:
-                self.chat_area.add_message(tr("NOVA {}. No update feed is configured "
-                                              "(set \"update_feed\" in config.json to an https JSON URL).").format(paths.__version__), "system", self._theme)
-            return
+        """Look for a newer NOVA (on GitHub, or in your own feed). `quiet` (the automatic daily check) says nothing
+        unless there is one."""
+        feed = self.config.get("update_feed", "") or updater.GITHUB_RELEASES
         def _bg():
             try:
                 info = updater.fetch_info(feed)
@@ -240,8 +236,10 @@ class DataMixin:
         threading.Thread(target=_bg, daemon=True).start()
 
     def _auto_update_check(self):
-        """Once a day, if an update address is set and you did not turn checking off."""
-        if self.config.get("auto_update", "notify") == "off" or not self.config.get("update_feed", ""): return
+        """Once a day, unless you turned checking off. NOVA run from source is updated with git, so it checks only
+        when you set a feed of your own (Help → Check for updates still works)."""
+        if self.config.get("auto_update", "notify") == "off": return
+        if not paths.IS_FROZEN and not self.config.get("update_feed", ""): return
         today = datetime.date.today().isoformat()
         if self.config.get("update_checked", "") == today: return
         self.config["update_checked"] = today; self._save_config()

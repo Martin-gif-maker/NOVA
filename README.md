@@ -4,6 +4,9 @@
 manages your calendar and reminders, acts on text you select in any app, and listens and speaks. It works with
 Groq, Claude, OpenAI or a model running offline on your Mac, and it asks before anything risky.
 
+**[Download NOVA for Mac](https://github.com/Martin-gif-maker/NOVA/releases/latest)** (Apple Silicon) · or run it from
+source (below).
+
 [![CI](https://github.com/Martin-gif-maker/NOVA/actions/workflows/ci.yml/badge.svg)](https://github.com/Martin-gif-maker/NOVA/actions/workflows/ci.yml)
 ![macOS](https://img.shields.io/badge/platform-macOS-lightgrey)
 ![Python](https://img.shields.io/badge/python-3.13%20%7C%203.14-blue)
@@ -199,10 +202,12 @@ macOS asks for permission the first time an app reads files in Downloads, which 
 ~30 s. Move the folder (e.g. to `~/NOVA`) and re-run `setup_mac.command`, or install the packaged app to `/Applications`.
 
 ## Updates
-With an update address set (`"update_feed"` in config.json), NOVA checks once a day. Settings → Data chooses between
-*tell me*, *install by itself* and *do not check*. The packaged app installs a new version in place: the download is
-checked against the feed's SHA-256, the app inside must be intact and — if your NOVA is signed — signed by the same
-developer; if anything fails the working app is put back.
+The app checks NOVA's [GitHub releases](https://github.com/Martin-gif-maker/NOVA/releases) once a day (or your own
+feed: `"update_feed"` in config.json). Settings → Data chooses between *tell me*, *install by itself* and *do not
+check*; NOVA run from source does not check by itself (update it with `git pull`), but Help → Check for updates works.
+The new version is installed in place: the download is checked against the SHA-256 GitHub publishes for it, a
+stalled download resumes where it stopped, the app inside must be intact and — if your NOVA is signed — signed by the
+same developer; if anything fails the working app is put back and no partial file is left behind.
 
 ## Development
 * `./check.sh` runs lint (ruff), a type check of the core modules (mypy; both set up in `pyproject.toml`) and every test (`./check.sh --screen` adds the few that briefly open a real window).

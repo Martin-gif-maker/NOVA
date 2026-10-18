@@ -65,6 +65,7 @@ form published at https://huggingface.co/Xenova/multilingual-e5-small — MIT. N
 * Web search: DuckDuckGo via `ddgs` (unofficial) or the Brave Search API with your own key (official).
 * Read-aloud: Microsoft Edge online voices via `edge-tts` (unofficial) unless the system voice is selected.
 * MCP tool servers you connect yourself: whatever those servers contact is up to them.
+* GitHub (api.github.com, once a day in the packaged app): is there a newer NOVA? Settings → Data turns it off.
 
 Each has its own terms; review them before distributing NOVA. "What NOVA sent today" (Settings → Privacy) shows
 which of them were actually contacted.

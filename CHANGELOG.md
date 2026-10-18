@@ -1,5 +1,12 @@
 # NOVA — what changed
 
+## Unreleased
+
+- **Updates come from GitHub by themselves.** The app checks NOVA's GitHub releases once a day and offers the new
+  version (Settings → Data: tell me / install by itself / do not check). The download is checked against the SHA-256
+  GitHub publishes, a stalled download resumes where it stopped, and a failed one no longer leaves a half-downloaded
+  file in Downloads.
+
 ## 6.3.0 — October 2026
 
 - **NOVA starts about a third faster** (0.83 s → 0.56 s from launch to a ready window, measured on this Mac), and

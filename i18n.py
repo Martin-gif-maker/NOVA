@@ -286,8 +286,6 @@ BG.update({
     "Send this report to {}? This is everything that would be sent:": "Да изпратя ли този доклад към {}? Това е всичко, което ще бъде изпратено:",
     "⬇️  Downloading NOVA {}…": "⬇️  Изтеглям NOVA {}…",
     "💾  Exported {} files to {} (the API key is not included).": "💾  Експортирани са {} файла в {} (API ключът не е включен).",
-    "NOVA {}. No update feed is configured (set \"update_feed\" in config.json to an https JSON URL).":
-        "NOVA {}. Няма настроен източник на обновления (задай \"update_feed\" в config.json с https адрес на JSON файл).",
     "No notes yet.": "Все още няма бележки.", "❌  Export failed: {}": "❌  Експортът не успя: {}",
     "🔒  Encryption is on — {} files are now encrypted. The key is in your Keychain.":
         "🔒  Шифроването е включено — {} файла вече са шифровани. Ключът е в твоя Keychain.",
