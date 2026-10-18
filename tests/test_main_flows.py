@@ -578,3 +578,15 @@ def test_settings_pass_the_start_hidden_choice_on(win, monkeypatch):
     monkeypatch.setattr(win_account.SettingsDialog, "exec", fake_exec)
     win._show_settings()
     assert seen == [(True, False)] and win.config["start_hidden"] is False
+
+
+def test_a_rejected_key_says_who_refused_it_and_where_to_get_a_new_one(win, monkeypatch):
+    from gui_support import _send, _wait_idle
+    def refuse(**kw): raise Exception("Error code: 401 - {'error': {'message': 'Invalid API Key', 'code': 'invalid_api_key'}}")
+    monkeypatch.setattr(FakeCompletions, "create", lambda self, **kw: refuse(**kw))
+    _send(win, "hello"); _wait_idle(win)
+    from widgets import MessageBubble
+    lay = win.chat_area._layout
+    last = [w for w in (lay.itemAt(i).widget() for i in range(lay.count())) if isinstance(w, MessageBubble) and w._role == "system"][-1]
+    assert "Groq did not accept the API key" in last._label.text() and 'href="https://console.groq.com/keys"' in last._label.text()
+    assert last._problem                                                       # shown in the colour for failures

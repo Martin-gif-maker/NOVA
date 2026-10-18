@@ -1,5 +1,10 @@
 # NOVA — what changed
 
+## Unreleased
+
+- When the AI service refuses your API key, NOVA says which service it was, links to the page for a new key and
+  says where to paste it (it used to say only "API key error").
+
 ## 6.4.0 — October 2026
 
 - **A cleaner first start.** In the setup wizard the AI-provider menu was almost invisible and the "I understand

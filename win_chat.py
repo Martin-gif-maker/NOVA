@@ -539,9 +539,17 @@ class ChatMixin:
         self._ai_retry_pending = False
         self._busy = False
         msg = tr(providers.FRIENDLY[kind]) if kind in providers.FRIENDLY else err[:300]
+        shown = msg
+        if kind == "auth":                                   # say who refused the key and where a new one comes from
+            p = providers.info(self._provider()); url = p.get("key_url", "")
+            if url and p.get("needs_key"):
+                name, host = p["label"].split(" (")[0], url.split("//")[-1].rstrip("/")
+                text = tr("{} did not accept the API key - it may have expired or been revoked. Get a new one at {}, "
+                          "then choose ≡ → Change API key.")
+                msg, shown = text.format(name, url), text.format(name, f'<a href="{url}">{host}</a>')
         self._reply_has_bubble = False
         self._show_tool_activity()
-        self.chat_area.add_message(f"❌ {msg}", "system", self._theme)
+        self.chat_area.add_message(f"❌ {shown}", "system", self._theme)
         if getattr(self, "_external_running", False): self._external_finish(error=msg)
         self._restore_send_btn()
         if self._conversation: self._end_conversation()               # do not keep listening after a failure
