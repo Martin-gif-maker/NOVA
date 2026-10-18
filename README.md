@@ -13,9 +13,9 @@ source (below).
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 <p align="center">
-  <img src="design/nova-light.png" width="380" alt="NOVA in the light Paper look: opening Paris in Maps, the weather, a reminder and an answer from a PDF">
+  <img src="design/nova-demo.gif" width="380" alt="NOVA at work: a request is typed, NOVA opens Paris in Maps and checks the weather, the answer streams in; then it answers a question from a PDF lease">
   &nbsp;
-  <img src="design/nova-dark.png" width="380" alt="The same conversation in the dark Graphite look">
+  <img src="design/nova-dark.png" width="380" alt="A conversation in the dark Graphite look: Maps, the weather, a reminder and an answer from a PDF">
 </p>
 
 ## Highlights
@@ -214,7 +214,7 @@ same developer; if anything fails the working app is put back and no partial fil
   `.github/workflows/ci.yml` does the same on GitHub for every push, then builds the app.
 * Coverage: `.venv/bin/python -m coverage run -m pytest -q tests && .venv/bin/python -m coverage report` (86 % of the
   app's code; the gaps are mostly macOS glue that would need real permission prompts).
-* The README pictures come from the real window with a sample chat (fake AI, nothing shown on screen):
+* The README pictures and the animation come from the real window with a sample chat (fake AI, nothing shown on screen):
   `NOVA_SCREENSHOTS=1 QT_QPA_PLATFORM=cocoa .venv/bin/python -m pytest -q tests/test_screenshots.py`.
 * Python **3.14** (`.python-version`) is what NOVA is tested on. `requirements.txt` lists minimum versions;
   `requirements.lock` pins the exact tested set (`pip install -r requirements.lock`; refresh it with

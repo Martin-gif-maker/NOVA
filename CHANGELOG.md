@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- While NOVA works, the line under your message says what it is doing ("Opening Maps…", "Checking the weather…")
+  from the first moment. It used to start empty and its "Thinking…" dots wrote over the action every 0.4 s.
+- What NOVA did (the rows above a reply) is shown as soon as the reply starts, so the text no longer jumps down
+  when the reply ends.
 - When the AI service refuses your API key, NOVA says which service it was, links to the page for a new key and
   says where to paste it (it used to say only "API key error").
 

@@ -99,7 +99,8 @@ class ChatMixin:
         self._clear_thinking()
         self._streaming_bubble = None
         self.input_field.setEnabled(False)
-        self._thinking_bubble = self.chat_area.add_message("", "system", self._theme)
+        self._think_base = tr("Thinking")                      # what the line says NOVA is doing; the dots move
+        self._thinking_bubble = self.chat_area.add_message(self._think_base + "…", "system", self._theme)
         self._think_dots = 0
         self._think_timer.start(420)
         hist = copy.deepcopy(_compact_history(self.messages))
@@ -265,7 +266,8 @@ class ChatMixin:
         self.chat_area.add_message(("🖼 " + os.path.basename(image_path) + " — " if image_path else "📷 ") + q, "user", self._theme)
         self.messages.append({"role": "user", "content": note})
         self._busy = True; self.input_field.setEnabled(False)
-        self._thinking_bubble = self.chat_area.add_message("", "system", self._theme)
+        self._think_base = tr("Looking at the image")
+        self._thinking_bubble = self.chat_area.add_message(self._think_base + "…", "system", self._theme)
         self._think_dots = 0; self._think_timer.start(420)
         w = VisionWorker(self.client, q, image_path, image)
         w.result_ready.connect(self._on_vision_done)
@@ -358,8 +360,8 @@ class ChatMixin:
         if not self._thinking_bubble:
             self._think_timer.stop(); return
         self._think_dots = (self._think_dots + 1) % 4
-        try:
-            self._thinking_bubble._label.setText(tr("Thinking") + "." * self._think_dots)
+        try:                                       # keeps what NOVA is doing ("Opening Maps"), only the dots move
+            self._thinking_bubble._label.setText(getattr(self, "_think_base", tr("Thinking")) + "." * self._think_dots)
         except RuntimeError:                       # bubble was deleted behind our back
             self._thinking_bubble = None; self._think_timer.stop()
 
@@ -464,6 +466,9 @@ class ChatMixin:
         if self._thinking_bubble: self._clear_thinking()
         if self._streaming_bubble is None:
             self._streaming_bubble = self.chat_area.add_message("", "assistant", self._theme)
+            if getattr(self, "_tool_log", None):         # what NOVA already did goes above the text now, so the text
+                rows = ToolActivity(list(self._tool_log), self._theme)        # does not jump down when the reply ends
+                if rows.rows: self._streaming_bubble.set_actions(rows)
         self._streaming_bubble.append_text(chunk)
 
     def _on_response(self, text: str, updated: list):
@@ -517,7 +522,9 @@ class ChatMixin:
     def _on_tool(self, name: str):
         if self._from_stale_worker(): return
         if self._thinking_bubble:
-            try: self._thinking_bubble._label.setText(self._working_text(name))
+            text = self._working_text(name)
+            self._think_base = text.rstrip("….")
+            try: self._thinking_bubble._label.setText(text)
             except RuntimeError: self._thinking_bubble = None
 
     def _on_error(self, err: str, kind: str = ""):

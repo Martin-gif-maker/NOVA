@@ -594,6 +594,7 @@ BG.update({
     "Image analysis is rate-limited - try again shortly.": "Анализът на изображения е ограничен за момента — опитай пак след малко.",
     "{} did not accept the API key - it may have expired or been revoked. Get a new one at {}, then choose ≡ → Change API key.":
         "{} не прие API ключа - може да е изтекъл или отменен. Вземи нов от {} и после избери ≡ → Смени API ключа.",
+    "Looking at the image": "Разглеждам изображението",
     # what's new in 6.4
     "NOVA keeps itself up to date: once a day it looks for a new version and, when you agree, installs it (Settings → Data).":
         "NOVA се обновява сама: веднъж на ден проверява за нова версия и, ако се съгласиш, я инсталира (Настройки → Данни).",

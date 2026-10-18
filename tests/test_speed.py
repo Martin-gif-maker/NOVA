@@ -185,3 +185,14 @@ def test_quitting_does_not_wait_for_the_system_statistics(app):
     w = workers.StatsWorker(); w.start(); time.sleep(0.3)
     t0 = time.monotonic(); w.requestInterruption(); assert w.wait(2000)
     assert time.monotonic() - t0 < 0.05
+
+
+def test_the_working_line_says_what_nova_is_doing_and_keeps_saying_it(win):
+    FakeCompletions.script = [["SLEEP"] * 8 + [_tc(0, "c1", "get_weather", '{"location": "Sofia"}')], ["Sunny."]]
+    _send(win, "weather in sofia")
+    label = win._thinking_bubble._label
+    assert label.text() == "Thinking…"                                   # at once, not an empty line
+    win._on_tool("⚙️  get_weather(location='Sofia')")
+    for _ in range(3): win._animate_thinking()                          # the dots move …
+    assert label.text().startswith("Checking the weather")              # … but what NOVA is doing stays
+    _wait_idle(win)
