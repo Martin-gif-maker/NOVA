@@ -153,13 +153,26 @@ def verify_app(new_app: str, current_app: str | None = None) -> None:
         raise UpdateError("The update is not signed by the same developer as the NOVA you have - it was not installed.")
 
 
+def _attach(dmg: str, mount: str, tries: int = 4) -> None:
+    """Mount the disk image. macOS sometimes answers "Resource temporarily unavailable" while its disk-image helper
+    is still busy (seen on GitHub's Mac runners); that passes within seconds, so it is tried again."""
+    import time
+    for attempt in range(tries):
+        try:
+            _run(["/usr/bin/hdiutil", "attach", "-nobrowse", "-readonly", "-noautoopen", "-mountpoint", mount, dmg], timeout=180)
+            return
+        except UpdateError as e:
+            if attempt == tries - 1 or not re.search(r"temporarily unavailable|resource busy", str(e), re.I): raise
+            time.sleep(2 * (attempt + 1))
+
+
 def install_from_dmg(dmg: str, app: str) -> str:
     """Replace the installed app with the one inside a (checksum-verified) disk image. The old app is put back if
     anything goes wrong. Returns the path of the installed app."""
     import tempfile
     mount = tempfile.mkdtemp(prefix="nova_update_")
     staged = app + ".new"; old = app + ".old"
-    _run(["/usr/bin/hdiutil", "attach", "-nobrowse", "-readonly", "-noautoopen", "-mountpoint", mount, dmg], timeout=180)
+    _attach(dmg, mount)
     try:
         apps = [os.path.join(mount, n) for n in sorted(os.listdir(mount)) if n.endswith(".app")]
         if not apps: raise UpdateError("The disk image does not contain an app.")

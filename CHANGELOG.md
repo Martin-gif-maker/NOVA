@@ -5,7 +5,9 @@
 - **Updates come from GitHub by themselves.** The app checks NOVA's GitHub releases once a day and offers the new
   version (Settings → Data: tell me / install by itself / do not check). The download is checked against the SHA-256
   GitHub publishes, a stalled download resumes where it stopped, and a failed one no longer leaves a half-downloaded
-  file in Downloads.
+  file in Downloads. If macOS's disk-image helper is briefly busy, the update waits for it instead of failing.
+- Tests for dropping folders and long files onto NOVA, and for keeping API keys in a private file when the Keychain
+  is locked; `coverage run` now reports (it was cut off by the test suite's own fast exit).
 
 ## 6.3.0 — October 2026
 

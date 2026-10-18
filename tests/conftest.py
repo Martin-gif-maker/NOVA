@@ -77,5 +77,11 @@ def pytest_sessionfinish(session, exitstatus):
 def pytest_unconfigure(config):
     if "PySide6.QtWidgets" not in sys.modules:
         return
+    try:                                                    # `coverage run -m pytest`: save what was measured first
+        import coverage
+        cov = coverage.Coverage.current()
+        if cov is not None: cov.stop(); cov.save()
+    except ImportError:
+        pass
     sys.stdout.flush(); sys.stderr.flush()
     os._exit(getattr(config, "_nova_exitstatus", 0))

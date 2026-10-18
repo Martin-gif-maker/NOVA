@@ -212,6 +212,8 @@ same developer; if anything fails the working app is put back and no partial fil
 ## Development
 * `./check.sh` runs lint (ruff), a type check of the core modules (mypy; both set up in `pyproject.toml`) and every test (`./check.sh --screen` adds the few that briefly open a real window).
   `.github/workflows/ci.yml` does the same on GitHub for every push, then builds the app.
+* Coverage: `.venv/bin/python -m coverage run -m pytest -q tests && .venv/bin/python -m coverage report` (86 % of the
+  app's code; the gaps are mostly macOS glue that would need real permission prompts).
 * The README pictures come from the real window with a sample chat (fake AI, nothing shown on screen):
   `NOVA_SCREENSHOTS=1 QT_QPA_PLATFORM=cocoa .venv/bin/python -m pytest -q tests/test_screenshots.py`.
 * Python **3.14** (`.python-version`) is what NOVA is tested on. `requirements.txt` lists minimum versions;

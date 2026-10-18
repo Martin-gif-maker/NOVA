@@ -191,3 +191,18 @@ def test_nova_from_source_leaves_updates_to_git_but_the_app_checks_daily(win, mo
     assert checked == [True]
     win.config["update_checked"] = ""; win.config["auto_update"] = "off"; win._auto_update_check()
     assert checked == [True]                                                   # "do not check" is respected
+
+
+def test_a_busy_disk_image_helper_is_waited_for(monkeypatch):
+    import time
+    tries = []
+    def flaky(cmd, timeout=120):
+        tries.append(cmd[1])
+        if len(tries) < 3: raise updater.UpdateError("hdiutil failed: hdiutil: attach failed - Resource temporarily unavailable")
+        return ""
+    monkeypatch.setattr(updater, "_run", flaky); monkeypatch.setattr(time, "sleep", lambda s: None)
+    updater._attach("x.dmg", "/tmp/m")
+    assert tries == ["attach"] * 3
+    def broken(cmd, timeout=120): raise updater.UpdateError("hdiutil failed: image not recognized")
+    monkeypatch.setattr(updater, "_run", broken)
+    with pytest.raises(updater.UpdateError, match="not recognized"): updater._attach("x.dmg", "/tmp/m")   # real errors at once
