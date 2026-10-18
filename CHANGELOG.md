@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Measured with a real model.** The 86-request evaluation ran against a 4B model on this Mac: 87.2 % correct at
+  first, **94.2 %** after the fixes it pointed to (Bulgarian 96.2 %). It also reports whether NOVA's approval rules
+  would have stopped every action that came from hidden instructions (they would have: 4/4).
+- Clearer tool descriptions and two new rules for the AI: save what you say about yourself, and never claim to have
+  done something it did not do (a model had answered "Saved" without saving).
+- File tools read a relative path ("Desktop/notes.txt") from your home folder instead of from wherever NOVA runs,
+  and "create a folder Projects on the desktop" works however the model phrases it.
 - After an update, "What's new" covers every version since the one you used last (newest first), not only the
   latest - coming from 6.2 you now hear about 6.3, 6.4 and 6.5. Its title has no emoji.
 - With *Search by meaning* installed, NOVA also picks the memories it sends by meaning: asked "what should I order

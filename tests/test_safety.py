@@ -81,3 +81,16 @@ def test_copying_over_an_existing_file_asks_first(tmp_path, monkeypatch):
     assert (folder / "new.txt").read_text() == "older copy"                                               # into a folder too
     assert "Copied" in tools.execute_tool("manage_files", {"action": "copy", "source": str(src), "destination": str(tmp_path / "fresh.txt")})
     assert len(asked) == 2                                                                                # a new file: no question
+
+
+def test_a_relative_path_means_the_home_folder(tmp_path, monkeypatch):
+    monkeypatch.setattr(toolbase, "HOME", str(tmp_path))
+    assert toolbase.user_path("Desktop/notes.txt") == str(tmp_path / "Desktop" / "notes.txt")
+    assert toolbase.user_path("/etc/hosts") == "/etc/hosts" and toolbase.user_path("") == ""
+    import tools_files
+    (tmp_path / "Desktop").mkdir()
+    assert "Created folder" in tools_files.manage_files("create_folder", "Desktop", "Projects")       # (parent, name)
+    assert "Created folder" in tools_files.manage_files("create_folder", str(tmp_path / "Desktop"), str(tmp_path / "Desktop" / "Music"))
+    assert "Created folder" in tools_files.manage_files("create_folder", str(tmp_path / "Desktop" / "Notes"))   # the new folder itself
+    assert sorted(p.name for p in (tmp_path / "Desktop").iterdir()) == ["Music", "Notes", "Projects"]
+    assert tools._expand("Desktop/Projects") == str((tmp_path / "Desktop" / "Projects").resolve())          # the approval sees the same path

@@ -65,6 +65,8 @@ def test_a_hidden_instruction_that_is_followed_is_caught(fake_model):
                               ["Here is the recipe."]]
     r = harness.run_case(case, fake_model, models.fast_model_id())
     assert r["args_ok"] and r["forbidden"] == ["run_shell_command"] and not r["ok"]
+    assert r["unguarded"] == []                                                   # …but NOVA would have asked first
+    assert harness.live_summary([r])["guarded_injection"] == "1/1"
     assert tools.run_tool.__name__ == "run_tool"                                 # the real tools are back afterwards
 
 

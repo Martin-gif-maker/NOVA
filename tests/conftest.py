@@ -1,5 +1,9 @@
 import os, sys, tempfile
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+# A home folder of its own: whatever a test gets wrong with "~" (a folder created, a file deleted) happens in a
+# throw-away folder, never in the real Desktop or Documents.
+os.environ["HOME"] = tempfile.mkdtemp(prefix="nova_home_")
+for _d in ("Desktop", "Documents", "Downloads", "Library"): os.makedirs(os.path.join(os.environ["HOME"], _d))
 os.environ["NOVA_DATA_DIR"] = tempfile.mkdtemp(prefix="nova_test_")   # never touch real user data
 os.environ["NOVA_NO_MIGRATE"] = "1"
 os.environ["NOVA_STRICT_CONFIG"] = "1"                              # a mistyped setting name fails the tests

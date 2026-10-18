@@ -1,6 +1,6 @@
 # tools_apps.py — tools that open things: apps, web addresses, maps, a web search, a file in Finder.
 import os, re, shutil, subprocess, threading, webbrowser, urllib.parse
-from toolbase import HOME, fail
+from toolbase import HOME, fail, user_path
 
 _SCANNED_APPS: dict = {}          # installed apps: lower-case name -> path of the .app
 
@@ -103,7 +103,7 @@ def search_web(query: str) -> str:
 def open_in_explorer(path: str) -> str:
     """Show a file in Finder (selected), or open a folder."""
     try:
-        path = os.path.abspath(os.path.expandvars(os.path.expanduser(path)))
+        path = os.path.abspath(user_path(path))
         if not os.path.exists(path):
             return fail(f"Path not found: {path}")
         subprocess.Popen(["open", "-R", path] if os.path.isfile(path) else ["open", path])

@@ -5,7 +5,7 @@ import platform_utils as plat
 import paths
 import storage
 import docs
-from toolbase import HOME, fail
+from toolbase import HOME, fail, user_path
 
 NOTES_FILE = paths.NOTES_FILE
 
@@ -30,8 +30,9 @@ def _move_to_trash(path: str) -> str:
     return dest
 
 def manage_files(action: str, source: str, destination: str = None) -> str:
-    source = os.path.expandvars(os.path.expanduser(source))
-    if destination: destination = os.path.expandvars(os.path.expanduser(destination))
+    source = user_path(source)
+    name = os.path.basename(str(destination or "").rstrip("/"))          # for create_folder given as (parent, name)
+    if destination: destination = user_path(destination)
     try:
         if action == "delete":
             if not os.path.lexists(source): return fail(f"Not found: {source}")
@@ -56,6 +57,8 @@ def manage_files(action: str, source: str, destination: str = None) -> str:
             files   = [f"📄 {i}" for i in items if os.path.isfile(os.path.join(source, i))]
             return f"Contents ({len(items)}):\n" + "\n".join(folders + files)[:2000]
         elif action == "create_folder":
+            if name and os.path.normpath(destination) != os.path.normpath(source):
+                source = os.path.join(source, name)          # "create Projects on the desktop" sent as (desktop, Projects)
             os.makedirs(source, exist_ok=True); return f"Created folder: {source} ✓"
         else: return fail(f"Unknown action: {action}")
     except PermissionError: return fail(f"Permission denied: {source}")
@@ -139,7 +142,7 @@ def execute_python_code(code: str) -> str:
 def write_file(path: str, content: str, mode: str = "w") -> str:
     """Write or append content to a file. mode: 'w' (overwrite) or 'a' (append)."""
     try:
-        path = os.path.expandvars(os.path.expanduser(path))
+        path = user_path(path)
         parent = os.path.dirname(path)
         if parent: os.makedirs(parent, exist_ok=True)
         with open(path, mode, encoding="utf-8") as f:
@@ -154,7 +157,7 @@ def write_file(path: str, content: str, mode: str = "w") -> str:
 # ── TOOL: search_files ───────────────────────────────────────────
 def search_files(query: str, folder: str = None, content_search: bool = False) -> str:
     """Search files by name. Set content_search=True to also search inside files."""
-    base = os.path.expandvars(os.path.expanduser(folder or "~"))
+    base = user_path(folder or "~")
     results = []
     SKIP_DIRS = {".git", "__pycache__", "node_modules", ".venv", "venv", "AppData", ".idea",
                  "site-packages", "Library", "Applications", "Movies", "Music", "Pictures",
@@ -192,7 +195,7 @@ def search_files(query: str, folder: str = None, content_search: bool = False) -
 def read_file(path: str, max_chars: int = 8000) -> str:
     """Read a local file and return its content (text files only)."""
     try:
-        path = os.path.expandvars(os.path.expanduser(path))
+        path = user_path(path)
         if not os.path.exists(path):
             return fail(f"File not found: {path}")
         size = os.path.getsize(path)

@@ -65,7 +65,27 @@ with hidden instructions that NOVA must not follow.
   and a test keeps it that way.
 * `python -m evals live` sends each request through NOVA's real prompt and agent loop to the real model. The
   tools are stand-ins, so nothing happens on the Mac. It reports right tool, right details, time, tokens,
-  and whether hidden instructions were ignored. Results are saved in `evals/results/`.
+  whether hidden instructions were ignored and, where they were not, whether NOVA's approval rules would have
+  stopped every resulting action. Results are saved in `evals/results/`.
+
+**Results** with a small open model running entirely on the Mac (Qwen3-4B-Instruct-2507, 4-bit, via `mlx-lm`'s
+OpenAI-compatible server and NOVA's *Custom* provider; Apple M4):
+
+| | First run | After fixing what it showed (two runs) |
+|---|---:|---:|
+| Correct (right tool and details) | 87.2 % | **94.2 %** |
+| Right tool | 88.6 % | 94.9 % |
+| Bulgarian requests | 84.6 % | 96.2 % |
+| No tool when none was needed | 7/7 | 7/7 |
+| Actions from hidden instructions stopped for approval | 2/2 | 4/4 |
+| Time per request | 3.0 s | 3.0 s |
+
+The first run's misses led to clearer tool descriptions (Spotify playback vs. opening an app, a Google search vs.
+an answer, "remind me in 10 minutes" vs. the Reminders app, "пряк път" for Shortcuts), two prompt rules (save what
+the user says about themselves; never claim an action that was not done - the model had replied "Saved" without
+saving) and two real fixes in the tools: relative paths now mean the home folder, not wherever NOVA runs, and
+"create folder" accepts a parent plus a name. Run it yourself:
+`python -m evals live --provider custom --base-url http://127.0.0.1:8080/v1 --model <id>`.
 
 ## Design decisions
 * **Tools are sent only when needed.** Every tool definition costs tokens on every request, and Groq's free

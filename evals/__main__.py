@@ -35,6 +35,7 @@ def main(argv=None) -> int:
     ap.add_argument("--only", help="comma-separated case ids")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--base-url", default="", help="server address for the custom / ollama providers")
+    ap.add_argument("--name", default="", help="the model's name in the report (instead of its id or path)")
     args = ap.parse_args(argv)
 
     cases = harness.load_cases()
@@ -76,11 +77,14 @@ def main(argv=None) -> int:
 
     s = harness.live_summary(results)
     stamp = datetime.datetime.now().strftime("%Y-%m-%d-%H%M")
-    name = f"{stamp}-{args.provider}-{model_id.split('/')[-1]}"
+    shown = args.name or model_id
+    for r in results: r["model"] = shown
+    import re
+    name = f"{stamp}-{args.provider}-" + re.sub(r"[^\w.]+", "-", shown.split("/")[-1]).strip("-").lower()
     out = os.path.join(harness.HERE, "results"); os.makedirs(out, exist_ok=True)
     with open(os.path.join(out, name + ".json"), "w", encoding="utf-8") as f:
-        json.dump({"provider": args.provider, "model": model_id, "summary": s, "results": results}, f, ensure_ascii=False, indent=1)
-    title = f"{args.provider} · {model_id} · {len(cases)} requests · {stamp[:10]}"
+        json.dump({"provider": args.provider, "model": shown, "summary": s, "results": results}, f, ensure_ascii=False, indent=1)
+    title = f"{args.provider} · {shown} · {len(cases)} requests · {stamp[:10]}"
     with open(os.path.join(out, name + ".md"), "w", encoding="utf-8") as f:
         f.write(harness.markdown(live_sum=s, title=title))
     print("\n" + harness.markdown(live_sum=s, title=title))

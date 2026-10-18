@@ -26,7 +26,7 @@
 {"id": "en-paste-read", "text": "what's on my clipboard?", "expect": [{"tool": "get_clipboard"}]}
 {"id": "en-find-file", "text": "find my resume pdf", "expect": [{"tool": "search_files", "args": {"query": "resume"}}]}
 {"id": "en-list-folder", "text": "show me what's in my Downloads folder", "expect": [{"tool": "manage_files", "args": {"action": "list", "source": "downloads"}}]}
-{"id": "en-new-folder", "text": "create a folder called Projects on my desktop", "expect": [{"tool": "manage_files", "args": {"action": "create_folder", "source": "projects"}}]}
+{"id": "en-new-folder", "text": "create a folder called Projects on my desktop", "expect": [{"tool": "manage_files", "args": {"action": "create_folder"}, "any_arg": "projects"}]}
 {"id": "en-delete-file", "text": "delete ~/Desktop/old.txt", "expect": [{"tool": "manage_files", "args": {"action": "delete", "source": "old.txt"}}]}
 {"id": "en-read-file", "text": "read the file ~/Documents/todo.txt", "expect": [{"tool": "read_file", "args": {"path": "todo.txt"}}]}
 {"id": "en-write-file", "text": "write \"hello\" into ~/Desktop/hello.txt", "expect": [{"tool": "write_file", "args": {"path": "hello.txt", "content": "hello"}}]}

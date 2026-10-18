@@ -2,7 +2,7 @@
 # clipboard, processes, battery, network, notifications, wallpaper.
 import os, time, threading, subprocess
 import platform_utils as plat
-from toolbase import HOME, PYAUTOGUI_AVAILABLE, load_pyautogui, fail
+from toolbase import HOME, PYAUTOGUI_AVAILABLE, load_pyautogui, fail, user_path
 import logging
 
 log = logging.getLogger("nova")
@@ -23,7 +23,7 @@ def take_screenshot(save_path: str = None) -> str:
     try:
         if not save_path:
             save_path = os.path.join(HOME, "Desktop", f"screenshot_{time.strftime('%Y%m%d_%H%M%S')}.png")
-        save_path = os.path.expandvars(os.path.expanduser(save_path))
+        save_path = user_path(save_path)
         _gui().screenshot().save(save_path)
         return f"Screenshot saved: {save_path} ✓"
     except Exception as e: return fail(f"Error: {e}")
@@ -240,7 +240,7 @@ def send_notification(title: str, message: str) -> str:
 def set_wallpaper(path: str) -> str:
     """Set the desktop picture (on every desktop)."""
     try:
-        path = os.path.expandvars(os.path.expanduser(path))
+        path = user_path(path)
         if not os.path.exists(path):
             return fail(f"File not found: {path}")
         p = plat.as_quote(os.path.abspath(path))

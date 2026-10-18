@@ -288,7 +288,7 @@ def list_documents() -> str:
 
 def add_document(path: str) -> str:
     """Index a file, or every supported file in a folder, so its content can be searched."""
-    p = os.path.expandvars(os.path.expanduser(str(path or "")))
+    p = toolbase.user_path(path)
     try:
         if os.path.isdir(p):
             r = docs.library().add_folder(p)
@@ -529,7 +529,7 @@ def _needs_confirmation(tool_name: str, args: dict) -> str:
         return f"{a.get('action')} file(s):\n{a.get('source', '')}" + (
             f"\n→ {a.get('destination')}" if a.get("destination") else "")
     if tool_name == "write_file":
-        p = os.path.expandvars(os.path.expanduser(str(a.get("path", ""))))
+        p = toolbase.user_path(a.get("path", ""))
         verb = "Append to" if a.get("mode") == "a" else ("Overwrite" if os.path.exists(p) else "Create")
         return f"{verb} file:\n{p}"
     if tool_name == "kill_process":
@@ -559,7 +559,7 @@ def _copy_replaces(a: dict) -> bool:
 TARGET_APP_HOOK = None          # () -> name of the app that will receive typed text (set by the GUI)
 
 def _expand(path) -> str:
-    return os.path.realpath(os.path.expandvars(os.path.expanduser(str(path or ""))))
+    return os.path.realpath(toolbase.user_path(path))
 
 def _offerable_dir(directory: str) -> bool:
     """Only ordinary folders inside the home folder can be pre-approved - never the home folder itself,

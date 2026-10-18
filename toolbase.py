@@ -4,6 +4,13 @@ import importlib.util
 
 HOME = os.path.expanduser("~")
 
+
+def user_path(path) -> str:
+    """A path as the user means it: ~ and $VARS expanded, and a relative path ("Desktop/notes.txt", "Projects")
+    taken from the home folder - not from the folder NOVA happens to run in (inside its own app bundle)."""
+    p = os.path.expandvars(os.path.expanduser(str(path or "").strip()))
+    return p if os.path.isabs(p) or not p else os.path.join(HOME, p)
+
 # pyautogui (screenshots and typing) pulls in Quartz and AppKit: about 140 ms that every start-up paid for two tools.
 # It is loaded the first time one of them runs.
 PYAUTOGUI_AVAILABLE = importlib.util.find_spec("pyautogui") is not None
