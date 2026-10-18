@@ -57,3 +57,14 @@ def test_a_passage_found_only_by_meaning_is_labelled_for_the_ai(lib, monkeypatch
     monkeypatch.setattr(docs, "library", lambda: lib)
     text = docs.answer_material("How much vacation do staff get?")
     assert text.startswith("[handbook.txt]") and "found by meaning" in text.split("\n")[0]
+
+
+def test_the_real_model_picks_the_memory_that_matters():
+    import memory
+    items = [memory.make(t, "preference") for t in (
+        "likes jazz", "has a dog called Rex", "works as a nurse", "lives in Plovdiv", "drives a blue Skoda",
+        "prefers tea to coffee", "plays tennis on Sundays", "has two children", "studies Spanish", "goes to the gym",
+        "reads crime novels", "uses a MacBook Air", "is learning to cook", "likes hiking", "watches Formula 1")]
+    items.insert(2, memory.make("is allergic to peanuts", "health"))
+    picked = [it["text"] for it in memory.relevant(items, "what should I order at the Thai restaurant tonight?")]
+    assert "is allergic to peanuts" in picked

@@ -153,14 +153,39 @@ def _overlap(a: set, b: set) -> int:
     return hits + sum(1 for w in a - b if len(w) >= 5 and w[:5] in stems_b)
 
 
+_VECTORS: dict = {}            # memory text -> its meaning vector (made once per text, kept while NOVA runs)
+
+
+def _meaning_scores(items: list, query: str) -> dict:
+    """{index: 0..1} how close each memory is in meaning to the question - with the on-device model (embeddings.py),
+    else {}. "What should I order at the restaurant?" is close to "is allergic to peanuts" with no word in common."""
+    import embeddings
+    if not query.strip() or not embeddings.ready(): return {}
+    try:
+        import numpy as np
+        new = [it["text"] for it in items if it["text"] not in _VECTORS]
+        if new:
+            for text, vec in zip(new, embeddings.embed_passages(new)): _VECTORS[text] = vec
+        q = embeddings.embed_query(query)
+        sims = np.array([float(_VECTORS[it["text"]] @ q) for it in items])
+    except Exception as e:
+        import logging; logging.getLogger("nova").info("memories by meaning skipped: %s", e)
+        return {}
+    import docs
+    floor = docs.Library.MEANING_FLOOR
+    return {i: max(0.0, (s - floor) / (1 - floor)) for i, s in enumerate(sims)}
+
+
 def relevant(items: list, query: str = "", limit: int = PROMPT_LIMIT) -> list:
     """The memories worth sending with this request, in the order they were saved.
-    Everything fits -> everything. Otherwise: memories that share words with the question first, then who the
-    user is and what they prefer, then the most recent."""
+    Everything fits -> everything. Otherwise: memories that share words with the question - or its meaning, with
+    the on-device model - first, then who the user is and what they prefer, then the most recent."""
     if len(items) <= limit: return list(items)
     q = _tokens(query); n = len(items); scored = []
+    close = _meaning_scores(items, query)
     for i, it in enumerate(items):
         score = (3.0 * _overlap(q, _tokens(it["text"])) + 2.0 * _overlap(q, _tokens(it.get("tags", "")))) if q else 0.0
+        score += 8.0 * close.get(i, 0.0)
         score += {"about_me": 1.5, "preference": 1.0, "task": 0.8}.get(it.get("category"), 0.0)
         score += i / n                                             # newer = slightly better (and breaks ties)
         scored.append((score, i))

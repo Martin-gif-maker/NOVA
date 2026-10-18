@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- With *Search by meaning* installed, NOVA also picks the memories it sends by meaning: asked "what should I order
+  at the Thai restaurant tonight?", it now includes "is allergic to peanuts", which word matching left out.
 - NOVA run from its source code no longer offers to download the app when a new version is out; it says to
   update with `git pull`.
 - `python -m evals live --provider custom --base-url …` measures any OpenAI-compatible server (Ollama, LM Studio,

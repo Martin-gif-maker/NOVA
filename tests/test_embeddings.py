@@ -190,3 +190,15 @@ def test_the_documents_window_shows_home_paths_short(app, lib, tmp_path, monkeyp
     lib.add_file(str(f))
     d = dialogs.DocumentsDialog(themes.THEMES["soft"], lib)
     assert d.listw.item(0).text().endswith("~/Documents/lease.txt")
+
+
+def test_memories_are_chosen_by_meaning_too(model):
+    import memory
+    CONCEPTS.append(("restaurant", "order", "peanut", "allergic"))           # food: one meaning, no shared word
+    try:
+        items = [memory.make(f"likes film number {i}", "preference") for i in range(20)]
+        items.insert(3, memory.make("is allergic to peanuts", "health"))
+        picked = memory.relevant(items, "what should I order at the restaurant?")
+        assert len(picked) == memory.PROMPT_LIMIT and any("peanuts" in it["text"] for it in picked)
+    finally:
+        CONCEPTS.pop()

@@ -177,7 +177,8 @@ open these folders, or delete all data (including the Keychain entries).
 NOVA remembers facts you tell it, each with a category and an optional expiry ("remember for a week that…").
 Only the memories that fit the current question are sent with it (up to 12); the rest stay on the Mac until
 they are relevant. When a memory is saved, the AI is asked once for keywords, so "what should I order at the
-restaurant?" finds "is allergic to peanuts" (can be turned off). Edit memories in Settings → Privacy → View memories.
+restaurant?" finds "is allergic to peanuts" (can be turned off). With *Search by meaning* installed, memories are
+also matched by meaning on the Mac, with no keywords needed. Edit memories in Settings → Privacy → View memories.
 
 ## Safety model
 * Risky tool calls (shell, Python, delete/move/rename, overwrite, kill, shutdown, typing) always ask first.
