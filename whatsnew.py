@@ -4,6 +4,11 @@ import paths
 from i18n import tr
 
 NOTES = {
+    "6.4": [
+        "NOVA keeps itself up to date: once a day it looks for a new version and, when you agree, installs it (Settings → Data).",
+        "The setup wizard and every settings window are fully in Bulgarian, and check boxes now show a tick.",
+        "The scheduled-task window is easier to use: the weekdays appear only when you choose days.",
+    ],
     "6.3": [
         "Search your documents by meaning: ＋ → Documents → Search by meaning (a one-time 135 MB download). A question then also finds passages that say the same thing in other words or in another language.",
         "NOVA starts about a third faster, and quits at once.",

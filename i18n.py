@@ -592,6 +592,13 @@ BG.update({
     "No image-capable model is available with this AI provider.": "Тази AI услуга няма модел, който разбира изображения.",
     "Image analysis is rate-limited - try again in {}s.": "Анализът на изображения е ограничен за момента — опитай пак след {} с.",
     "Image analysis is rate-limited - try again shortly.": "Анализът на изображения е ограничен за момента — опитай пак след малко.",
+    # what's new in 6.4
+    "NOVA keeps itself up to date: once a day it looks for a new version and, when you agree, installs it (Settings → Data).":
+        "NOVA се обновява сама: веднъж на ден проверява за нова версия и, ако се съгласиш, я инсталира (Настройки → Данни).",
+    "The setup wizard and every settings window are fully in Bulgarian, and check boxes now show a tick.":
+        "Първоначалната настройка и всички прозорци с настройки са изцяло на български, а отметките вече показват ✓.",
+    "The scheduled-task window is easier to use: the weekdays appear only when you choose days.":
+        "Прозорецът за планирани задачи е по-удобен: дните от седмицата се показват само когато избираш дни.",
     # what's new in 6.3
     "Search your documents by meaning: ＋ → Documents → Search by meaning (a one-time 135 MB download). A question then also finds passages that say the same thing in other words or in another language.":
         "Търси в документите си по смисъл: ＋ → Документи → Търсене по смисъл (еднократно изтегляне от 135 MB). Тогава въпросът намира и откъси, които казват същото с други думи или на друг език.",

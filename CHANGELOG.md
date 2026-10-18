@@ -1,6 +1,6 @@
 # NOVA — what changed
 
-## Unreleased
+## 6.4.0 — October 2026
 
 - **A cleaner first start.** In the setup wizard the AI-provider menu was almost invisible and the "I understand
   and agree" box had no visible check box; both are fixed. Pages that are too long now scroll instead of
