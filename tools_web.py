@@ -2,6 +2,7 @@
 # Whatever they return is outside content: tools.py marks the request as "tainted" after they ran.
 import re, socket, ipaddress, logging
 import ledger
+import toolbase
 from toolbase import UNTRUSTED_NOTE, fail
 
 log = logging.getLogger("nova")
@@ -28,9 +29,12 @@ def read_webpage(url: str) -> str:
         class _Strip(HTMLParser):
             SKIP = ("script", "style", "nav", "footer", "head", "noscript", "svg")
             def __init__(self):
-                super().__init__(); self._t=[]; self._depth=0
-            def handle_starttag(self, tag, _):
+                super().__init__(); self._t=[]; self._depth=0; self.links=[]
+            def handle_starttag(self, tag, attrs):
                 if tag in self.SKIP: self._depth += 1
+                if tag == "a":
+                    href = dict(attrs).get("href")
+                    if href: self.links.append(href)
             def handle_endtag(self, tag):
                 if tag in self.SKIP and self._depth: self._depth -= 1
             def handle_data(self, d):
@@ -43,6 +47,8 @@ def read_webpage(url: str) -> str:
         r = requests.get(url, timeout=10, headers={"User-Agent":"Mozilla/5.0"})
         r.raise_for_status()
         p = _Strip(); p.feed(r.text)
+        from urllib.parse import urljoin
+        toolbase.note_urls(urljoin(r.url or url, h) for h in p.links[:500])     # its links may be followed later
         text = re.sub(r"\s{3,}", "  ", p.text())
         return UNTRUSTED_NOTE + text[:4000] if text else "Page is empty."
     except Exception as e: return fail(f"Error reading: {e}")

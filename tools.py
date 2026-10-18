@@ -17,6 +17,7 @@ import mac_apps
 import docs
 import schedule as sched
 import mcp_client
+import toolbase
 from toolbase import HOME, UNTRUSTED_NOTE, ToolFailure, fail
 from tools_apps import open_application, open_url, open_maps, search_web, open_in_explorer
 from tools_system import (take_screenshot, type_text_keyboard, control_volume, control_system, empty_recycle_bin,
@@ -468,10 +469,12 @@ def validate_args(tool_name: str, args: dict):
     return args, ""
 _taint = {"on": False, "src": ""}
 
-def begin_request():
-    """Call at the start of every user request: forget what the previous one read."""
+def begin_request(user_text: str = ""):
+    """Call at the start of every user request: forget what the previous one read. `user_text` (what the user wrote
+    in this conversation) gives the web addresses NOVA may open later without asking."""
     _taint["on"] = False; _taint["src"] = ""
     REQUESTED_GROUPS.clear()
+    toolbase.SEEN_URLS.clear(); toolbase.note_urls(user_text or "")
 
 def taint(source: str) -> None:
     """Mark this request as having read content someone else wrote (a file, a page, text selected in another app)."""
@@ -487,6 +490,10 @@ TAINT_WARNING = ("⚠️ NOVA read web or file content earlier in this request, 
 def needs_confirmation(tool_name: str, args: dict) -> str:
     """Return a human-readable description if this call is risky, else ''."""
     desc = _needs_confirmation(tool_name, args)
+    if not desc and _taint["on"] and tool_name == "read_webpage":
+        url = str((args or {}).get("url", ""))
+        if toolbase.norm_url(url) not in toolbase.SEEN_URLS:          # an address nobody gave NOVA: it could carry data out
+            desc = f"Open a web address that did not come from you or from what NOVA read:\n{url[:300]}"
     if not desc and _taint["on"] and tool_name in SIDE_EFFECT_TOOLS:
         shown = ", ".join(f"{k}={str(v)[:120]}" for k, v in (args or {}).items())
         desc = f"{tool_name}({shown})"
@@ -516,6 +523,8 @@ def _needs_confirmation(tool_name: str, args: dict) -> str:
         return f"Run shell command:\n{a.get('command', '')}"
     if tool_name == "execute_python_code":
         return f"Run Python code:\n{str(a.get('code', ''))[:600]}"
+    if tool_name == "manage_files" and a.get("action") == "copy" and _copy_replaces(a):
+        return f"copy file(s), replacing what is there:\n{a.get('source', '')}\n→ {a.get('destination', '')}"
     if tool_name == "manage_files" and a.get("action") in ("delete", "move", "rename"):
         return f"{a.get('action')} file(s):\n{a.get('source', '')}" + (
             f"\n→ {a.get('destination')}" if a.get("destination") else "")
@@ -532,6 +541,14 @@ def _needs_confirmation(tool_name: str, args: dict) -> str:
     if tool_name == "type_text_keyboard":
         return f"Type into {_typing_target() or 'the active app'}:\n{str(a.get('text', ''))[:300]}"
     return ""
+
+def _copy_replaces(a: dict) -> bool:
+    """Would copying `source` to `destination` replace something that is already there?"""
+    src, dest = _expand(a.get("source", "")), _expand(a.get("destination", "") or "")
+    if not dest: return False
+    final = os.path.join(dest, os.path.basename(src)) if os.path.isdir(dest) else dest
+    return os.path.lexists(final)
+
 
 # ── Scoped "always allow" ─────────────────────────────────────────
 # Instead of all-or-nothing, the user can pre-approve
@@ -558,6 +575,9 @@ def _affected_paths(tool_name: str, a: dict):
         return [_expand(a.get("path"))] if a.get("path") else None
     if tool_name == "manage_files" and a.get("action") in ("move", "rename") and a.get("source") and a.get("destination"):
         return [_expand(a["source"]), _expand(a["destination"])]
+    if tool_name == "manage_files" and a.get("action") == "copy" and a.get("source") and a.get("destination"):
+        dest, src = _expand(a["destination"]), _expand(a["source"])
+        return [os.path.join(dest, os.path.basename(src)) if os.path.isdir(dest) else dest]
     return None
 
 def _typing_target() -> str:
@@ -731,6 +751,7 @@ def execute_tool(tool_name: str, args: dict) -> str:
     except Exception as e: result = fail(f"Error in {tool_name}: {e}")
     if tool_name in UNTRUSTED_SOURCES or tool_name in MCP_TOOLS:      # whatever a connected server returns is outside text
         _taint["on"] = True; _taint["src"] = tool_name
+        if isinstance(result, str): toolbase.note_urls(result)             # its links may be followed
     _log_activity(tool_name, args, outcome + (" (tainted)" if _taint["on"] else ""), result, ok=not isinstance(result, ToolFailure))
     return result
 

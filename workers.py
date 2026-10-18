@@ -206,7 +206,8 @@ class AIWorker(QThread):
         MAX_RETRY  = 4
         MAX_ROUNDS = 8   # max tool-call rounds before giving up
         t0 = time.monotonic(); ttft = None; rounds = 0
-        computer_tools.begin_request()
+        computer_tools.begin_request(" ".join(m["content"] for m in self.messages
+                                              if m.get("role") == "user" and isinstance(m.get("content"), str)))
         if self.untrusted: computer_tools.taint(self.untrusted)
         begin = getattr(self.client, "begin_request", None)
         if callable(begin): begin()                          # e.g. Claude: forget the previous tool loop's thinking blocks

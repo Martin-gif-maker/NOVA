@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Safety:** after NOVA has read a page, file or email, hidden instructions in it could have had NOVA read your
+  files and then "read" a web address with that data in it, which never asked. Now a web address that did not come
+  from you, a search result or a link on a page NOVA read asks first; following real links still does not.
+- **Safety:** copying a file onto one that already exists replaced it without asking (moving and renaming always
+  asked). Now it asks, with what would be replaced.
 - The window always opens fully on screen: shrinking NOVA to a bubble, parking it in a corner and opening it again
   used to put most of the window off the edge of the screen (a 61-pixel corner was all that showed).
 - The counter in the title bar says "6 messages · 1.2k tokens" (and in Bulgarian), not "6 msgs · 1.2k tok"; the
