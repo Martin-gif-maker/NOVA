@@ -21,6 +21,29 @@ class MemoryKeyring(KeyringBackend):
 
 keyring.set_keyring(MemoryKeyring())
 
+# ── no test may reach the internet ─────────────────────────────────
+# A test that lets a real tool run (weather, a web page …) is slow when the network is, can time out, and leaves a
+# worker thread behind that later crashes the run. Every connection except to this Mac fails at once and the test is
+# marked failed. (NOVA_LIVE_TESTS=1 lifts this for tests/test_live.py, which talks to the real AI on purpose.)
+import socket
+_NET_TRIES: list = []
+_real_connect = socket.socket.connect
+
+
+def _guarded_connect(self, address):
+    if os.environ.get("NOVA_LIVE_TESTS") != "1" and self.family in (socket.AF_INET, socket.AF_INET6):
+        host = str(address[0])
+        if not (host.startswith("127.") or host in ("::1", "localhost", "0.0.0.0")):
+            import traceback
+            here = [f"{f.filename.rsplit('/', 1)[-1]}:{f.lineno} {f.name}" for f in traceback.extract_stack()[:-1]
+                    if "nova.mac/" in f.filename and "/.venv/" not in f.filename and "conftest" not in f.filename]
+            _NET_TRIES.append(f"{host} from {' > '.join(here[-4:]) or 'outside NOVA'}")
+            raise ConnectionRefusedError(f"a test tried to reach the internet ({host}) - fake the tool or the server instead")
+    return _real_connect(self, address)
+
+
+socket.socket.connect = _guarded_connect
+
 import platform_utils                                         # the tests never read or write the real "launch at login" file
 platform_utils._LAUNCH_AGENT = os.path.join(os.environ["NOVA_DATA_DIR"], "LaunchAgents", "com.nova.assistant.plist")
 
@@ -35,6 +58,13 @@ def _plain_storage():
     tools.begin_request()                       # no "read untrusted content" state leaks between tests
     yield
     storage._state.update(on=False, key=None)
+
+
+@pytest.fixture(autouse=True)
+def _no_internet():
+    _NET_TRIES.clear()
+    yield
+    assert not _NET_TRIES, f"this test tried to reach the internet: {sorted(set(_NET_TRIES))}"
 
 
 @pytest.fixture(autouse=True)

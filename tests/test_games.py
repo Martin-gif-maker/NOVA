@@ -101,8 +101,8 @@ def test_games_speak_bulgarian(qapp, data_dir, monkeypatch):
     d = games.NumberGuessDialog(themes.THEMES["nova"])
     assert d.windowTitle() == "NOVA — Познай числото" and d._tries_lbl.text() == "Оставащи опити: 7"
     d._entry.setText("abc"); d._guess(); assert d._msg_lbl.text() == "Въведи число!"
-    d._entry.setText("10"); d._guess(); assert d._msg_lbl.text() == "Твърде малко ⬆️" and d._tries_lbl.text() == "Оставащи опити: 6"
-    d._entry.setText("42"); d._guess(); assert d._msg_lbl.text().startswith("🎉 Позна!") and d._tries_lbl.text() == "Познато с 2 опита"
+    d._entry.setText("10"); d._guess(); assert d._msg_lbl.text() == "Твърде малко — по-голямо" and d._tries_lbl.text() == "Оставащи опити: 6"
+    d._entry.setText("42"); d._guess(); assert d._msg_lbl.text().startswith("Позна!") and d._tries_lbl.text() == "Познато с 2 опита"
     monkeypatch.setattr(games, "get_daily_word", lambda: "CRANE")
     w = games.WordleDialog(themes.THEMES["nova"])
     for ch in "CR": w._on_key(ch)

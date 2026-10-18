@@ -121,34 +121,33 @@ class ExtrasMixin:
 
     def _show_plugins_dialog(self):
         t = self._theme
+        import dialogs
         d = QDialog(self); d.setWindowTitle(tr("NOVA — Active Plugins & Tools"))
-        d.setMinimumWidth(380); d.setMinimumHeight(260)
-        d.setStyleSheet(f"background:{t['frame_bg']};color:{t['ai_fg']};")
+        d.setMinimumWidth(420); d.setMinimumHeight(320)
+        d.setStyleSheet(dialogs._style(t))                     # the shared look: fields, thin scroll bars
         v = QVBoxLayout(d); v.setContentsMargins(16,14,16,14)
         te = QTextEdit(); te.setReadOnly(True)
-        te.setStyleSheet(f"background:{t['ai_bg']};color:{t['ai_fg']};"
-                         f"border:1px solid {t['ai_br']};border-radius:8px;padding:8px;")
         # Built-in tools count
         builtin = [s["function"]["name"] for s in TOOLS_SCHEMA if s.get("function")]
         plugin_tools = [s["function"]["name"] for s in _PLUGIN_SCHEMAS if s.get("function")]
-        lines = [f"Built-in tools ({len(builtin)}):"]
+        lines = [tr("Built-in tools ({}):").format(len(builtin))]
         for name in sorted(builtin):
             lines.append(f"  • {name}")
         if plugin_tools:
-            lines.append(f"\nPlugin tools ({len(plugin_tools)}):") 
+            lines.append("\n" + tr("Plugin tools ({}):").format(len(plugin_tools)))
             for name in sorted(plugin_tools):
                 info = computer_tools.PLUGIN_INFO.get(name, {})
-                how = ("sandboxed — " + (", ".join(info["permissions"]) or "no permissions")) if info.get("sandboxed") \
-                    else "NOT sandboxed (no MANIFEST)"
+                how = (tr("sandboxed") + " — " + (", ".join(info["permissions"]) or tr("no permissions"))) if info.get("sandboxed") \
+                    else tr("NOT sandboxed (no MANIFEST)")
                 lines.append(f"  • {name}   [{info.get('file', '?')}: {how}]")
             # List plugin files
             plugins_dir = paths.PLUGINS_DIR
             if os.path.isdir(plugins_dir):
                 pfiles = [f for f in os.listdir(plugins_dir) if f.endswith(".py")]
-                lines.append(f"\nPlugin files: {', '.join(pfiles)}")
+                lines.append("\n" + tr("Plugin files: {}").format(", ".join(pfiles)))
         else:
-            lines.append("\nNo plugins loaded.")
-            lines.append(f"Drop .py files into: {paths.PLUGINS_DIR}")
+            lines.append("\n" + tr("No plugins loaded."))
+            lines.append(tr("Drop .py files into: {}").format(paths.PLUGINS_DIR))
         te.setPlainText("\n".join(lines))
         v.addWidget(te)
         bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)

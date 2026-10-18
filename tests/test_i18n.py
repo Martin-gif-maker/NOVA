@@ -34,7 +34,7 @@ def _dynamic():
     out += ["Tell me when there is a new version", "Install new versions by themselves", "Do not check", "Updates:"]
     import whatsnew
     out += [line for lines in whatsnew.NOTES.values() for line in lines]
-    out += ["Genius! 🧠", "Magnificent! 🎉", "Impressive! 👏", "Splendid! 😊", "Great! 👍", "Phew! 😅", "Too low ⬆️", "Too high ⬇️"]      # games
+    out += ["Genius!", "Magnificent!", "Impressive!", "Splendid!", "Great!", "Phew!", "Too low — go higher", "Too high — go lower"]      # games
     out += list(providers.FRIENDLY.values()) + [tools.TAINT_WARNING.strip()]
     out += ["Best model:", "Fast model:", "Third model:", "Fast (recommended)", "Balanced", "Deep (slowest)", "Auto-detect",
             "English", "Bulgarian", "German", "French", "Spanish", "Russian", "Short", "Normal", "Detailed"]

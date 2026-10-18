@@ -265,3 +265,11 @@ def test_the_bubble_opens_on_screen_from_a_corner(win):
         end = time.time() + 3
         while win._mode != mode and time.time() < end: win._pump(50)
     assert win._mode == MODE_NORMAL and area.contains(win.geometry()), (win.geometry(), area)
+
+
+def test_start_up_jobs_do_not_run_after_nova_shut_down(win):
+    ran = []
+    win._later(50, lambda: ran.append("early")); win._pump(150)
+    assert ran == ["early"]
+    win._later(50, lambda: ran.append("late")); win._shutdown(); win._pump(200)
+    assert ran == ["early"]                       # quitting within the first half minute: no update check, no refresh

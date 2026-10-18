@@ -184,10 +184,11 @@ def test_the_ai_client_loads_its_sdk_on_first_use(provider, sdk):
 def test_quitting_does_not_wait_for_the_system_statistics(app):
     w = workers.StatsWorker(); w.start(); time.sleep(0.3)
     t0 = time.monotonic(); w.requestInterruption(); assert w.wait(2000)
-    assert time.monotonic() - t0 < 0.05
+    assert time.monotonic() - t0 < 0.5                                  # not the rest of its 2-second wait (generous: busy CI)
 
 
-def test_the_working_line_says_what_nova_is_doing_and_keeps_saying_it(win):
+def test_the_working_line_says_what_nova_is_doing_and_keeps_saying_it(win, monkeypatch):
+    monkeypatch.setattr(tools, "run_tool", lambda name, args: tools.ToolResult(name, args, True, "18 °C"))   # no real weather
     FakeCompletions.script = [["SLEEP"] * 8 + [_tc(0, "c1", "get_weather", '{"location": "Sofia"}')], ["Sunny."]]
     _send(win, "weather in sofia")
     label = win._thinking_bubble._label

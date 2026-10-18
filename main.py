@@ -208,16 +208,21 @@ class AssistantWindow(WindowModesMixin, VoiceMixin, ApprovalsMixin, DataMixin, D
         try: QGuiApplication.styleHints().colorSchemeChanged.connect(self._on_system_theme)
         except Exception as e: log.debug("this Qt does not report light / dark changes: %s", e)
         self._build_menubar()
-        QTimer.singleShot(0, self._enable_shadow)
-        QTimer.singleShot(1200, self._review_plugins)
+        self._later(0, self._enable_shadow)
+        self._later(1200, self._review_plugins)
         self._start_stats()
         self._start_scheduler()
         self._start_mcp()
         self._start_spotify_monitor()
-        QTimer.singleShot(2000, self._maybe_morning_briefing)
-        QTimer.singleShot(6000, self._tag_memories)          # older memories without keywords get them once
-        QTimer.singleShot(30000, self._auto_update_check)
-        QTimer.singleShot(9000, self._refresh_documents)       # documents that changed while NOVA was closed
+        self._later(2000, self._maybe_morning_briefing)
+        self._later(6000, self._tag_memories)                 # older memories without keywords get them once
+        self._later(30000, self._auto_update_check)
+        self._later(9000, self._refresh_documents)            # documents that changed while NOVA was closed
+
+    def _later(self, ms: int, job):
+        """Run a start-up job after `ms` - unless NOVA has been shut down by then (quitting within the first half
+        minute must not start an update check or a document refresh)."""
+        QTimer.singleShot(ms, lambda: None if self._quitting else job())
 
     # ── Autostart ────────────────────────────────────────────────
     def _setup_autostart(self):

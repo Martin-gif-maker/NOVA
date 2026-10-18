@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Quitting NOVA within its first half minute no longer starts the delayed start-up jobs (update check, document
+  refresh) on the way out.
+- Tests: none may reach the internet any more (a guard fails the test that tries, and says which code did it). One
+  test let a real weather request through, which made the suite fail and then crash when the network was slow.
+- The games: no emoji in their buttons, messages and menu (the Stats button has a line icon, the games menu looks
+  like NOVA's other menus), the stats line wraps instead of being cut off in the Number Guesser, and the date is
+  written the Bulgarian way in Bulgarian.
+- The plugins window is translated and uses the same thin scroll bars as the other windows.
 - **Safety:** after NOVA has read a page, file or email, hidden instructions in it could have had NOVA read your
   files and then "read" a web address with that data in it, which never asked. Now a web address that did not come
   from you, a search result or a link on a page NOVA read asks first; following real links still does not.

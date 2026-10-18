@@ -335,6 +335,7 @@ class WordleDialog(QDialog):
         # Date + stats bar
         self._stats_lbl = QLabel("")
         self._stats_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._stats_lbl.setWordWrap(True)                      # a narrow window wraps the line instead of cutting it
         self._stats_lbl.setFont(plat.ui_font(9))
         self._stats_lbl.setStyleSheet(f"color:{self.t['sys_fg']};")
         vl.addWidget(self._stats_lbl)
@@ -378,12 +379,16 @@ class WordleDialog(QDialog):
 
         # Bottom buttons
         btn_row = QHBoxLayout()
-        self._stats_btn = self._mkbtn("📊  " + tr("Stats"),    self._show_stats)
+        self._stats_btn = self._mkbtn(tr("Stats"), self._show_stats, "stats")
         btn_row.addWidget(self._stats_btn)
         vl.addLayout(btn_row)
 
-    def _mkbtn(self, text, fn):
+    def _mkbtn(self, text, fn, icon: str = ""):
         b = QPushButton(text)
+        if icon:
+            import icons
+            from PySide6.QtCore import QSize
+            b.setIcon(icons.icon(icon, "#ffffff")); b.setIconSize(QSize(15, 15))
         b.setFixedHeight(34)
         b.setCursor(Qt.CursorShape.PointingHandCursor)
         b.setFont(plat.ui_font(10))
@@ -397,8 +402,8 @@ class WordleDialog(QDialog):
     def _update_stats_bar(self):
         s   = get_wordle_stats()
         wp  = int(s["won"]/s["played"]*100) if s["played"] else 0
-        today = datetime.date.today().strftime("%d %b %Y")
-        self._stats_lbl.setText(tr("{}  |  Played: {}  |  Win: {}%  |  🔥 Streak: {}  |  Best: {}")
+        today = _today_label()
+        self._stats_lbl.setText(tr("{}  |  Played: {}  |  Win: {}%  |  Streak: {}  |  Best: {}")
                                 .format(today, s['played'], wp, s['streak'], s['best']))
 
     # ── Restore already-played board ──────────────────────────────
@@ -412,7 +417,7 @@ class WordleDialog(QDialog):
         self._done = True
         if s["last_result"] == "won":
             streak = s["streak"]
-            self._show_msg(tr("✓ Already solved today!  🔥 Streak: {}").format(streak), "#538d4e")
+            self._show_msg(tr("✓ Already solved today!  Streak: {}").format(streak), "#538d4e")
         else:
             self._show_msg(tr("❌ The word was: {}  —  next word in {}").format(self._word, time_until_midnight()), "#cc4444")
         self._update_stats_bar()
@@ -446,10 +451,10 @@ class WordleDialog(QDialog):
     # ── Submit guess ──────────────────────────────────────────────
     def _submit(self):
         if self._col < 5:
-            self._flash(tr("Not enough letters ✋")); return
+            self._flash(tr("Not enough letters")); return
         guess = "".join(self._current)
         if not is_valid_guess(guess):
-            self._flash(tr("Not in word list 🤔")); return
+            self._flash(tr("Not in the word list")); return
 
         result = self._evaluate(guess, self._word)
         row_data = {"row": self._row, "letters": list(guess), "states": result}
@@ -464,12 +469,12 @@ class WordleDialog(QDialog):
             self._done = True
             record_wordle_result(True, self._row + 1, self._board_states)
             self._update_stats_bar()
-            praise = ["Genius! 🧠","Magnificent! 🎉","Impressive! 👏",
-                      "Splendid! 😊","Great! 👍","Phew! 😅"]
+            praise = ["Genius!","Magnificent!","Impressive!",
+                      "Splendid!","Great!","Phew!"]
             self._show_msg(tr(praise[min(self._row, 5)]), "#538d4e")
             streak = get_wordle_stats()["streak"]
             QTimer.singleShot(1800, lambda: self._show_msg(
-                tr("🔥 Streak: {}  —  next word in {}").format(streak, time_until_midnight()), "#538d4e"))
+                tr("Streak: {}  —  next word in {}").format(streak, time_until_midnight()), "#538d4e"))
         elif self._row == 5:
             self._done = True
             record_wordle_result(False, 0, self._board_states)
@@ -514,7 +519,7 @@ class WordleDialog(QDialog):
             bar  = "█" * max(1, int(n/mx*12)) if n else ""
             bars += f"  {i}: {bar} {n}\n"
         QMessageBox.information(self, tr("Wordle Stats"),
-            tr("Played: {}\nWin %: {}%\nCurrent streak: {} 🔥\nBest streak: {}").format(s['played'], wp, s['streak'], s['best'])
+            tr("Played: {}\nWin %: {}%\nCurrent streak: {}\nBest streak: {}").format(s['played'], wp, s['streak'], s['best'])
             + "\n\n" + tr("Guess distribution:") + f"\n{bars}\n" + tr("Next word in: {}").format(time_until_midnight()))
 
 
@@ -593,7 +598,7 @@ class NumberGuessDialog(QDialog):
         if s["last_result"] == "won":
             streak = s["streak"]
             self._tries_lbl.setText(tr("Solved in {} tries").format(s['last_tries']))
-            self._show_msg(tr("✓ Already played today!  🔥 Streak: {}").format(streak), "#538d4e")
+            self._show_msg(tr("✓ Already played today!  Streak: {}").format(streak), "#538d4e")
         else:
             self._tries_lbl.setText(tr("Better luck tomorrow!"))
             self._show_msg(tr("❌ It was {}  —  next in {}").format(self._target, time_until_midnight()), "#cc4444")
@@ -608,9 +613,10 @@ class NumberGuessDialog(QDialog):
         title.setStyleSheet(f"color:{self.t.get('accent_fg', self.t['accent'])};")
         vl.addWidget(title)
 
-        today = datetime.date.today().strftime("%d %b %Y")
+        today = _today_label()
         self._stats_lbl = QLabel(f"{today}")
         self._stats_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._stats_lbl.setWordWrap(True)                      # a narrow window wraps the line instead of cutting it
         self._stats_lbl.setFont(plat.ui_font(9))
         self._stats_lbl.setStyleSheet(f"color:{self.t['sys_fg']};")
         vl.addWidget(self._stats_lbl)
@@ -637,21 +643,25 @@ class NumberGuessDialog(QDialog):
         self._msg_lbl.setFont(plat.ui_font(11, QFont.Weight.Bold))
         vl.addWidget(self._msg_lbl)
 
-        vl.addWidget(self._mkbtn("📊  " + tr("Stats"), self._show_stats))
+        vl.addWidget(self._mkbtn(tr("Stats"), self._show_stats, "stats"))
 
     def _update_stats_bar(self):
         s  = get_ng_stats()
         wp = int(s["won"]/s["played"]*100) if s["played"] else 0
-        today = datetime.date.today().strftime("%d %b %Y")
-        self._stats_lbl.setText(tr("{}  |  Played: {}  |  Win: {}%  |  🔥 Streak: {}  |  Best: {}")
+        today = _today_label()
+        self._stats_lbl.setText(tr("{}  |  Played: {}  |  Win: {}%  |  Streak: {}  |  Best: {}")
                                 .format(today, s['played'], wp, s['streak'], s['best']))
 
     def _lbl(self, text):
         l = QLabel(text); l.setAlignment(Qt.AlignmentFlag.AlignCenter)
         l.setFont(plat.ui_font(10)); return l
 
-    def _mkbtn(self, text, fn):
-        b = QPushButton(text); b.setFixedHeight(34)
+    def _mkbtn(self, text, fn, icon: str = ""):
+        b = QPushButton(text)
+        if icon:
+            import icons
+            from PySide6.QtCore import QSize
+            b.setIcon(icons.icon(icon, "#ffffff")); b.setIconSize(QSize(15, 15)); b.setFixedHeight(34)
         b.setCursor(Qt.CursorShape.PointingHandCursor)
         b.setFont(plat.ui_font(10))
         b.setAutoDefault(False); b.setDefault(False)
@@ -683,7 +693,7 @@ class NumberGuessDialog(QDialog):
             self._update_stats_bar()
             self._tries_lbl.setText(tr("Solved in {} tries").format(self._tries))
 
-            self._show_msg(tr("🎉 Correct!  🔥 Streak: {}").format(get_ng_stats()['streak']), "#538d4e")
+            self._show_msg(tr("Correct!  Streak: {}").format(get_ng_stats()['streak']), "#538d4e")
             QTimer.singleShot(1800, lambda: self._show_msg(
                 tr("Next number in {}").format(time_until_midnight()), "#538d4e"))
             self._entry.setEnabled(False)
@@ -695,7 +705,7 @@ class NumberGuessDialog(QDialog):
             self._show_msg(tr("❌ It was {}  —  next in {}").format(self._target, time_until_midnight()), "#cc4444")
             self._entry.setEnabled(False)
         else:
-            hint = "Too low ⬆️" if n < self._target else "Too high ⬇️"
+            hint = "Too low — go higher" if n < self._target else "Too high — go lower"
             self._show_msg(tr(hint), self.t["accent"])
             self._tries_lbl.setText(tr("Tries left: {}").format(left))
             save_progress("numguess", {"tries": self._tries, "hint": hint})
@@ -705,38 +715,39 @@ class NumberGuessDialog(QDialog):
         s  = get_ng_stats()
         wp = int(s["won"]/s["played"]*100) if s["played"] else 0
         QMessageBox.information(self, tr("Number Guesser Stats"),
-            tr("Played: {}\nWin %: {}%\nCurrent streak: {} 🔥\nBest streak: {}").format(s['played'], wp, s['streak'], s['best'])
+            tr("Played: {}\nWin %: {}%\nCurrent streak: {}\nBest streak: {}").format(s['played'], wp, s['streak'], s['best'])
             + "\n\n" + tr("Next number in {}").format(time_until_midnight()))
 
 
 # ── Launcher ─────────────────────────────────────────────────────
+def _today_label() -> str:
+    """Today's date in the interface language ("18 Oct 2026", or "18.10.2026" in Bulgarian)."""
+    import i18n
+    return datetime.date.today().strftime("%d.%m.%Y" if i18n.language() == "bg" else "%d %b %Y")
+
+
 def open_games_menu(parent, theme):
     from PySide6.QtWidgets import QMenu
     import datetime as _dt
-    t  = theme
     s  = load_stats()
     wl = s.get("wordle",   {})
     ng = s.get("numguess", {})
 
-    menu = QMenu(parent)
-    menu.setStyleSheet(
-        f"QMenu{{background:{t['bar_bg']};border:1px solid {t['ai_br']};"
-        f"border-radius:12px;color:{t['ai_fg']};font-size:11px;padding:6px;}}"
-        f"QMenu::item{{padding:9px 18px;border-radius:6px;}}"
-        f"QMenu::item:selected{{background:{t['frame_bg']};}}"
-        f"QMenu::item:disabled{{color:{t['sys_fg']};}}")
-
-    menu.addAction(tr("🟩  Wordle  (daily word)")).triggered.connect(
-        lambda: WordleDialog(theme, parent).exec())
-    menu.addAction(tr("🔢  Number Guesser  (daily)")).triggered.connect(
-        lambda: NumberGuessDialog(theme, parent).exec())
+    if hasattr(parent, "_menu"):                       # the same look and line icons as NOVA's other menus
+        menu = parent._menu()
+        parent._menu_add(menu, "game", tr("Wordle  (daily word)"), lambda: WordleDialog(theme, parent).exec())
+        parent._menu_add(menu, "question", tr("Number Guesser  (daily)"), lambda: NumberGuessDialog(theme, parent).exec())
+    else:
+        menu = QMenu(parent)
+        menu.addAction(tr("Wordle  (daily word)")).triggered.connect(lambda: WordleDialog(theme, parent).exec())
+        menu.addAction(tr("Number Guesser  (daily)")).triggered.connect(lambda: NumberGuessDialog(theme, parent).exec())
     menu.addSeparator()
 
     today     = _dt.date.today().isoformat()
     wl_status = "✓" if wl.get("last_played","") == today else tr("next in {}").format(time_until_midnight())
     ng_status = "✓" if ng.get("last_played","") == today else tr("next in {}").format(time_until_midnight())
     menu.addAction(
-        tr("🟩 Wordle: {}🔥 ({})   |   🔢 Number: {}🔥 ({})").format(wl.get('streak',0), wl_status, ng.get('streak',0), ng_status)
+        tr("Streaks: Wordle {} ({})  ·  Number Guesser {} ({})").format(wl.get('streak',0), wl_status, ng.get('streak',0), ng_status)
     ).setEnabled(False)
 
     from PySide6.QtCore import QPoint
