@@ -103,6 +103,10 @@ def test_settings_window_is_bulgarian(bulgarian, monkeypatch):
             english.append(text)
     allowed = {"Save", "Cancel"}                         # Qt's own dialog buttons follow the system language
     assert [t for t in english if t not in allowed and "NOVA" not in t and "API" not in t] == []
+    providers_menu = [d._provider_cb.itemText(i) for i in range(d._provider_cb.count())]
+    assert "Groq (безплатен план, бърз)" in providers_menu and "Друг (всеки сървър, съвместим с OpenAI)" in providers_menu
+    voices = [d._voice_cb.itemText(i) for i in range(d._voice_cb.count())]
+    assert "Български — Калина" in voices and not [v for v in voices if not re.search(r"[А-Яа-я]", v)]
 
 
 def test_approval_prompt_is_translated(bulgarian):

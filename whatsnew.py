@@ -45,12 +45,12 @@ NOTES = {
 }
 
 
-def release(version: str = None) -> str:
+def release(version: str | None = None) -> str:
     """'6.1.3' -> '6.1'"""
     return ".".join(str(version or paths.__version__).split(".")[:2])
 
 
-def notes(version: str = None) -> list:
+def notes(version: str | None = None) -> list:
     return NOTES.get(release(version), [])
 
 
@@ -58,7 +58,7 @@ def _key(rel: str) -> tuple:
     return tuple(int(p) for p in rel.split(".") if p.isdigit())
 
 
-def text(version: str = None, since: str = "") -> str:
+def text(version: str | None = None, since: str = "") -> str:
     """The note as markdown in the interface language ('' if there is nothing to say). With `since` (the version
     used before), every release after it is included, newest first - someone coming from 6.2 hears about 6.3 and
     6.4 too, not only about this one."""
@@ -73,7 +73,7 @@ def text(version: str = None, since: str = "") -> str:
     return "\n\n".join(parts)
 
 
-def should_show(seen: str, onboarded: bool, version: str = None) -> bool:
+def should_show(seen: str, onboarded: bool, version: str | None = None) -> bool:
     """Once per release, to people who already used NOVA (a fresh install gets the first-run wizard instead)."""
     seen_release = ".".join(str(seen or "").split(".")[:2])              # "" = an older NOVA that did not record it
     return bool(onboarded) and seen_release != release(version) and bool(notes(version))

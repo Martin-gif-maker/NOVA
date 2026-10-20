@@ -305,3 +305,8 @@ def test_forgetting_with_other_words_suggests_the_memory_instead_of_failing_sile
     assert isinstance(out, tools.ToolFailure) and "nothing was deleted" in out and "“обича суши”" in out
     assert "Plovdiv" not in out.split("The closest:")[1]                      # only what is alike
     assert "Deleted 1" in tools.delete_memory("суши")                          # the second try works
+
+
+def test_a_memory_without_text_is_dropped_not_a_crash(data_dir):
+    tools.replace_memories([{"text": "likes tea"}, {"category": "preference"}, {"text": None}, "  ", "lives in Sofia"])
+    assert [m["text"] if isinstance(m, dict) else m for m in tools.memory_items()] == ["likes tea", "lives in Sofia"]

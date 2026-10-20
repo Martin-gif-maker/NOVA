@@ -114,6 +114,7 @@ class AIWorker(QThread):
         self._cancelled = False
         self._tok_in = self._tok_out = 0
         self._retry_note = ""
+        self.waited = 0.0              # seconds spent waiting (rate limits, retries) - not the model's or a tool's time
         self._round_in = 0             # prompt tokens of the latest model call (the next one costs about as much)
 
     def cancel(self):
@@ -148,10 +149,14 @@ class AIWorker(QThread):
 
     def _sleep(self, seconds: float) -> bool:
         """Interruptible sleep. False if cancelled."""
-        for _ in range(int(seconds * 5) + 1):
-            if self._cancelled: return False
-            time.sleep(0.2)
-        return True
+        t0 = time.monotonic()
+        try:
+            for _ in range(int(seconds * 5) + 1):
+                if self._cancelled: return False
+                time.sleep(0.2)
+            return True
+        finally:
+            self.waited += time.monotonic() - t0
 
     def _estimate(self, tools_: list) -> int:
         """Roughly how many tokens the next model call will cost (what the last round cost, or a guess from the size)."""

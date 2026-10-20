@@ -15,7 +15,7 @@ def _gui():
     return pyautogui
 
 # ── TOOL: take_screenshot ─────────────────────────────────────────
-def take_screenshot(save_path: str = None) -> str:
+def take_screenshot(save_path: str | None = None) -> str:
     if not PYAUTOGUI_AVAILABLE: return fail("pyautogui not installed.")
     if not plat.screen_capture_allowed(request=True):
         return fail("Screen Recording permission is missing. Allow it in System Settings → "
@@ -59,7 +59,7 @@ def type_text_keyboard(text: str, press_enter: bool = False) -> str:
             except Exception as e: log.info("the clipboard could not be restored after typing: %s", e)
 
 # ── TOOL: control_volume ──────────────────────────────────────────
-def control_volume(action: str, level: int = None) -> str:
+def control_volume(action: str, level: int | None = None) -> str:
     """Actions: mute, unmute, up, down, set (0-100), get"""
     def current():
         rc, out = plat.run_osascript("output volume of (get volume settings)")

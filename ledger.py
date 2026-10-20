@@ -54,7 +54,7 @@ def entries(days: int = 1) -> list:
 
 def summary(items: list) -> list:
     """[(destination, kind, requests, bytes)] sorted by most data first."""
-    agg = {}
+    agg: dict = {}
     for e in items:
         k = (e.get("dest", "?"), e.get("what", "?"))
         n, b = agg.get(k, (0, 0)); agg[k] = (n + 1, b + int(e.get("bytes", 0) or 0))

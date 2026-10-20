@@ -1,5 +1,20 @@
 # NOVA — what changed
 
+## Unreleased
+
+- If the network is not up yet when NOVA starts (the Wi-Fi still waking), it fetches the list of models again after
+  half a minute and after two minutes, instead of going without it until the next start: retired models are swapped
+  for current ones and Settings → AI lists what your account offers.
+- In Settings, a button next to a menu ("Brave API key…" beside the search choice) sits centred on the row instead
+  of at its top, and the AI-provider menu (also in the setup wizard) and the read-aloud voices are in Bulgarian
+  too - "Groq (безплатен план, бърз)" instead of "Groq (free tier, fast)", "Български — Калина" instead of
+  "Bulgarian — Kalina".
+- The evaluation's times leave out the waits for the provider's per-minute limit (on Groq's free tier most of a run
+  is waiting), and the report says how long those waits were.
+- Under the hood: the type check now covers the tools and their approval rules, the tool definitions, the prompt,
+  speech, the translations and the evaluation runner too (24 files instead of 9). It found a list of memories with
+  an entry without text, which made saving them fail.
+
 ## 6.6.0 — October 2026
 
 - **"Quit Safari" quits Safari the way ⌘Q does**, so it can ask to save first. NOVA used to end the app at once

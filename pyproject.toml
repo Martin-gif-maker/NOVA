@@ -25,10 +25,13 @@ ignore = [
 "tests/*" = ["SIM115", "B023", "B007"]     # one-line open().read() and loop helpers are fine in tests
 
 [tool.mypy]
-# The core is type-checked: the AI loop, providers, models, documents and their search, memory, storage, evals.
-# (./check.sh runs it on these files; the UI modules are not annotated yet.)
+# The core is type-checked: the AI loop, providers, models, the tools and their approval rules, documents and their
+# search, memory, storage, speech, translations, evals. (./check.sh runs it on these files; the window modules are
+# not annotated yet.)
 files = ["workers.py", "providers.py", "models.py", "docs.py", "embeddings.py", "memory.py", "storage.py", "updater.py",
-         "evals/harness.py"]
+         "tools.py", "toolbase.py", "tools_web.py", "tools_system.py", "tools_files.py", "tools_apps.py", "schemas.py",
+         "prompts.py", "ledger.py", "keystore.py", "settings.py", "i18n.py", "whatsnew.py", "speech.py",
+         "evals/harness.py", "evals/__main__.py"]
 ignore_missing_imports = true
 follow_imports = "silent"
 warn_unused_ignores = true

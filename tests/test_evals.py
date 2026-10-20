@@ -125,3 +125,16 @@ def test_a_stopped_run_is_finished_later_into_the_same_file(fake_model, monkeypa
     saved = json.loads(first.read_text())
     assert sorted(r["id"] for r in saved["results"]) == ["bg-chat-hello", "en-chat-hello"] and saved["left"] == 0
     assert "not run yet" not in (tmp_path / "results" / (first.stem + ".md")).read_text()
+
+
+def test_times_leave_out_waiting_for_the_providers_limit(fake_model):
+    import workers
+    w = workers.AIWorker(fake_model, [{"role": "user", "content": "x"}], models.fast_model_id())
+    assert w._sleep(0.05) and w.waited >= 0.05                                  # every wait is counted…
+    FakeCompletions.script = [["Hi!"]]
+    r = harness.run_case(BY_ID["en-chat-hello"], fake_model, models.fast_model_id())
+    assert r["waited"] == 0 and r["secs"] >= 0
+    slow = dict(r, waited=40.0, secs=1.5)
+    s = harness.live_summary([slow, dict(slow, id="bg-chat-hello", lang="bg")])
+    assert s["all"]["avg_secs"] == 1.5 and s["all"]["waited"] == 80                # …and left out of the times
+    assert "leave out 80 s of waiting" in harness.markdown(live_sum=s)

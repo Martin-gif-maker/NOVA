@@ -218,18 +218,27 @@ class AccountMixin:
             self._apply_wake_setting(); self._refresh_models()
 
     # ── Models: notice retired ones ──────────────────────────────
-    def _refresh_models(self):
+    _MODEL_LIST_RETRY_MS = (30_000, 120_000)    # after a network error (at start-up the Wi-Fi may still be waking up)
+
+    def _refresh_models(self, attempt: int = 0):
         client = self.client
         if client is None: return
         def _bg():
             try:
                 available = model_registry.fetch_available(client)
-                self._models_ready.emit((model_registry.reconcile(available), available))
             except Exception as e:
                 log.info("model list unavailable: %s", e)
+                if providers.classify_error(e)[0] in ("connection", "server"):
+                    self._models_ready.emit(("retry", attempt))         # the window's timer tries again, not this thread
+                return
+            self._models_ready.emit((model_registry.reconcile(available), available))
         threading.Thread(target=_bg, daemon=True).start()
 
     def _on_models(self, payload):
+        if isinstance(payload, tuple) and payload[0] == "retry":
+            if payload[1] < len(self._MODEL_LIST_RETRY_MS):
+                self._later(self._MODEL_LIST_RETRY_MS[payload[1]], lambda: self._refresh_models(payload[1] + 1))
+            return
         notes, available = payload if isinstance(payload, tuple) else (payload, None)
         if available is not None: self._available_models = set(available)       # offered in Settings → AI
         if not notes: return

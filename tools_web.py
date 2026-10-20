@@ -14,7 +14,7 @@ def _is_public_url(url: str):
     if not host: return False, "Invalid URL."
     try:
         for _fam, _, _, _, addr in socket.getaddrinfo(host, None):
-            ip = ipaddress.ip_address(addr[0].split("%")[0])
+            ip = ipaddress.ip_address(str(addr[0]).split("%")[0])
             if (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
                     or ip.is_multicast or ip.is_unspecified):
                 return False, f"Refusing to open a private/local address ({host})."
@@ -84,7 +84,8 @@ def _search_brave(query: str, n: int, key: str) -> list:
     """Brave Search API - an official, documented API (needs the user's own key)."""
     import requests
     ledger.record("api.search.brave.com", "web search", len(query.encode("utf-8")), "search query")
-    r = requests.get("https://api.search.brave.com/res/v1/web/search", params={"q": query, "count": n},
+    params: dict = {"q": query, "count": n}
+    r = requests.get("https://api.search.brave.com/res/v1/web/search", params=params,
                      headers={"X-Subscription-Token": key, "Accept": "application/json"}, timeout=10)
     r.raise_for_status()
     hits = (r.json().get("web") or {}).get("results") or []
@@ -135,8 +136,8 @@ def get_weather(location: str = "") -> str:
             return fail("No city given and no home city is set. Ask the user which city they mean "
                         "(they can set a home city in Settings → General).")
         ledger.record("geocoding-api.open-meteo.com", "weather", len(loc.encode("utf-8")), "city name")
-        g = _req.get("https://geocoding-api.open-meteo.com/v1/search",
-                     params={"name": loc, "count": 1, "language": "en", "format": "json"}, timeout=8)
+        where: dict = {"name": loc, "count": 1, "language": "en", "format": "json"}
+        g = _req.get("https://geocoding-api.open-meteo.com/v1/search", params=where, timeout=8)
         g.raise_for_status()
         hits = g.json().get("results") or []
         if not hits: return fail(f"I could not find a place called '{loc}'.")
@@ -149,8 +150,9 @@ def get_weather(location: str = "") -> str:
         w.raise_for_status()
         d = w.json(); c = d.get("current") or {}; day = d.get("daily") or {}
         first = lambda k: (day.get(k) or [None])[0]
+        code = c.get("weather_code")
         place = ", ".join(x for x in (h.get("name"), h.get("country")) if x)
-        text = (f"{place}: {_WMO.get(c.get('weather_code'), 'unknown conditions')}, {round(c.get('temperature_2m', 0))}°C "
+        text = (f"{place}: {_WMO.get(code if isinstance(code, int) else -1, 'unknown conditions')}, {round(c.get('temperature_2m', 0))}°C "
                 f"(feels like {round(c.get('apparent_temperature', 0))}°C), humidity {c.get('relative_humidity_2m', '?')}%, "
                 f"wind {round(c.get('wind_speed_10m', 0))} km/h.")
         if first("temperature_2m_min") is not None:

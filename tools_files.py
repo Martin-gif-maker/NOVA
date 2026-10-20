@@ -29,7 +29,7 @@ def _move_to_trash(path: str) -> str:
     shutil.move(path, dest)
     return dest
 
-def manage_files(action: str, source: str, destination: str = None) -> str:
+def manage_files(action: str, source: str, destination: str | None = None) -> str:
     source = user_path(source)
     name = os.path.basename(str(destination or "").rstrip("/"))          # for create_folder given as (parent, name)
     if destination: destination = user_path(destination)
@@ -57,7 +57,7 @@ def manage_files(action: str, source: str, destination: str = None) -> str:
             files   = [f"📄 {i}" for i in items if os.path.isfile(os.path.join(source, i))]
             return f"Contents ({len(items)}):\n" + "\n".join(folders + files)[:2000]
         elif action == "create_folder":
-            if name and os.path.normpath(destination) != os.path.normpath(source):
+            if name and os.path.normpath(destination or "") != os.path.normpath(source):
                 source = os.path.join(source, name)          # "create Projects on the desktop" sent as (desktop, Projects)
             os.makedirs(source, exist_ok=True); return f"Created folder: {source} ✓"
         else: return fail(f"Unknown action: {action}")
@@ -84,7 +84,7 @@ def run_shell_command(command: str) -> str:
 # ── TOOL: save_note ───────────────────────────────────────────────
 _notes_lock = threading.Lock()
 
-def save_note(text: str = None, title: str = None, content: str = None) -> str:
+def save_note(text: str | None = None, title: str | None = None, content: str | None = None) -> str:
     body = text or " - ".join(x for x in (title, content) if x)
     if not body: return fail("Nothing to save.")
     try:
@@ -105,7 +105,7 @@ def read_notes() -> str:
 # ── TOOL: execute_python_code ─────────────────────────────────────
 # Runs in a separate, isolated interpreter (-I) with a hard 10 s timeout, in a temp folder. This is NOT a security sandbox - the user must approve every run (see
 # NEEDS_CONFIRM) because the code can do anything the user account can do.
-def _python_exe() -> str:
+def _python_exe() -> str | None:
     """A real Python interpreter (inside a packaged .app sys.executable is NOVA itself)."""
     if not paths.IS_FROZEN:
         return sys.executable
@@ -155,7 +155,7 @@ def write_file(path: str, content: str, mode: str = "w") -> str:
         return fail(f"Error writing file: {e}")
 
 # ── TOOL: search_files ───────────────────────────────────────────
-def search_files(query: str, folder: str = None, content_search: bool = False) -> str:
+def search_files(query: str, folder: str | None = None, content_search: bool = False) -> str:
     """Search files by name. Set content_search=True to also search inside files."""
     base = user_path(folder or "~")
     results = []

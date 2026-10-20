@@ -167,6 +167,14 @@ BG.update({
     "Settings sections": "Раздели на настройките", "Auto (follow system)": "Автоматично (според системата)",
     "Pick accent color": "Избери акцентен цвят", "e.g. Sofia — used for the weather": "напр. София — използва се за времето",
     "Test connection": "Провери връзката", "Several search engines (no key)": "Няколко търсачки (без ключ)",
+    # the read-aloud voices (language — the voice's own name)
+    "English — Aria (US)": "Английски — Aria (САЩ)", "English — Sonia (UK)": "Английски — Sonia (Великобритания)",
+    "Bulgarian — Kalina": "Български — Калина", "German — Katja": "Немски — Katja", "French — Denise": "Френски — Denise",
+    "Spanish — Elvira": "Испански — Elvira", "Russian — Svetlana": "Руски — Svetlana",
+    # the AI providers, as the menus list them
+    "Groq (free tier, fast)": "Groq (безплатен план, бърз)",
+    "Ollama (runs on this Mac, private, offline)": "Ollama (работи на този Mac, лично, без интернет)",
+    "Custom (any OpenAI-compatible server)": "Друг (всеки сървър, съвместим с OpenAI)",
     "Brave Search (needs a key)": "Brave Search (изисква ключ)", "Web search": "Търсене в интернет",
     "Without a key NOVA asks several search engines in turn (DuckDuckGo, Yahoo, Wikipedia and others) through an "
     "unofficial library; What NOVA sent lists each one. Brave Search is an official API and needs your own key.":
@@ -731,11 +739,17 @@ def install_qt_translations(app=None) -> bool:
 _EDGE = re.compile(r"^([^\w{]*)(.*?)([^\w}]*)$", re.DOTALL)
 
 
+def _edges(text: str) -> tuple:
+    """(leading symbols, the words, trailing symbols) - the pattern always matches."""
+    m = _EDGE.match(text)
+    return m.groups() if m else ("", text, "")
+
+
 def translated(text: str, lang: str = "bg") -> bool:
     """True if `text` has an entry in the given language (same lookup rules as tr)."""
     table = TABLES.get(lang) or {}
     if text in table: return True
-    pre, core, post = _EDGE.match(text).groups()
+    pre, core, post = _edges(text)
     return (core + post) in table or core in table
 
 
@@ -745,7 +759,7 @@ def tr(text: str) -> str:
         return text
     if text in table:
         return table[text]
-    pre, core, post = _EDGE.match(text).groups()
+    pre, core, post = _edges(text)
     if core + post in table:                       # key keeps its own trailing punctuation ("listening...")
         return pre + table[core + post]
     if core in table:

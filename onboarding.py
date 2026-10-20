@@ -129,7 +129,7 @@ class OnboardingDialog(QDialog):
         w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(10)
         v.addWidget(self._title(tr("Connect your AI")))
         self.provider_cb = QComboBox()
-        for pid, p in providers.PROVIDERS.items(): self.provider_cb.addItem(p["label"], pid)
+        for pid, p in providers.PROVIDERS.items(): self.provider_cb.addItem(tr(p["label"]), pid)
         self.provider_cb.setCurrentIndex(max(0, self.provider_cb.findData(self.provider)))
         self.provider_cb.setAccessibleName(tr("AI provider"))
         self.provider_cb.currentIndexChanged.connect(self._on_provider_changed)

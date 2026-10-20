@@ -221,6 +221,26 @@ def test_retired_model_is_replaced(win, monkeypatch):
         models.MODELS.clear(); models.MODELS.update(saved)
 
 
+def test_the_model_list_is_fetched_again_after_a_network_error(win, monkeypatch):
+    import models
+    tries = []
+    def flaky(client):
+        tries.append(1)
+        if len(tries) < 3: raise Exception("Connection error.")                 # Wi-Fi still waking up at start-up
+        return {"openai/gpt-oss-120b", "openai/gpt-oss-20b"}
+    monkeypatch.setattr(models, "fetch_available", flaky)
+    monkeypatch.setattr(models, "reconcile", lambda available: [])
+    monkeypatch.setattr(type(win), "_MODEL_LIST_RETRY_MS", (20, 20))
+    win._available_models = set(); win._refresh_models()
+    deadline = time.monotonic() + 3
+    while not win._available_models and time.monotonic() < deadline: win._pump(20)
+    assert len(tries) == 3 and "openai/gpt-oss-120b" in win._available_models
+    tries.clear(); monkeypatch.setattr(models, "fetch_available", lambda c: (tries.append(1), (_ for _ in ()).throw(
+        Exception("Error code: 401 - Invalid API Key")))[1])
+    win._refresh_models(); win._pump(200)
+    assert len(tries) == 1                                                       # a refused key: no point retrying
+
+
 def test_memory_history_and_retention_settings(win, tmp_path):
     win.config["save_history"] = False
     win.messages += [{"role": "user", "content": "x"}, {"role": "assistant", "content": "y"}]

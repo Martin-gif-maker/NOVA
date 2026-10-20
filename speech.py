@@ -103,7 +103,7 @@ def _load():
         return _model
 
 
-def recognizer(grammar: str = None):
+def recognizer(grammar: str | None = None):
     """A streaming recogniser. With `grammar` it only knows those words (used for the wake word)."""
     import vosk
     m = _load()

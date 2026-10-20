@@ -44,14 +44,23 @@ class _FlowLayout(QLayout):
         super().setGeometry(rect); self._place(rect, dry=False)
 
     def _place(self, rect, dry: bool) -> int:
-        x, y, line_h = rect.x(), rect.y(), 0
+        lines: list = []; line: list = []; x = rect.x()
         for it in self._items:
-            hint = it.sizeHint(); w = hint.width()
-            if x > rect.x() and x + w > rect.x() + rect.width():
-                x = rect.x(); y += line_h + self._gap; line_h = 0
-            if not dry: it.setGeometry(QRect(QPoint(x, y), QSize(min(w, rect.width()), hint.height())))
-            x += w + self._gap; line_h = max(line_h, hint.height())
-        return y + line_h - rect.y()
+            w = it.sizeHint().width()
+            if line and x + w > rect.x() + rect.width():
+                lines.append(line); line, x = [], rect.x()
+            line.append((it, x)); x += w + self._gap
+        if line: lines.append(line)
+        y = rect.y()
+        for i, items in enumerate(lines):
+            line_h = max(it.sizeHint().height() for it, _ in items)
+            if not dry:
+                for it, x in items:                      # centred on the line: a button next to a taller menu
+                    hint = it.sizeHint()
+                    it.setGeometry(QRect(QPoint(x, y + (line_h - hint.height()) // 2),
+                                         QSize(min(hint.width(), rect.width()), hint.height())))
+            y += line_h + (self._gap if i < len(lines) - 1 else 0)
+        return y - rect.y()
 
 
 class _FlowRow(QWidget):
@@ -239,7 +248,7 @@ class SettingsDialog(QDialog):
     def _tab_ai(self, form):
         c = self._config
         self._provider_cb = QComboBox()
-        for pid, p in providers.PROVIDERS.items(): self._provider_cb.addItem(p["label"], pid)
+        for pid, p in providers.PROVIDERS.items(): self._provider_cb.addItem(tr(p["label"]), pid)
         self._select(self._provider_cb, self._active_provider)
         self._row(form, "AI provider:", self._provider_cb)
 
@@ -332,7 +341,7 @@ class SettingsDialog(QDialog):
         self._select(self._tts_engine_cb, c.get("tts_engine", "online"))
         self._row(form, "Voice engine:", self._tts_engine_cb)
         self._voice_cb = QComboBox()
-        for val, label in self.VOICES: self._voice_cb.addItem(label, val)
+        for val, label in self.VOICES: self._voice_cb.addItem(tr(label), val)
         self._select(self._voice_cb, c.get("tts_voice", "en-US-AriaNeural"))
         self._row(form, "TTS voice:", self._voice_cb)
 

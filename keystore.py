@@ -3,10 +3,12 @@
 import os
 import paths
 import logging
+from typing import Any
 
 log = logging.getLogger("nova")
 
 _KR_SERVICE = "NOVA_AI_Assistant"
+_keyring: Any
 try:
     import keyring as _keyring
     _KEYRING_OK = True

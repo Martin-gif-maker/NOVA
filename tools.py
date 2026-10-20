@@ -75,12 +75,13 @@ def restore_reminders():
     for r in _read_reminders():
         _schedule_reminder(r["id"], r["text"], r["due"] - now)
 
-def set_reminder(text: str = None, minutes: float = None, message: str = None, seconds: float = None) -> str:
+def set_reminder(text: str | None = None, minutes: float | None = None, message: str | None = None,
+                 seconds: float | None = None) -> str:
     text = text or message
     if not text: return fail("What should I remind you about?")
     if minutes is None and seconds is None: return fail("When? Give minutes (or seconds).")
     try:
-        minutes = float(minutes) if minutes is not None else float(seconds) / 60.0
+        minutes = float(minutes) if minutes is not None else float(seconds or 0) / 60.0
     except (TypeError, ValueError):
         return fail("Invalid time.")
     minutes = max(0.0, minutes)
@@ -117,9 +118,9 @@ def list_memories() -> list:
 
 def replace_memories(facts: list) -> None:
     """Accepts memory dicts or old-style strings."""
-    replace_memory_items([f for f in facts if (f.get("text") if isinstance(f, dict) else str(f)).strip()])
+    replace_memory_items([f for f in facts if ((f.get("text") or "") if isinstance(f, dict) else str(f)).strip()])
 
-REQUESTED_GROUPS = set()      # tool groups the model switched on with more_tools during this request
+REQUESTED_GROUPS: set[str] = set()      # tool groups the model switched on with more_tools during this request
 
 def more_tools(group: str) -> str:
     """The model asks for a group of tools that was not sent with the request (see schemas.select_tools)."""
@@ -197,7 +198,7 @@ def delete_memory(keyword: str) -> str:
 
 # ── MCP servers (tool servers the user connected) ────────────────
 MCP = None                    # mcp_client.Manager, created by the GUI
-MCP_TOOLS = {}                # tool id the AI sees -> {"server", "tool"}
+MCP_TOOLS: dict[str, dict] = {}                # tool id the AI sees -> {"server", "tool"}
 MAX_MCP_TOOLS = 80            # every tool's description is sent with every request: keep the total sane
 
 def _mcp_tool(tid: str):
@@ -417,9 +418,9 @@ SIDE_EFFECT_TOOLS = {"open_url", "open_maps", "search_web", "open_application", 
                      "control_volume", "control_spotify",
                      "add_calendar_event", "add_apple_reminder", "draft_email", "draft_email_reply",
                      "remove_document", "schedule_task", "cancel_scheduled_task", "run_shortcut"}
-PLUGIN_TOOLS = set()                       # names registered by user plugins (always ask)
-SETTINGS = {}                              # the app's live config dict (set by the GUI)
-_PARAM_SCHEMAS = {}                        # tool name -> JSON-schema "parameters" (set via set_schemas)
+PLUGIN_TOOLS: set[str] = set()             # names registered by user plugins (always ask)
+SETTINGS: dict = {}                        # the app's live config dict (set by the GUI)
+_PARAM_SCHEMAS: dict[str, dict] = {}       # tool name -> JSON-schema "parameters" (set via set_schemas)
 
 def set_schemas(schemas: list):
     """Register the tool definitions so execute_tool can validate the model's arguments."""
@@ -485,7 +486,7 @@ def taint(source: str) -> None:
     _taint["on"] = True; _taint["src"] = source
 
 def is_tainted() -> bool:
-    return _taint["on"]
+    return bool(_taint["on"])
 
 TAINT_WARNING = ("⚠️ NOVA read web or file content earlier in this request, and such content can hide "
                  "instructions. Approve only if this is what YOU asked for.\n\n")
@@ -778,7 +779,7 @@ def run_tool(tool_name: str, args: dict) -> ToolResult:
 
 
 # ── Plugin loader ─────────────────────────────────────────────────
-PENDING_PLUGINS = []                       # (filename, path, sha256) waiting for the user's consent
+PENDING_PLUGINS: list[tuple] = []          # (filename, path, sha256) waiting for the user's consent
 
 def _plugin_hash(path: str) -> str:
     import hashlib
@@ -816,7 +817,7 @@ def read_manifest(path: str):
                     "description": str(m.get("description", ""))[:300], "permissions": sorted(set(perms))}
     return None
 
-PLUGIN_INFO = {}                           # tool name -> {"file", "sandboxed", "permissions"}
+PLUGIN_INFO: dict[str, dict] = {}          # tool name -> {"file", "sandboxed", "permissions"}
 
 def _sandboxed_tool(path: str, perms: list, name: str):
     """A function that runs one plugin tool in its own sandboxed process."""
@@ -844,6 +845,7 @@ def load_plugin(path: str) -> list:
             tools_ = [dict(t, function=_sandboxed_tool(path, perms, t["name"])) for t in r.get("tools", [])]
         else:
             spec = importlib.util.spec_from_file_location(fname[:-3], path)
+            if spec is None or spec.loader is None: raise ImportError(f"{fname} cannot be loaded as Python")
             mod  = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
             tools_ = getattr(mod, "TOOLS", [])
