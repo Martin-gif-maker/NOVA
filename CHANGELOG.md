@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- **"Quit Safari" quits Safari the way ⌘Q does**, so it can ask to save first. NOVA used to end the app at once
+  (unsaved work was lost). Forcing an app closed, or ending a process by its number, still works when you ask for
+  it, and the approval says which of the two it is.
+- **"What NOVA sent" names every search engine a web search went to.** Without a Brave key, a search asks several
+  engines in turn (DuckDuckGo, Yahoo, Wikipedia, Google …), but the list showed one "duckduckgo.com" line. Settings
+  and the setup wizard now say so too, instead of "DuckDuckGo".
+- **Measured with the model NOVA uses on Groq (gpt-oss-120b).** The first 66 of the 86 requests were 89.4 % right
+  (Bulgarian 92.3 %), and every miss pointed at something to fix - all fixed, and those requests now pass:
+  - The AI asked "May I run `ls -la`?" in the chat, although NOVA shows its own approval for risky tools - you had to
+    say yes twice. It now calls the tool and NOVA asks.
+  - "What do you know about me?" was answered without looking at the saved memories.
+  - "Louder" set the volume to 80 % instead of one step up; "search google for …" now opens the Google search.
+  - Screenshots failed: the model sends "no value" for the optional file name, and Groq refused the call before
+    NOVA saw it. NOVA now tells Groq that optional values may be empty, and an empty value is no longer turned into
+    the text "None" (a screenshot would have been saved as a file called "None").
+- When the AI service refuses one of the AI's tool calls for another reason, NOVA asks again and tells the AI what
+  was wrong. That error used to end the request.
+- `python -m evals live --budget 100000` stops before a free tier's daily allowance runs out, and `--resume` runs
+  the rest later into the same results. A request the provider refused for its limit no longer counts as the
+  model's mistake.
 - When a model writes a tool call out as text (`save_memory({"fact": …})`, or `<tool_call>{…}</tool_call>`) instead
   of making it, NOVA runs it as the call it is - through the same checks and approvals - and takes the raw text back
   off the screen. Smaller local models (Ollama, LM Studio) do this.

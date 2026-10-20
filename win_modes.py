@@ -131,7 +131,7 @@ class WindowModesMixin:
     # ── Bubble press/move/release ────────────────────────────────
     def _bubble_press(self,e):
         if e.button()==Qt.MouseButton.LeftButton:
-            self._bubble_press_pos=e.pos()
+            self._bubble_press_pos=e.position().toPoint()
             self._drag_pos=e.globalPosition().toPoint()-self.frameGeometry().topLeft()
 
     def _bubble_move(self,e):
@@ -140,7 +140,7 @@ class WindowModesMixin:
 
     def _bubble_release(self,e):
         if e.button()!=Qt.MouseButton.LeftButton: return
-        if (e.pos()-self._bubble_press_pos).manhattanLength()>=8:
+        if (e.position().toPoint()-self._bubble_press_pos).manhattanLength()>=8:
             self._bubble_click_count=0; self._bubble_click_timer.stop(); return
         self._bubble_click_count+=1
         if self._bubble_click_count>=2:

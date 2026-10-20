@@ -451,7 +451,7 @@ def validate_args(tool_name: str, args: dict):
     props, required = schema.get("properties", {}), schema.get("required", [])
     if not props:                                  # a tool without parameters: small models still send things like {"": {}}
         return {}, ""
-    args = {k: v for k, v in args.items() if str(k).strip()}       # an empty key is never meant
+    args = {k: v for k, v in args.items() if str(k).strip() and v is not None}   # an empty key, or null: not given
     unknown = [k for k in args if k not in props]
     if unknown: return args, f"unknown argument(s): {', '.join(unknown)}. Allowed: {', '.join(props) or 'none'}"
     missing = [k for k in required if k not in args or args[k] in (None, "")]
@@ -537,7 +537,9 @@ def _needs_confirmation(tool_name: str, args: dict) -> str:
         verb = "Append to" if a.get("mode") == "a" else ("Overwrite" if os.path.exists(p) else "Create")
         return f"{verb} file:\n{p}"
     if tool_name == "kill_process":
-        return f"Kill process: {a.get('name_or_pid', '')}"
+        what = str(a.get("name_or_pid", ""))
+        if a.get("force") or what.strip().isdigit(): return f"Force quit (unsaved work is lost): {what}"
+        return f"Quit: {what}"
     if tool_name == "control_system" and str(a.get("action", "")).lower() in ("shutdown", "restart", "sleep", "hibernate"):
         return f"System action: {a.get('action')}"
     if tool_name == "empty_recycle_bin":

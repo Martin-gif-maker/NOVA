@@ -113,6 +113,7 @@ class AIWorker(QThread):
         self.reasoning  = reasoning    # gpt-oss "thinking" effort: low = fastest
         self._cancelled = False
         self._tok_in = self._tok_out = 0
+        self._retry_note = ""
         self._round_in = 0             # prompt tokens of the latest model call (the next one costs about as much)
 
     def cancel(self):
@@ -121,6 +122,9 @@ class AIWorker(QThread):
 
     def _stream(self, messages, tools=None, max_tokens=None):
         if max_tokens is None: max_tokens = self.max_tokens
+        if self._retry_note:                                 # the last call was refused: say why, for this retry only
+            messages = messages + [{"role": "user", "content": self._retry_note}]
+            self._retry_note = ""
         kwargs = dict(model=self.model_id, messages=messages,
                       max_tokens=max_tokens, temperature=0.7, stream=True)
         if self.reasoning: kwargs["reasoning_effort"] = self.reasoning     # each provider adapter maps or drops this
@@ -369,6 +373,10 @@ class AIWorker(QThread):
                         self.tool_executing.emit(tr("⏳  Rate limit — retrying in {}s").format(f"{wait:.0f}"))
                         if not self._sleep(wait): return
                         continue
+                    if kind == "tool_json":
+                        log.info("the provider refused a tool call - asking again: %s", err[:200])
+                        self._retry_note = ("(NOVA: the provider refused your last tool call: " + err[:300] + ". Call the "
+                                            "tool again with valid arguments, and leave out optional ones you have no value for.)")
                     if kind in ("connection", "server", "tool_json"):
                         if not self._sleep(1.0 if kind != "server" else 2.0): return
                         continue

@@ -70,7 +70,7 @@ SCHEMA = {
                                   "fix": "Find and fix the problems in this code. Show the corrected code, then explain each fix in one line:"},
                            doc="reusable prompts: type /name in the message box"),
     "prices":            F(dict, {}, doc='your prices in USD per million tokens, for the cost estimate: {"model-id": [input, output]}'),
-    "search_engine":     F(str, "ddg", choices=("ddg", "brave"), doc="ddg = DuckDuckGo (no key, unofficial); brave = Brave Search API (needs a key)"),
+    "search_engine":     F(str, "ddg", choices=("ddg", "brave"), doc="ddg = several search engines via ddgs (no key, unofficial); brave = Brave Search API (needs a key)"),
     # voice
     "tts":               F(bool, True), "tts_auto": F(bool, False),
     "tts_voice":         F(str, "en-US-AriaNeural"),

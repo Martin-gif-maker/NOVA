@@ -73,14 +73,19 @@ def _no_internet():
 
 @pytest.fixture(autouse=True)
 def _no_real_keys():
-    """No test may press a real key or change which app is in front on this Mac - whatever it forgets to fake.
+    """No test may press a real key, change which app is in front or quit one of the Mac's apps - whatever it forgets
+    to fake.
     (Set directly, not through monkeypatch, so a test's own monkeypatch.undo() cannot lift it.)"""
     def refuse(*a, **k): raise AssertionError("a test tried to press real keys")
     saved = platform_utils._press_cmd, platform_utils.activate_pid, platform_utils.activate_app
     platform_utils._press_cmd = refuse; platform_utils.activate_pid = lambda pid: False
     platform_utils.activate_app = lambda: None                 # …and never pull the test process in front of your work
+    import tools_system
+    real_apps = tools_system._running_apps
+    tools_system._running_apps = lambda name: []               # "quit Notes" in a test never reaches your Notes
     yield
     platform_utils._press_cmd, platform_utils.activate_pid, platform_utils.activate_app = saved
+    tools_system._running_apps = real_apps
 
 
 @pytest.fixture

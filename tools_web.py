@@ -54,14 +54,31 @@ def read_webpage(url: str) -> str:
     except Exception as e: return fail(f"Error reading: {e}")
 
 # ── TOOL: search_web_and_read ────────────────────────────────────
+def _note_search_requests() -> None:
+    """ddgs asks a shuffled list of search engines (Wikipedia, DuckDuckGo, Yahoo, Google, Brave, Startpage …) until it
+    has enough results. Every request it makes goes through its HttpClient, so each is written to "What NOVA sent"
+    with its real address - not one "duckduckgo.com" line for a query that went to five places. Set up once."""
+    from ddgs.http_client import HttpClient
+    if getattr(HttpClient.request, "noted", False): return
+    real = HttpClient.request
+    def request(self, method, url, *a, **kw):
+        sent = {k: kw[k] for k in ("params", "data", "json") if kw.get(k)}
+        ledger.record(str(url), "web search", ledger.size_of(sent) if sent else 0, "search query")
+        return real(self, method, url, *a, **kw)
+    request.noted = True                                        # type: ignore[attr-defined]
+    HttpClient.request = request                                # type: ignore[method-assign]
+
+
 def _search_ddg(query: str, n: int) -> list:
+    from ddgs import DDGS
+    from ddgs.exceptions import DDGSException
+    _note_search_requests()
     try:
-        from ddgs import DDGS                      # current package name
-    except ImportError:
-        from duckduckgo_search import DDGS         # legacy name
-    ledger.record("duckduckgo.com", "web search", len(query.encode("utf-8")), "search query")
-    with DDGS() as ddgs:
-        return list(ddgs.text(query, max_results=n))
+        with DDGS() as ddgs:
+            return list(ddgs.text(query, max_results=n))
+    except DDGSException as e:                     # "No results found", a timeout, every engine refused
+        log.info("search found nothing: %s", e)
+        return []
 
 def _search_brave(query: str, n: int, key: str) -> list:
     """Brave Search API - an official, documented API (needs the user's own key)."""
@@ -75,7 +92,7 @@ def _search_brave(query: str, n: int, key: str) -> list:
              "body": re.sub(r"<[^>]+>", "", h.get("description", ""))} for h in hits[:n]]
 
 def search_web_and_read(query: str, num_results: int = 3) -> str:
-    """Search the web (DuckDuckGo, or the Brave Search API if chosen in Settings) and return the top results."""
+    """Search the web (several search engines through ddgs, or the Brave Search API if chosen in Settings)."""
     n = max(1, min(int(num_results or 3), 8))
     try:
         results = None
@@ -85,7 +102,7 @@ def search_web_and_read(query: str, num_results: int = 3) -> str:
             key = keystore._get_api_key("brave")
             if key:
                 try: results = _search_brave(query, n, key)
-                except Exception as e: log.warning("Brave search failed (%s) - using DuckDuckGo", e)
+                except Exception as e: log.warning("Brave search failed (%s) - asking the other search engines", e)
         if results is None:
             results = _search_ddg(query, n)
         if not results:

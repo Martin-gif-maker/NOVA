@@ -4,6 +4,12 @@ import paths
 from i18n import tr
 
 NOTES = {
+    "6.6": [
+        "“Quit Safari” now quits an app the way ⌘Q does, so it can ask you to save first.",
+        "With Search by meaning installed, NOVA also picks the memories that fit your question, even when you said it in other words.",
+        "“Forget …” finds the memory even when you word it differently, and file requests like “Desktop/notes.txt” mean your own Desktop.",
+        "Small offline models (Ollama, LM Studio) work better: when one writes a command out instead of running it, NOVA runs it, with the usual checks.",
+    ],
     "6.5": [
         "Speak Bulgarian, English or 97 more languages with nothing leaving your Mac: Settings → Voice → Any language, on this Mac (a one-time 574 MB download).",
         "While NOVA works, the line under your message says what it is doing, and replies no longer jump when they finish.",

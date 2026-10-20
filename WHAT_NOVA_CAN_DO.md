@@ -33,7 +33,7 @@ So the AI decides *what* to do; NOVA's own code does it, and you approve anythin
 
 | You type | What happens | How it works |
 |---|---|---|
-| "what's the latest news about Tesla?", "how much does an iPhone 17 cost?" | NOVA searches and answers with what it found | Tool `search_web_and_read`: asks DuckDuckGo (or Brave Search, if you entered a key in Settings → AI) and gives the AI the titles, links and snippets of the top results |
+| "what's the latest news about Tesla?", "how much does an iPhone 17 cost?" | NOVA searches and answers with what it found | Tool `search_web_and_read`: asks several search engines in turn - DuckDuckGo, Yahoo, Wikipedia and others, each listed in *What NOVA sent* - (or Brave Search, if you entered a key in Settings → AI) and gives the AI the titles, links and snippets of the top results |
 | "summarize this article: https://…" | NOVA reads the page and summarizes it | Tool `read_webpage`: downloads the page, strips menus/scripts, passes the first ~4,000 characters to the AI. Addresses inside your home network are refused |
 | "what's the weather?", "weather in Varna" | Current weather and today's forecast | Tool `get_weather`: Open-Meteo (a free official weather service). With no city it uses your **home city** from Settings → General — it never guesses your location |
 | ＋ → **Daily news** | The top headlines appear in the chat | Reads Google News' public feed directly — no AI request needed |
@@ -85,7 +85,7 @@ Scanned PDFs are read with on-device text recognition (up to 80 pages per file).
 | "shut down", "restart" | Starts a **10-second countdown** — asks first; say "cancel" to stop it | Tool `control_system`: tells macOS to shut down when the countdown ends |
 | "next song", "pause the music" | Spotify skips / pauses | Tool `control_spotify`: talks to the Spotify app (never starts it by itself). The current track is also shown in NOVA's title bar |
 | "what's my battery?", "how much RAM is used?", "what's my IP / Wi-Fi?" | The numbers | Tools `get_battery`, `get_system_stats`, `get_network_info` |
-| "what's using the most memory?", "close Safari" | A list of running apps / the app is stopped (asks first) | Tools `list_processes`, `kill_process`. System processes, Finder and NOVA itself are protected |
+| "what's using the most memory?", "quit Safari", "force quit Safari" | A list of running apps / the app quits as with ⌘Q and may ask to save; "force quit" (or a process number) ends it at once (asks first) | Tools `list_processes`, `kill_process` (AppKit's `terminate`, or a kill when forced). System processes, Finder and NOVA itself are protected |
 | "what's in my clipboard?", "copy this to the clipboard: …" | Reads / sets the clipboard | Tools `get_clipboard`, `set_clipboard` |
 | "take a screenshot" | A picture is saved to the Desktop | Tool `take_screenshot` (needs the Screen Recording permission) |
 | "type 'Hello, how are you?' in the app I'm using" | NOVA types it for you — asks first, and shows which app will receive it | Tool `type_text_keyboard`: switches to the other app and pastes the text (so Bulgarian letters work), then puts your clipboard back. Needs the Accessibility permission |

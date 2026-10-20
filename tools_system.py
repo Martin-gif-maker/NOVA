@@ -187,12 +187,27 @@ def list_processes(filter_name: str = "") -> str:
 _NEVER_KILL = {"launchd", "kernel_task", "windowserver", "loginwindow", "systemd", "init", "system",
                "finder", "dock", "systemuiserver"}
 
-def kill_process(name_or_pid: str) -> str:
-    """Kill a process by name or PID."""
+def _running_apps(name: str) -> list:
+    """The Mac apps with that name that have a Dock icon (NSRunningApplication objects)."""
+    try:
+        from AppKit import NSWorkspace
+    except ImportError:
+        return []
+    want = name.strip().lower().removesuffix(".app")
+    return [a for a in NSWorkspace.sharedWorkspace().runningApplications()
+            if (a.localizedName() or "").lower() == want and a.activationPolicy() == 0]     # 0: a regular app
+
+def kill_process(name_or_pid: str, force: bool = False) -> str:
+    """Quit an app the way ⌘Q does - it may ask to save first - or end a process by name or PID. `force`, a PID, or a
+    process that is not an app: it is killed at once (unsaved work is lost)."""
     try:
         import psutil as _ps
         target = str(name_or_pid).strip()
         mine = {os.getpid(), os.getppid()}
+        if not force and not target.isdigit() and target.lower() not in _NEVER_KILL:
+            apps = [a for a in _running_apps(target) if a.processIdentifier() not in mine]
+            asked = [a.localizedName() for a in apps if a.terminate()]
+            if asked: return f"Asked {asked[0]} to quit (as with ⌘Q - it may ask to save first)."
         killed, failed = [], []
         for p in _ps.process_iter(["pid","name"]):
             nm = p.info["name"] or ""

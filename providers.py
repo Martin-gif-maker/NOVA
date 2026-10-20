@@ -145,6 +145,11 @@ def _sdk_modules():
     return [sys.modules[n] for n in ("anthropic", "openai", "groq") if n in sys.modules]
 
 
+# How providers say that the model's tool call did not fit the tool (Groq: "tool_use_failed", e.g. null for an optional
+# text argument), or was not valid JSON.
+_TOOL_CALL_REFUSED = ("tool_use_failed", "tool call validation failed", "failed to call a function", "failed_generation")
+
+
 def classify_error(exc: Exception):
     """(kind, retry_after_seconds).  kind ∈ rate_limit | auth | not_found | bad_request | connection |
     server | tool_json | other.   Typed SDK exceptions are checked first (most specific first); plain
@@ -152,6 +157,8 @@ def classify_error(exc: Exception):
     if isinstance(exc, ProviderError):
         return exc.kind, exc.retry_after
     text = str(exc)
+    if any(s in text.lower() for s in _TOOL_CALL_REFUSED):       # the model's own mistake: worth another try
+        return "tool_json", None
     for sdk in _sdk_modules():
         def _is(name, sdk=sdk):
             cls = getattr(sdk, name, None)
@@ -182,6 +189,7 @@ FRIENDLY = {
     "connection": "Network error — check your connection.",
     "server": "The AI service is having trouble — try again in a moment.",
     "not_found": "That model is not available on this account — pick another in Settings.",
+    "tool_json": "The AI made a mistake calling one of NOVA's tools — ask again, perhaps in other words.",
 }
 
 
@@ -248,8 +256,27 @@ class _LazySDK:
 _sdk_lock = threading.Lock()
 
 
+def nullable_optionals(tools: list) -> list:
+    """The tool definitions with every optional argument also allowed to be null. Groq checks each tool call against
+    the definition before NOVA sees it, and gpt-oss models send null for an argument they have no value for
+    (take_screenshot with save_path: null) - Groq refused that and the request failed. NOVA drops nulls itself."""
+    out = []
+    for t in tools:
+        fn = t.get("function") or {}
+        params = fn.get("parameters") or {}
+        required = set(params.get("required") or ())
+        props = {}
+        for name, spec in (params.get("properties") or {}).items():
+            if name not in required and isinstance(spec.get("type"), str):
+                spec = {**spec, "type": [spec["type"], "null"]}
+                if "enum" in spec: spec["enum"] = [*spec["enum"], None]
+            props[name] = spec
+        out.append({**t, "function": {**fn, "parameters": {**params, "properties": props}}} if props else t)
+    return out
+
+
 class _GroqAdapter(_LazySDK):
-    """Groq's own SDK, with the one Groq-specific request quirk applied."""
+    """Groq's own SDK, with Groq's request quirks handled (reasoning_effort, nullable optional arguments)."""
     host = "api.groq.com"
 
     def __init__(self, api_key: str):
@@ -270,6 +297,7 @@ class _GroqAdapter(_LazySDK):
         effort = kw.pop("reasoning_effort", None)
         if effort and "gpt-oss" in kw.get("model", ""):                 # only these models take the parameter
             kw["reasoning_effort"] = effort
+        if kw.get("tools"): kw["tools"] = nullable_optionals(kw["tools"])
         note_chat(self.host, kw)
         stream = self._c.chat.completions.create(**kw)
         note_allowance(kw.get("model", ""), getattr(getattr(stream, "response", None), "headers", None))

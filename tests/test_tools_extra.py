@@ -114,6 +114,26 @@ def test_weather_unknown_place(monkeypatch):
     assert "could not find" in tools.get_weather("Qwertyville")
 
 
+def test_what_nova_sent_names_every_search_engine_asked(monkeypatch, data_dir):
+    """ddgs asks several engines in turn; each request must be in the ledger with its real address. (The engines speak
+    through primp, which the test suite's internet guard cannot see, so the requests themselves are stand-ins.)"""
+    import ledger, types
+    from ddgs.http_client import HttpClient
+    asked = []
+    def offline(self, method, url, *a, **kw):
+        asked.append(url)
+        return types.SimpleNamespace(status_code=200, text="", content=b"")            # every engine: nothing found
+    monkeypatch.setattr(HttpClient, "request", offline)
+    import paths
+    monkeypatch.setattr(paths, "OUTBOUND_FILE", str(data_dir / "outbound.log"))         # this test's own ledger
+    monkeypatch.setattr(tools, "SETTINGS", {"search_engine": "ddg"})
+    assert "No results found" in tools.search_web_and_read("best pizza in rome")
+    hosts = {ledger.host_of(u) for u in asked}
+    assert len(hosts) >= 3                                                              # it really tried several
+    sent = [e for e in ledger.entries() if e["what"] == "web search"]
+    assert {e["dest"] for e in sent} == hosts and len(sent) == len(asked)               # each one, under its own name
+
+
 def test_search_uses_brave_only_with_a_key_and_falls_back(monkeypatch, data_dir):
     import requests, keystore
     used = []

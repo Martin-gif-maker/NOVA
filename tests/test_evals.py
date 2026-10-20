@@ -3,7 +3,7 @@ import types
 import pytest
 import models, tools
 from evals import harness
-from gui_support import FakeCompletions, _tc
+from gui_support import FakeCompletions, _C, _D, _tc
 
 CASES = harness.load_cases()
 BY_ID = {c["id"]: c for c in CASES}
@@ -77,3 +77,51 @@ def test_a_model_that_asks_for_more_tools_still_counts(fake_model):
     assert r["ok"] and [n for n, _ in r["calls"]] == ["list_shortcuts"]
     s = harness.live_summary([r])
     assert s["all"]["ok_pct"] == 100.0 and "| English | 1 |" in harness.markdown(live_sum=s)
+
+
+# ── long runs: a token budget, the provider's limit, and carrying on later ──
+def test_a_run_alternates_the_languages():
+    order = [harness.lang(c) for c in harness.interleave(CASES)]
+    assert order[:4] == ["en", "bg", "en", "bg"] and sorted(order) == sorted(harness.lang(c) for c in CASES)
+
+
+class _Counted:
+    """A model that answers in a word and, like a real provider, says what the request cost."""
+    def __init__(self): self.chat = types.SimpleNamespace(completions=self)
+    def create(self, **kw):
+        chunk = _C(_D(content="Hi!")); chunk.usage = types.SimpleNamespace(prompt_tokens=900, completion_tokens=5)
+        return iter([chunk])
+
+
+def test_a_budget_stops_the_run_before_the_next_request(fake_model):
+    chats = [BY_ID["en-chat-hello"]] * 3
+    results, why = harness.run_all(chats, _Counted(), models.fast_model_id(), budget=1000)
+    assert len(results) == 2 and results[0]["tok_in"] == 900 and "budget of 1000 tokens" in why
+
+
+def test_the_providers_limit_stops_the_run_and_that_request_is_not_counted(fake_model, monkeypatch):
+    import workers
+    monkeypatch.setattr(workers.AIWorker, "_sleep", lambda self, s: True)            # no real waiting
+    class Limited:
+        chat = types.SimpleNamespace(completions=types.SimpleNamespace(create=lambda **kw: (_ for _ in ()).throw(
+            Exception("Error code: 429 - Rate limit reached on tokens per day (TPD): Limit 200000, Used 199990"))))
+    results, why = harness.run_all([BY_ID["en-maps"], BY_ID["en-chat-hello"]], Limited(), models.fast_model_id())
+    assert results == [] and "tokens per day" in why
+
+
+def test_a_stopped_run_is_finished_later_into_the_same_file(fake_model, monkeypatch, tmp_path):
+    from evals import __main__ as runner
+    import keystore, providers
+    monkeypatch.setattr(harness, "HERE", str(tmp_path))
+    monkeypatch.setattr(keystore, "_get_api_key", lambda p: "test-key")
+    monkeypatch.setattr(providers, "make_client", lambda *a: _Counted())
+    ids = "en-chat-hello,bg-chat-hello"
+    assert runner.main(["live", "--model", models.fast_model_id(), "--only", ids, "--budget", "1"]) == 0
+    (first,) = (tmp_path / "results").glob("*.json")
+    import json
+    saved = json.loads(first.read_text())
+    assert len(saved["results"]) == 1 and saved["left"] == 1
+    assert runner.main(["live", "--model", models.fast_model_id(), "--only", ids, "--resume", str(first)]) == 0
+    saved = json.loads(first.read_text())
+    assert sorted(r["id"] for r in saved["results"]) == ["bg-chat-hello", "en-chat-hello"] and saved["left"] == 0
+    assert "not run yet" not in (tmp_path / "results" / (first.stem + ".md")).read_text()

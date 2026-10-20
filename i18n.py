@@ -97,8 +97,8 @@ BG = {
                 "(Настройки → Глас) речта се разпознава на този Mac и активиращата дума никога не качва звук.<br>"
                 "• По избор: текст на отговорите за четене на глас → онлайн гласовете на Microsoft (edge-tts). Избери системния глас "
                 "в Настройки → Глас и нищо не се изпраща.<br>"
-                "• Времето → Open-Meteo (градът, за който питаш), новините → Google News, търсенето → DuckDuckGo или Brave "
-                "(IP адресът ти е видим за тях).<br>"
+                "• Времето → Open-Meteo (градът, за който питаш), новините → Google News, търсенето → няколко търсачки една след друга "
+                "(DuckDuckGo, Yahoo, Wikipedia …) или Brave; IP адресът ти е видим за тях.<br>"
                 "• Когато питаш за календара, пощата, уеб страница, избран текст или документите си, частта, която отговаря на "
                 "въпроса, се изпраща към AI доставчика като всяко друго съобщение. Документите се индексират на този Mac; "
                 "напускат го само откъсите, които съвпадат с въпроса.<br>"
@@ -166,10 +166,12 @@ BG.update({
     "Home city": "Твоят град", "Voice engine": "Глас за четене", "Speech recognition": "Разпознаване на реч",
     "Settings sections": "Раздели на настройките", "Auto (follow system)": "Автоматично (според системата)",
     "Pick accent color": "Избери акцентен цвят", "e.g. Sofia — used for the weather": "напр. София — използва се за времето",
-    "Test connection": "Провери връзката", "DuckDuckGo (no key)": "DuckDuckGo (без ключ)",
+    "Test connection": "Провери връзката", "Several search engines (no key)": "Няколко търсачки (без ключ)",
     "Brave Search (needs a key)": "Brave Search (изисква ключ)", "Web search": "Търсене в интернет",
-    "DuckDuckGo needs no key but has no official API. Brave Search is an official API and needs your own key.":
-        "DuckDuckGo не изисква ключ, но няма официален API. Brave Search е официален API и изисква твой собствен ключ.",
+    "Without a key NOVA asks several search engines in turn (DuckDuckGo, Yahoo, Wikipedia and others) through an "
+    "unofficial library; What NOVA sent lists each one. Brave Search is an official API and needs your own key.":
+        "Без ключ NOVA пита няколко търсачки една след друга (DuckDuckGo, Yahoo, Wikipedia и други) чрез неофициална "
+        "библиотека; „Какво е изпратила NOVA“ показва всяка от тях. Brave Search е официален API и изисква твой собствен ключ.",
     "Voice (TTS):": "Озвучаване (TTS):",
     "Online voices (Microsoft)": "Онлайн гласове (Microsoft)", "System voice (offline)": "Системен глас (офлайн)",
     "Online voices sound better but send the text to Microsoft's speech service (unofficial). The system voice works offline and nothing leaves this Mac.":
@@ -254,6 +256,8 @@ BG.update({
     "API key error — use 'Change API key' in the menu.": "Грешка с API ключа — използвай „Смени API ключа“ в менюто.",
     "Network error — check your connection.": "Мрежова грешка — провери връзката си.",
     "The AI service is having trouble — try again in a moment.": "AI услугата има затруднения — опитай отново след малко.",
+    "The AI made a mistake calling one of NOVA's tools — ask again, perhaps in other words.":
+        "AI сгреши при извикването на един от инструментите на NOVA — попитай отново, може би с други думи.",
     "That model is not available on this account — pick another in Settings.": "Този модел не е наличен за този акаунт — избери друг в Настройки.",
     # data
     "Export NOVA data": "Експорт на данните на NOVA", "Delete all NOVA data": "Изтриване на всички данни на NOVA",
@@ -612,6 +616,15 @@ BG.update({
     "New line": "Нов ред", "Length": "Дължина", "Double-click": "Двойно щракване",
     "Drag the title bar": "Влачене на заглавната лента", "Drag a corner": "Влачене на ъгъл",
     "The menu: new chat, sessions, theme, model, settings": "Менюто: нов чат, сесии, тема, модел, настройки",
+    # what's new in 6.6
+    "“Quit Safari” now quits an app the way ⌘Q does, so it can ask you to save first.":
+        "„Затвори Safari“ вече затваря програмата като ⌘Q, така че тя може първо да те попита дали да запази.",
+    "With Search by meaning installed, NOVA also picks the memories that fit your question, even when you said it in other words.":
+        "С инсталираното Търсене по смисъл NOVA избира и спомените, които пасват на въпроса ти, дори ако си ги казал с други думи.",
+    "“Forget …” finds the memory even when you word it differently, and file requests like “Desktop/notes.txt” mean your own Desktop.":
+        "„Забрави …“ намира спомена, дори да го кажеш с други думи, а заявки за файлове като „Desktop/notes.txt“ означават твоя собствен Desktop.",
+    "Small offline models (Ollama, LM Studio) work better: when one writes a command out instead of running it, NOVA runs it, with the usual checks.":
+        "Малките офлайн модели (Ollama, LM Studio) работят по-добре: когато някой напише командата като текст, вместо да я изпълни, NOVA я изпълнява, със същите проверки.",
     # what's new in 6.5
     "Speak Bulgarian, English or 97 more languages with nothing leaving your Mac: Settings → Voice → Any language, on this Mac (a one-time 574 MB download).":
         "Говори на български, английски или още 97 езика, без нищо да напуска Mac-а ти: Настройки → Гласов вход → Всеки език, на този Mac (еднократно изтегляне от 574 MB).",

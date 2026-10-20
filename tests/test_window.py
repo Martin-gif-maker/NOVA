@@ -16,7 +16,8 @@ def said(win):
 
 def mouse(x, y, button=Qt.MouseButton.LeftButton, pos=None):
     """A stand-in mouse event at a place on the screen (and inside the widget)."""
-    return types.SimpleNamespace(button=lambda: button, buttons=lambda: button, pos=lambda: pos or QPoint(4, 4),
+    at = QPointF(pos or QPoint(4, 4))
+    return types.SimpleNamespace(button=lambda: button, buttons=lambda: button, position=lambda: at,
                                  globalPosition=lambda: QPointF(x, y))
 
 

@@ -12,7 +12,7 @@
 #          "order": "any", "forbid": [tool names], "results": {tool name: canned result}}
 # An argument matches when one of the expected texts is part of it (ignoring case). "expect": [] means a plain
 # answer with no tool at all.
-import json, os, time
+import itertools, json, os, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CASES = os.path.join(HERE, "cases.jsonl")
@@ -175,6 +175,35 @@ def run_case(case: dict, client, model_id: str, max_tokens: int = 1024) -> dict:
                   calls=[[n, a] for n, a in calls], reply=(got.get("reply") or "")[:400], error=got.get("error", ""))
     if result["error"]: result["ok"] = False
     return result
+
+
+def interleave(cases: list) -> list:
+    """English and Bulgarian requests in turn, so that a run which stops early still covers both languages."""
+    by: dict = {}
+    for c in cases: by.setdefault(lang(c), []).append(c)
+    return [c for group in itertools.zip_longest(*by.values()) for c in group if c is not None]
+
+
+def run_all(cases: list, client, model_id: str, budget: int = 0, report=None) -> tuple:
+    """Run the cases one after another. Returns (results, why the run stopped early - or "").
+
+    It stops before the next case once `budget` tokens are used, and it stops when the provider still refuses after
+    NOVA's own waiting (its rate limit - e.g. the free tier's tokens per day - or the key). That last case is not
+    counted: it says nothing about the model, and a later --resume runs it again."""
+    results: list = []
+    used = 0
+    for i, case in enumerate(cases, 1):
+        if budget and used >= budget:
+            return results, f"the budget of {budget} tokens was used up"
+        r = run_case(case, client, model_id)
+        kind = r["error"].split(":", 1)[0]
+        if kind in ("rate_limit", "auth"):
+            return results, ("the key was refused" if kind == "auth" else
+                             "the provider's rate limit: " + r["error"].split(":", 1)[1].strip()[:200])
+        results.append(r)
+        used += r["tok_in"] + r["tok_out"]
+        if report: report(i, len(cases), r)
+    return results, ""
 
 
 def live_summary(results: list) -> dict:

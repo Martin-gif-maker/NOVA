@@ -271,9 +271,10 @@ class SettingsDialog(QDialog):
         self._followup_chk = self._check(form, "Follow-ups:", tr("Suggest follow-up questions (one extra request per reply)"), c.get("suggest_followups", False))
 
         self._search_cb = QComboBox()
-        self._search_cb.addItem(tr("DuckDuckGo (no key)"), "ddg")
+        self._search_cb.addItem(tr("Several search engines (no key)"), "ddg")
         self._search_cb.addItem(tr("Brave Search (needs a key)"), "brave")
-        self._search_cb.setToolTip(tr("DuckDuckGo needs no key but has no official API. Brave Search is an official API and needs your own key."))
+        self._search_cb.setToolTip(tr("Without a key NOVA asks several search engines in turn (DuckDuckGo, Yahoo, Wikipedia and others) through an "
+                                    "unofficial library; What NOVA sent lists each one. Brave Search is an official API and needs your own key."))
         self._select(self._search_cb, c.get("search_engine", "ddg"))
         self._search_key_btn = self._small_btn(tr("Brave API key") + "…")
         form.addRow(tr("Web search:"), self._hbox(self._search_cb, self._search_key_btn))

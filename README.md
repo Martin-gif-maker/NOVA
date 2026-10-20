@@ -201,7 +201,7 @@ restaurant?" finds "is allergic to peanuts" (can be turned off). With *Search by
 also matched by meaning on the Mac, with no keywords needed. Edit memories in Settings → Privacy → View memories.
 
 ## Safety model
-* Risky tool calls (shell, Python, delete/move/rename, overwrite, kill, shutdown, typing) always ask first.
+* Risky tool calls (shell, Python, delete/move/rename, overwrite, quitting apps, shutdown, typing) always ask first.
   "Always allow" is scoped: file changes inside **one folder**, typing into **one app**, or sleep.
 * After a request has read web pages or files, every side-effect tool asks (with a warning) and "Always allow"
   is off — a hostile page cannot quietly trigger actions. Fetching a page is a side effect too when the address

@@ -194,3 +194,27 @@ def test_show_in_finder(monkeypatch, tmp_path):
 def test_network_info_goes_through_the_platform_layer(monkeypatch):
     monkeypatch.setattr(plat, "network_info", lambda: "Wi-Fi: Home\nen0: 192.168.1.20")
     assert tools.get_network_info() == "Wi-Fi: Home\nen0: 192.168.1.20"
+
+
+def test_quitting_an_app_asks_it_to_quit_as_cmd_q_does(monkeypatch):
+    import tools_system, psutil
+    asked, killed = [], []
+    class App:
+        def __init__(self, name, pid): self.name, self.pid = name, pid
+        def localizedName(self): return self.name
+        def processIdentifier(self): return self.pid
+        def terminate(self): asked.append(self.name); return True
+    monkeypatch.setattr(tools_system, "_running_apps", lambda name: [App("Safari", 500)] if name.lower() == "safari" else [])
+    monkeypatch.setattr(psutil, "process_iter", lambda attrs=None: [types.SimpleNamespace(
+        info={"pid": 500, "name": "Safari"}, kill=lambda: killed.append(500))])
+    out = tools.kill_process("safari")
+    assert "Asked Safari to quit" in out and "save" in out and asked == ["Safari"] and killed == []
+    assert tools.kill_process("Safari", force=True) == "Killed: Safari (500)" and killed == [500]   # "force quit"
+    assert tools.kill_process("500") == "Killed: Safari (500)"                                       # a PID: the process
+    assert tools.needs_confirmation("kill_process", {"name_or_pid": "Safari"}) == "Quit: Safari"         # what you approve
+    assert "unsaved work is lost" in tools.needs_confirmation("kill_process", {"name_or_pid": "Safari", "force": True})
+
+
+def test_tests_can_never_quit_a_real_app():
+    import tools_system
+    assert tools_system._running_apps("Finder") == [] and tools_system._running_apps("Safari") == []
