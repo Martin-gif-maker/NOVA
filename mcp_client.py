@@ -37,10 +37,11 @@ def gui_env(extra: dict = None) -> dict:
     """Environment for a server program: an app started from the Dock has a bare PATH, so add the usual places."""
     env = dict(os.environ)
     home = os.path.expanduser("~")
-    more = ["/opt/homebrew/bin", "/opt/homebrew/sbin", "/usr/local/bin", os.path.join(home, ".local", "bin"),
+    import platform_utils as plat
+    more = plat.extra_path_dirs(home) + [
             os.path.join(home, ".cargo", "bin"), os.path.join(home, ".bun", "bin"), os.path.join(home, ".deno", "bin")]
-    have = env.get("PATH", "/usr/bin:/bin").split(":")
-    env["PATH"] = ":".join(have + [p for p in more if p not in have])
+    have = env.get("PATH", os.defpath).split(os.pathsep)
+    env["PATH"] = os.pathsep.join(have + [p for p in more if p not in have])
     for k in ("PYTHONHOME", "PYTHONPATH", "PYTHONEXECUTABLE"):       # NOVA's own (packaged) Python must not leak into theirs
         env.pop(k, None)
     env.update({str(k): str(v) for k, v in (extra or {}).items()})
@@ -60,17 +61,19 @@ class StdioTransport:
         self.stderr_tail = []; self.closed = False
 
     def start(self) -> None:
+        import platform_utils as plat
         env = gui_env(self.env)
         exe = self.command if os.path.isabs(self.command) else shutil.which(self.command, path=env["PATH"])
         if not exe:
             hint = {"npx": "Install Node.js (nodejs.org) first.", "node": "Install Node.js (nodejs.org) first.",
                     "uvx": "Install uv (docs.astral.sh/uv) first.", "uv": "Install uv (docs.astral.sh/uv) first.",
                     "docker": "Install Docker Desktop first."}.get(os.path.basename(self.command), "")
-            raise MCPError(f"The program “{self.command}” was not found on this Mac. {hint}".strip())
+            from i18n import local
+            raise MCPError(local(f"The program “{self.command}” was not found on this Mac. {hint}").strip())
         try:
             self.proc = subprocess.Popen([exe, *self.args], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                          env=env, cwd=self.cwd or os.path.expanduser("~"), text=True, encoding="utf-8",
-                                         errors="replace", bufsize=1, start_new_session=True)
+                                         errors="replace", bufsize=1, start_new_session=True, **plat.QUIET_PROCESS)
         except OSError as e:
             raise MCPError(f"Could not start “{self.command}”: {e}")
         threading.Thread(target=self._read_loop, daemon=True, name="mcp-read").start()

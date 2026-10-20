@@ -6,11 +6,13 @@ import platform_utils as plat
 mac_only = pytest.mark.skipif(not plat.IS_MAC, reason="macOS only")
 
 
+@mac_only
 def test_labels_and_quoting():
     assert plat.shortcut_label("N") == "⌘N" and plat.HOTKEY_LABEL == "⌘⇧Space" and plat.KEYSTORE_NAME == "macOS Keychain"
     assert plat.as_quote('say "hi"\\ now\nplease') == 'say \\"hi\\"\\\\ now please'      # safe inside an AppleScript string
 
 
+@mac_only
 def test_the_prompt_is_written_for_macos():
     import prompts
     text = prompts._build_prompt("hello")

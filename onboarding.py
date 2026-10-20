@@ -2,7 +2,7 @@
 #
 # Nothing is requested from the user (and nothing leaves the machine) before this wizard has
 # explained it. The wizard only *collects* choices; main.py applies and stores them.
-import subprocess, threading
+import threading
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QStackedWidget,
                              QCheckBox, QLineEdit, QWidget, QFrame, QComboBox)
 from PySide6.QtCore import Qt, QTimer, Signal
@@ -10,7 +10,7 @@ from PySide6.QtGui import QFont
 import platform_utils as plat
 import themes
 import providers
-from i18n import tr, language, BG
+from i18n import tr, language, local, BG
 
 PRIVACY_POINTS = (
     "<b>What stays on your Mac:</b> your chat history, memories, notes and settings "
@@ -119,7 +119,7 @@ class OnboardingDialog(QDialog):
         w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(0, 0, 0, 0); v.setSpacing(10)
         v.addWidget(self._title(tr("Welcome to NOVA")))
         v.addWidget(self._body(tr("Your personal AI assistant for your desktop. Before we start, here is exactly how your data is handled:")))
-        v.addWidget(self._body(BG["PRIVACY"] if language() == "bg" else PRIVACY_POINTS))
+        v.addWidget(self._body(local(BG["PRIVACY"] if language() == "bg" else PRIVACY_POINTS)))
         self.consent_chk = QCheckBox(tr("I understand and agree")); self.consent_chk.toggled.connect(self._update_nav)
         v.addWidget(self.consent_chk)
         v.addStretch()
@@ -285,7 +285,7 @@ class OnboardingDialog(QDialog):
         elif key == "microphone":
             if plat.microphone_status() == "undetermined":
                 plat.request_microphone(); return            # the system prompt appears; no need to open Settings
-        subprocess.Popen(["open", _SETTINGS_URLS[key]])
+        plat.open_path(_SETTINGS_URLS[key])
 
     def _refresh_permissions(self):
         if not plat.IS_MAC or not hasattr(self, "_perm_rows") or self._stack.currentIndex() != 2: return

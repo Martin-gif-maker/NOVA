@@ -8,6 +8,7 @@
 # Reading is format-agnostic: a file is decrypted if it carries the NOVA marker, otherwise read as plain
 # text. That makes switching the setting safe at any moment, and `convert_all` re-writes what is on disk.
 import os, json, time, base64, logging, threading
+from i18n import local
 import paths
 
 log = logging.getLogger("nova")
@@ -47,17 +48,17 @@ def _key(create: bool = False) -> bytes:
         try:
             stored = _keyring().get_password(_KR_SERVICE, _KR_USER)
         except Exception as e:
-            raise StorageError(f"The Keychain is not available ({e}).")
+            raise StorageError(local(f"The Keychain is not available ({e})."))
         if not stored:
             if not create:
-                raise StorageError("The encryption key is not in the Keychain (it was removed, or this data came from "
-                                   "another Mac), so the encrypted files cannot be read.")
+                raise StorageError(local("The encryption key is not in the Keychain (it was removed, or this data came from "
+                                         "another Mac), so the encrypted files cannot be read."))
             stored = base64.urlsafe_b64encode(os.urandom(32)).decode()
             try:
                 _keyring().set_password(_KR_SERVICE, _KR_USER, stored)
                 if _keyring().get_password(_KR_SERVICE, _KR_USER) != stored: raise RuntimeError("the key did not persist")
             except Exception as e:
-                raise StorageError(f"Could not store the encryption key in the Keychain ({e}).")
+                raise StorageError(local(f"Could not store the encryption key in the Keychain ({e})."))
         _state["key"] = base64.urlsafe_b64decode(stored)
         return _state["key"]
 

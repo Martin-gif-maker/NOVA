@@ -7,7 +7,6 @@ import shutil
 import threading
 import datetime
 import logging
-import subprocess
 from PySide6.QtWidgets import (QApplication, QVBoxLayout, QPushButton, QDialog, QFileDialog, QMessageBox, QTextEdit)
 from PySide6.QtCore import QTimer
 import tools as computer_tools
@@ -97,7 +96,7 @@ class DataMixin:
     @staticmethod
     def _reveal(path: str):
         os.makedirs(path, exist_ok=True)
-        try: subprocess.Popen(["open", path])
+        try: plat.open_path(path)
         except OSError: pass
 
     def _export_data(self, parent=None):

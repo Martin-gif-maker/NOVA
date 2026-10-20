@@ -390,23 +390,27 @@ class BuildMixin:
         menu.exec(self._plus_btn.mapToGlobal(self._plus_btn.rect().topLeft() - QPoint(0, menu.sizeHint().height() + 6)))
 
     def _build_menubar(self):
-        """Standard macOS menu bar (File / Edit / View / Window / Help)."""
+        """Standard macOS menu bar (File / Edit / View / Window / Help). Windows shows no menu bar for this
+        frameless window, but the same actions keep their keyboard shortcuts there."""
         mb = QMenuBar()                      # parent-less => the global menu bar on macOS
-        def add(menu, text, fn, shortcut=None, role=None):
+        def add(menu, text, fn, shortcut=None, role=None, in_window=True):
             a = QAction(text, self)
             if shortcut: a.setShortcut(QKeySequence(shortcut))
             if role is not None: a.setMenuRole(role)
-            a.triggered.connect(lambda _=False, f=fn: f()); menu.addAction(a); return a
+            a.triggered.connect(lambda _=False, f=fn: f()); menu.addAction(a)
+            if shortcut and in_window and not plat.IS_MAC: self.addAction(a)       # the window itself listens for the keys
+            return a
         m = mb.addMenu(tr("File"))
         add(m, tr("New chat"), self._new_chat, QKeySequence.StandardKey.New)
         add(m, tr("Sessions") + "…", self._show_sessions_menu, "Ctrl+Shift+O")
         add(m, tr("Export chat") + "…", self._export_chat)
         add(m, tr("Settings") + "…", self._show_settings, QKeySequence.StandardKey.Preferences, QAction.MenuRole.PreferencesRole)
+        if not plat.IS_MAC: add(m, tr("Quit"), self._quit_app, "Ctrl+Q")           # macOS adds its own Quit (⌘Q)
         m = mb.addMenu(tr("Edit"))
         for label, name, key in (("Undo", "undo", QKeySequence.StandardKey.Undo), ("Redo", "redo", QKeySequence.StandardKey.Redo),
                                  ("Cut", "cut", QKeySequence.StandardKey.Cut), ("Copy", "copy", QKeySequence.StandardKey.Copy),
                                  ("Paste", "paste", QKeySequence.StandardKey.Paste), ("Select All", "selectAll", QKeySequence.StandardKey.SelectAll)):
-            add(m, label, lambda n=name: self._focus_call(n), key)
+            add(m, label, lambda n=name: self._focus_call(n), key, in_window=False)   # text fields know these keys themselves
         m = mb.addMenu(tr("View"))
         add(m, tr("Bigger text"), lambda: self._bump_font(+1), "Ctrl+=")
         add(m, tr("Smaller text"), lambda: self._bump_font(-1), "Ctrl+-")
@@ -442,6 +446,9 @@ class BuildMixin:
         self._tray.setContextMenu(menu)
         self._tray.activated.connect(self._tray_clicked)
         self._tray.show()
+        if plat.IS_WINDOWS:                  # notifications come from NOVA's own icon, with its name on them
+            self._bridge.notify.connect(lambda title, text, ms: self._tray.showMessage(title, text, self.windowIcon(), ms))
+            plat.NOTIFY_HOOK = lambda title, text, ms: (self._bridge.notify.emit(title, text, int(ms)), True)[1]
 
     def _make_tray_icon(self):
         """Monochrome 'template' icon: macOS tints it for light/dark menu bars."""

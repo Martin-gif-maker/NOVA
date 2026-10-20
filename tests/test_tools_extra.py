@@ -8,7 +8,7 @@ import tools, tools_files, tools_web, platform_utils as plat
 def home(monkeypatch, tmp_path):
     (tmp_path / ".Trash").mkdir()
     monkeypatch.setattr(tools, "HOME", str(tmp_path)); monkeypatch.setattr(tools_files, "HOME", str(tmp_path))
-    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("HOME", str(tmp_path)); monkeypatch.setenv("USERPROFILE", str(tmp_path))
     monkeypatch.setattr(tools_files, "_PROTECTED_PATHS", {os.path.realpath(str(tmp_path))})
     return tmp_path
 

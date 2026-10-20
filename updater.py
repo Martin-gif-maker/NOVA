@@ -1,7 +1,10 @@
 # updater.py — update check + verified download + installing in place.
-# Where NOVA looks: its GitHub releases (the latest one's .dmg, with the SHA-256 GitHub publishes for it), or
-# your own feed (config "update_feed"), a JSON file:  {"version": "6.1.0", "url": "https://…/NOVA-6.1.0.dmg",
-#                                                      "sha256": "<hex digest of that file>", "notes": "…"}
+# Where NOVA looks: its GitHub releases (the latest one's .dmg - or on Windows its setup program - with the SHA-256
+# GitHub publishes for it), or your own feed (config "update_feed"), a JSON file:
+#   {"version": "6.1.0", "url": "https://…/NOVA-6.1.0.dmg", "sha256": "<hex digest of that file>", "notes": "…",
+#    "windows": {"url": "https://…/NOVA-6.1.0-setup.exe", "sha256": "…"}}
+# "url" / "sha256" at the top are the macOS disk image. On Windows the "windows" part is used instead: the setup
+# program is downloaded, checked against its sha256 and opened - it replaces NOVA itself.
 import os, re, hashlib, platform, shutil, subprocess, sys
 import paths
 
@@ -26,24 +29,42 @@ def fetch_info(feed: str) -> dict:
     r = requests.get(feed, timeout=10, headers={"Accept": "application/vnd.github+json"}); r.raise_for_status()
     info = r.json()
     if isinstance(info, dict) and "tag_name" in info and "assets" in info:
-        return from_github_release(info)
+        return from_github_release(info, system=sys.platform)
     if not isinstance(info, dict) or "version" not in info:
         raise ValueError("Unexpected update feed format")
-    return info
+    return for_this_system(info)
 
 
-def from_github_release(release: dict, machine: str = "") -> dict:
-    """The feed fields from a GitHub release: its tag, the disk image for this Mac's processor and the SHA-256
-    GitHub computed for that file. A release without one for this Mac reports version "0" (nothing to install)."""
-    machine = machine or platform.machine()                          # arm64 (Apple Silicon) or x86_64 (Intel)
-    dmgs = [a for a in release.get("assets") or [] if str(a.get("name", "")).endswith(".dmg")]
-    named = [a for a in dmgs if machine in a["name"]]
-    if named: pick = named[0]
-    elif machine == "arm64" and not any(k in a["name"] for a in dmgs for k in ("arm64", "x86_64")):
-        pick = dmgs[0] if dmgs else None                             # unnamed images are built on Apple Silicon
-    else: pick = None
-    if pick is None:
-        return {"version": "0", "notes": "No build for this Mac in the latest release."}
+def for_this_system(info: dict, platform: str = sys.platform) -> dict:
+    """The feed entry with the download meant for this system. A feed without a Windows download is "no update"
+    on Windows - a Mac disk image is never fetched there."""
+    if platform != "win32": return info
+    win = info.get("windows")
+    if not isinstance(win, dict) or not win.get("url"):
+        return dict(info, version="0")
+    return dict(info, url=win.get("url", ""), sha256=win.get("sha256", ""))
+
+
+def from_github_release(release: dict, machine: str = "", system: str = "darwin") -> dict:
+    """The feed fields from a GitHub release: its tag, the download for this computer - the disk image for this Mac's
+    processor, or on Windows the setup program - and the SHA-256 GitHub computed for that file. A release without one
+    for this computer reports version "0" (nothing to install)."""
+    assets = release.get("assets") or []
+    if system == "win32":
+        setups = [a for a in assets if str(a.get("name", "")).endswith("-setup.exe")]
+        pick = setups[0] if setups else None
+        if pick is None:
+            return {"version": "0", "notes": "No Windows build in the latest release."}
+    else:
+        machine = machine or platform.machine()                      # arm64 (Apple Silicon) or x86_64 (Intel)
+        dmgs = [a for a in assets if str(a.get("name", "")).endswith(".dmg")]
+        named = [a for a in dmgs if machine in a["name"]]
+        if named: pick = named[0]
+        elif machine == "arm64" and not any(k in a["name"] for a in dmgs for k in ("arm64", "x86_64")):
+            pick = dmgs[0] if dmgs else None                         # unnamed images are built on Apple Silicon
+        else: pick = None
+        if pick is None:
+            return {"version": "0", "notes": "No build for this Mac in the latest release."}
     digest = str(pick.get("digest") or "")
     if not digest.startswith("sha256:"):
         raise ValueError("The release does not say the download's SHA-256 - refusing to install")
@@ -92,9 +113,9 @@ def download(url: str, sha256: str, dest_dir: str | None = None, progress=None) 
 
 
 def reveal(path: str) -> None:
-    """Open the downloaded installer (mounts a .dmg on macOS)."""
-    cmd = ["open", path] if sys.platform == "darwin" else ["xdg-open", path]
-    subprocess.Popen(cmd)
+    """Open the downloaded installer (mounts a .dmg on macOS, starts the setup program on Windows)."""
+    import platform_utils as plat
+    plat.open_path(path)
 
 
 # ── installing in place ────────────────────────────────────────────
@@ -115,6 +136,8 @@ def app_bundle():
 def can_self_update(app: str | None = None):
     """(True, '') if the running app can replace itself, else (False, why)."""
     app = app or app_bundle()
+    if not app and sys.platform == "win32" and getattr(sys, "frozen", False):
+        return False, "On Windows the downloaded setup program installs the new version."
     if not app: return False, "NOVA is running from source, not from an app."
     if "/AppTranslocation/" in app or app.startswith("/Volumes/"):
         return False, "NOVA is running straight from the disk image. Drag it to Applications first."

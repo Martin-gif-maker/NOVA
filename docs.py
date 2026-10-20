@@ -4,11 +4,12 @@
 # passages and kept in a local index. When you ask something, the best-matching passages are found here
 # (BM25 by words, and - with the optional on-device model in embeddings.py - by meaning; no network) and only
 # those few passages go to the AI together with your question.
-import os, re, math, time, base64, logging, zipfile, threading, subprocess, collections
+import os, re, sys, math, time, base64, logging, zipfile, threading, subprocess, collections
 import paths
 import storage
 
 log = logging.getLogger("nova")
+ON_WINDOWS = sys.platform == "win32"       # there the readers in docs_windows.py stand in for Apple's frameworks
 
 MAX_FILE_CHARS  = 3_000_000        # ≈ a 1,000-page book; longer files are cut here
 MAX_TOTAL_CHARS = 40_000_000
@@ -35,6 +36,9 @@ class DocError(Exception):
 # ── getting the text out ───────────────────────────────────────────
 # ── text recognition (scans, photos of documents) - Apple's Vision framework, entirely on this Mac ──
 def ocr_available() -> bool:
+    if ON_WINDOWS:
+        import docs_windows
+        return docs_windows.ocr_available()
     import importlib.util
     try:
         return importlib.util.find_spec("Vision") is not None
@@ -80,6 +84,9 @@ def _page_image(pdf, index: int, scale: float = 2.5):
 
 def _ocr_pdf(path: str, wanted: list, progress=None) -> dict:
     """Recognise the text of the given page numbers (0-based). -> {page: text}"""
+    if ON_WINDOWS:
+        import docs_windows
+        return docs_windows.ocr_pdf(path, wanted, progress)
     import Quartz
     from Foundation import NSURL
     pdf = Quartz.CGPDFDocumentCreateWithURL(NSURL.fileURLWithPath_(path))
@@ -93,6 +100,9 @@ def _ocr_pdf(path: str, wanted: list, progress=None) -> dict:
 
 
 def _image_text(path: str) -> str:
+    if ON_WINDOWS:
+        import docs_windows
+        return docs_windows.image_text(path)
     if not ocr_available(): raise DocError("Reading text from pictures is not available in this build.")
     import Quartz
     from Foundation import NSURL
@@ -104,7 +114,11 @@ def _image_text(path: str) -> str:
     return text
 
 
-def _pdf_pages(path: str, progress=None) -> list:
+def _pdf_text_layer(path: str) -> list:
+    """The text of every page as the PDF itself stores it ('' for a scanned page)."""
+    if ON_WINDOWS:
+        import docs_windows
+        return docs_windows.pdf_pages(path, MAX_FILE_CHARS)
     try:
         from Quartz import PDFDocument
         from Foundation import NSURL
@@ -119,6 +133,11 @@ def _pdf_pages(path: str, progress=None) -> list:
         text = str(page.string() or "") if page is not None else ""
         pages.append(text); total += len(text)
         if total > MAX_FILE_CHARS: break
+    return pages
+
+
+def _pdf_pages(path: str, progress=None) -> list:
+    pages = _pdf_text_layer(path)
     blank = [i for i, t in enumerate(pages) if len(t.strip()) < 12]             # scanned pages have no text layer
     if blank and ocr_available():
         for i, text in _ocr_pdf(path, blank[:OCR_MAX_PAGES], progress).items():
@@ -319,6 +338,9 @@ def _sheet_parts(sheets: list) -> list:
 
 
 def _textutil(path: str) -> str:
+    if ON_WINDOWS:
+        import docs_windows
+        return docs_windows.to_text(path)
     try:
         r = subprocess.run(["/usr/bin/textutil", "-convert", "txt", "-stdout", path], capture_output=True, timeout=60)
     except (OSError, subprocess.TimeoutExpired) as e:

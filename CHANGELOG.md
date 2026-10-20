@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+**NOVA for Windows (first version).** The same program now also starts on Windows 10 and 11:
+- Everything NOVA asks of the system goes through one layer with a macOS and a Windows side. On the Mac nothing changes.
+- Windows gets its own hotkeys (Ctrl+Alt+Space, Ctrl+Alt+Shift+Space), the Recycle Bin, Start menu apps, the
+  notification area, "Start with Windows", Windows Credential Manager, and Windows wording in English and Bulgarian.
+- Documents are read without Apple's frameworks there; "part of the screen" has its own selection overlay.
+- Calendar, Reminders, Mail, the browser page, Apple Shortcuts and sandboxed plugins stay Mac-only; on Windows they
+  are not offered at all.
+- `setup_windows.bat`, `start.bat`, `check.bat`, a Windows build script and a setup program.
+- Checked by automatic tests on Windows machines. **Not yet tried on a real PC** - see the end of `WHAT_NOVA_CAN_DO.md`.
+- Everything from the Mac versions 6.3 to 6.6 is in it: search by meaning, speech in any language on the PC,
+  updates from GitHub (the Windows setup program), the safety fixes, the eval set, and "quit Notepad" closing a
+  program the way its close button does.
+
 - If the network is not up yet when NOVA starts (the Wi-Fi still waking), it fetches the list of models again after
   half a minute and after two minutes, instead of going without it until the next start: retired models are swapped
   for current ones and Settings → AI lists what your account offers.

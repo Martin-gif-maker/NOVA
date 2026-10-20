@@ -46,6 +46,10 @@ class ApprovalsMixin:
             except ValueError as e:
                 self.chat_area.add_message(tr("🔌  Plugin {} was not loaded: {}.").format(fname, e), "system", self._theme)
                 continue
+            if manifest is not None and not sandbox.available():       # never run a plugin unsealed that asked to be sealed
+                self.chat_area.add_message(tr("🔌  Plugin {} was not loaded: {}.").format(
+                    fname, tr("sandboxed plugins do not work on Windows yet")), "system", self._theme)
+                continue
             box = QMessageBox(self)
             box.setWindowTitle(tr("NOVA — plugin wants to load"))
             if manifest is not None and sandbox.available():
@@ -97,7 +101,7 @@ class ApprovalsMixin:
             else: rows.append(text)
         more = "" if preview.count("\n") < 45 else "<br><i>…</i>"
         return (html.escape(desc).replace("\n", "<br>") +
-                '<br><br><pre style="font-family:Menlo,monospace;font-size:11px;margin:0">' + "\n".join(rows) + "</pre>" + more)
+                '<br><br><pre style="font-family:Menlo,Consolas,monospace;font-size:11px;margin:0">' + "\n".join(rows) + "</pre>" + more)
 
     @staticmethod
     def _localize_desc(desc: str) -> str:

@@ -26,7 +26,7 @@ def test_plain_by_default_and_roundtrip(store):
     raw = open(paths.HISTORY_FILE, "rb").read()
     assert b"hello" in raw and not storage.is_encrypted(raw)
     assert storage.read_json(paths.HISTORY_FILE)["messages"][0]["content"] == "hello Ünïcode"
-    assert oct(os.stat(paths.HISTORY_FILE).st_mode & 0o777) == "0o600"
+    assert os.name == "nt" or oct(os.stat(paths.HISTORY_FILE).st_mode & 0o777) == "0o600"
 
 
 def test_encrypted_files_hide_the_text_and_read_back(store):
@@ -161,7 +161,7 @@ def test_crash_report_is_opt_in_and_scrubbed(store, monkeypatch):
     text = open(path).read()
     home = os.path.expanduser("~")
     assert "ValueError" in text and "~/Documents/private.txt" in text and home not in text and os.path.basename(home) not in text
-    assert f"version: {paths.__version__}" in text and oct(os.stat(path).st_mode & 0o777) == "0o600"
+    assert f"version: {paths.__version__}" in text and (os.name == "nt" or oct(os.stat(path).st_mode & 0o777) == "0o600")
     assert crash.unseen() == [path] and crash.unseen() == []                # told once
 
 

@@ -10,11 +10,12 @@ import tools, tools_apps, tools_system, platform_utils as plat
 @pytest.fixture
 def mac(monkeypatch):
     """Records what would have been done. `scripts` = AppleScript run, `runs` = programs started, `opened` = web addresses."""
+    if not plat.IS_MAC: pytest.skip("checks what NOVA tells macOS to do (the Windows side is in test_windows.py)")
     rec = types.SimpleNamespace(scripts=[], runs=[], opened=[], answer=(0, ""), timers=[])
     monkeypatch.setattr(plat, "run_osascript", lambda script, timeout=10: (rec.scripts.append(script), rec.answer)[1])
     done = types.SimpleNamespace(returncode=0, stdout="", stderr="")
-    monkeypatch.setattr(tools_system.subprocess, "run", lambda cmd, **k: (rec.runs.append(cmd), done)[1])
-    monkeypatch.setattr(tools_system.subprocess, "Popen", lambda cmd, **k: rec.runs.append(cmd))
+    monkeypatch.setattr(plat.subprocess, "run", lambda cmd, **k: (rec.runs.append(cmd), done)[1])
+    monkeypatch.setattr(plat.subprocess, "Popen", lambda cmd, **k: rec.runs.append(cmd))
     monkeypatch.setattr(tools_apps.webbrowser, "open", lambda url: rec.opened.append(url))
 
     class FakeTimer:                                   # a shutdown countdown that never reaches zero
@@ -164,7 +165,7 @@ def test_an_app_is_found_by_its_everyday_name(monkeypatch, mac):
     tried = []
     def fake_open(target, is_path=False):
         tried.append((target, is_path)); return target in ("Google Chrome", "/Applications/Affinity Photo 2.app", "System Settings")
-    monkeypatch.setattr(tools_apps, "_mac_open", fake_open)
+    monkeypatch.setattr(plat, "open_app", fake_open)
     monkeypatch.setattr(tools_apps, "_SCANNED_APPS", {"affinity photo 2": "/Applications/Affinity Photo 2.app"})
     assert tools.open_application("Chrome") == "Opened Chrome ✓" and tried == [("Google Chrome", False)]
     assert tools.open_application("control panel") == "Opened control panel ✓"          # old habits: it means System Settings here
@@ -174,14 +175,16 @@ def test_an_app_is_found_by_its_everyday_name(monkeypatch, mac):
     assert isinstance(tools.open_application("NoSuchApp123"), tools.ToolFailure) and tools.open_application("  ") == "No app name given."
 
 
+@pytest.mark.skipif(not plat.IS_MAC, reason="indexes .app bundles")
 def test_installed_apps_are_indexed_by_name(monkeypatch, tmp_path):
     apps = tmp_path / "Applications"; apps.mkdir()
     for name in ("Pixelmator Pro.app", "Notes.app", "readme.txt"): (apps / name).mkdir()
     monkeypatch.setattr(tools_apps, "HOME", str(tmp_path)); monkeypatch.setattr(tools_apps, "_SCANNED_APPS", {})
-    tools_apps._scan_mac_apps()
+    tools_apps._scan_apps()
     assert tools_apps._SCANNED_APPS["pixelmator pro"] == str(apps / "Pixelmator Pro.app") and "readme.txt" not in tools_apps._SCANNED_APPS
 
 
+@pytest.mark.skipif(not plat.IS_MAC, reason="Finder")
 def test_show_in_finder(monkeypatch, tmp_path):
     started = []
     monkeypatch.setattr(tools_apps.subprocess, "Popen", lambda cmd, **k: started.append(cmd))
@@ -197,24 +200,27 @@ def test_network_info_goes_through_the_platform_layer(monkeypatch):
 
 
 def test_quitting_an_app_asks_it_to_quit_as_cmd_q_does(monkeypatch):
-    import tools_system, psutil
+    import psutil
     asked, killed = [], []
-    class App:
-        def __init__(self, name, pid): self.name, self.pid = name, pid
-        def localizedName(self): return self.name
-        def processIdentifier(self): return self.pid
-        def terminate(self): asked.append(self.name); return True
-    monkeypatch.setattr(tools_system, "_running_apps", lambda name: [App("Safari", 500)] if name.lower() == "safari" else [])
+    monkeypatch.setattr(plat, "quit_app", lambda name: (asked.append(name), ["Safari"])[1] if name.lower() == "safari" else [])
     monkeypatch.setattr(psutil, "process_iter", lambda attrs=None: [types.SimpleNamespace(
         info={"pid": 500, "name": "Safari"}, kill=lambda: killed.append(500))])
     out = tools.kill_process("safari")
-    assert "Asked Safari to quit" in out and "save" in out and asked == ["Safari"] and killed == []
+    assert f"Asked Safari to quit ({plat.QUIT_HOW}" in out and "save" in out and asked == ["safari"] and killed == []
     assert tools.kill_process("Safari", force=True) == "Killed: Safari (500)" and killed == [500]   # "force quit"
     assert tools.kill_process("500") == "Killed: Safari (500)"                                       # a PID: the process
     assert tools.needs_confirmation("kill_process", {"name_or_pid": "Safari"}) == "Quit: Safari"         # what you approve
     assert "unsaved work is lost" in tools.needs_confirmation("kill_process", {"name_or_pid": "Safari", "force": True})
 
 
+def test_a_windows_program_name_needs_no_exe(monkeypatch):
+    import psutil, tools_system
+    killed = []
+    monkeypatch.setattr(psutil, "process_iter", lambda attrs=None: [types.SimpleNamespace(
+        info={"pid": 700, "name": "chrome.exe"}, kill=lambda: killed.append(700))])
+    assert tools.kill_process("Chrome", force=True) == "Killed: chrome.exe (700)" and killed == [700]
+    assert tools_system._same_program("notepad.exe", "Notepad.EXE") and not tools_system._same_program("notepad", "note")
+
+
 def test_tests_can_never_quit_a_real_app():
-    import tools_system
-    assert tools_system._running_apps("Finder") == [] and tools_system._running_apps("Safari") == []
+    assert plat.quit_app("Finder") == [] and plat.quit_app("Safari") == [] and plat.quit_app("notepad") == []

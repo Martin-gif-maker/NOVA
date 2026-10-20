@@ -10,24 +10,11 @@ from toolbase import HOME, fail, user_path
 NOTES_FILE = paths.NOTES_FILE
 
 # ── TOOL: manage_files ────────────────────────────────────────────
-_PROTECTED_PATHS = {os.path.realpath(p) for p in (
-    "/", HOME, os.path.join(HOME, "Desktop"), os.path.join(HOME, "Documents"),
-    os.path.join(HOME, "Downloads"), os.path.join(HOME, "Library"), "/System", "/Users",
-    "/Applications", "/usr", "/bin", "/etc", "/var")}
+_PROTECTED_PATHS = plat.protected_paths(HOME)      # never deleted, whatever the tool is told
 
-def _move_to_trash(path: str) -> str:
-    """Move to the Trash instead of deleting for good."""
-    trash = os.path.join(HOME, ".Trash")
-    if not os.path.isdir(trash):
-        raise OSError("Trash folder not found")
-    name = os.path.basename(path.rstrip("/")) or "item"
-    dest = os.path.join(trash, name)
-    n = 1
-    while os.path.exists(dest):
-        stem, ext = os.path.splitext(name)
-        dest = os.path.join(trash, f"{stem} {n}{ext}"); n += 1
-    shutil.move(path, dest)
-    return dest
+def _move_to_trash(path: str) -> None:
+    """Move to the Trash / Recycle Bin instead of deleting for good."""
+    plat.move_to_trash(path, HOME)
 
 def manage_files(action: str, source: str, destination: str | None = None) -> str:
     source = user_path(source)
@@ -39,7 +26,7 @@ def manage_files(action: str, source: str, destination: str | None = None) -> st
             if os.path.realpath(source) in _PROTECTED_PATHS:
                 return fail(f"Refusing to delete a protected folder: {source}")
             _move_to_trash(source)
-            return f"Moved to Trash: {source} ✓"
+            return f"Moved to {plat.TRASH_NAME}: {source} ✓"
         elif action == "move":
             if not destination: return fail("Destination required.")
             shutil.move(source, destination); return f"Moved: {source} → {destination} ✓"
@@ -66,16 +53,13 @@ def manage_files(action: str, source: str, destination: str | None = None) -> st
 
 # ── TOOL: run_shell_command ───────────────────────────────────────
 def _shell_env():
-    env = dict(os.environ)                 # a GUI app starts with a bare PATH: add Homebrew and the usual folders
-    have = env.get("PATH", "").split(":")
-    env["PATH"] = ":".join(plat._GUI_PATH.split(":") + [p for p in have if p and p not in plat._GUI_PATH])
-    return env
+    return plat.shell_env()                # a GUI app starts with a bare PATH: the platform layer completes it
 
 def run_shell_command(command: str) -> str:
     try:
-        proc = subprocess.run(command, shell=True, capture_output=True, stdin=subprocess.DEVNULL,
+        proc = subprocess.run(plat.SHELL_PREFIX + command, shell=True, capture_output=True, stdin=subprocess.DEVNULL,
                               text=True, timeout=30, encoding="utf-8", errors="replace",
-                              env=_shell_env())
+                              env=_shell_env(), **plat.QUIET_PROCESS)
         out = (proc.stdout + proc.stderr).strip()
         return out[:2000] if out else "Command executed successfully ✓"
     except subprocess.TimeoutExpired: return fail("Command timed out.")
@@ -106,31 +90,23 @@ def read_notes() -> str:
 # Runs in a separate, isolated interpreter (-I) with a hard 10 s timeout, in a temp folder. This is NOT a security sandbox - the user must approve every run (see
 # NEEDS_CONFIRM) because the code can do anything the user account can do.
 def _python_exe() -> str | None:
-    """A real Python interpreter (inside a packaged .app sys.executable is NOVA itself)."""
+    """A real Python interpreter (inside a packaged app sys.executable is NOVA itself)."""
     if not paths.IS_FROZEN:
         return sys.executable
-    for cand in ("/opt/homebrew/bin/python3", "/usr/local/bin/python3"):
-        if os.access(cand, os.X_OK): return cand
-    cand = shutil.which("python3") or "/usr/bin/python3"
-    if cand == "/usr/bin/python3":
-        # /usr/bin/python3 is only a stub that opens an installer dialog unless the developer tools exist
-        if subprocess.run(["xcode-select", "-p"], capture_output=True).returncode != 0:
-            return None
-    return cand
+    return plat.find_python()
 
 def execute_python_code(code: str) -> str:
     exe = _python_exe()
     if not exe:
-        return fail("Python is not installed on this Mac. Install it from python.org or with "
-                    "`brew install python`, or run `xcode-select --install`, then try again.")
+        return fail(plat.NO_PYTHON)
     try:
         with tempfile.TemporaryDirectory(prefix="nova_py_") as tmp:
             # No preexec_fn: running Python code in a forked child of this multi-threaded process (with macOS
             # frameworks loaded) can stall for a minute before the program even starts. Plain spawn is safe;
             # the wall-clock timeout and the approval prompt are the real limits.
-            proc = subprocess.run([exe, "-I", "-c", code], capture_output=True, text=True,
+            proc = subprocess.run([exe, "-I", *plat.PYTHON_FLAGS, "-c", code], capture_output=True, text=True,
                                   timeout=10, cwd=tmp, stdin=subprocess.DEVNULL,
-                                  encoding="utf-8", errors="replace")
+                                  encoding="utf-8", errors="replace", **plat.QUIET_PROCESS)
         out = (proc.stdout + proc.stderr).strip()
         return out[:2000] if out else "Executed (no output)."
     except subprocess.TimeoutExpired:
@@ -160,9 +136,8 @@ def search_files(query: str, folder: str | None = None, content_search: bool = F
     base = user_path(folder or "~")
     results = []
     SKIP_DIRS = {".git", "__pycache__", "node_modules", ".venv", "venv", "AppData", ".idea",
-                 "site-packages", "Library", "Applications", "Movies", "Music", "Pictures",
-                 ".Trash", "OneDrive", "Dropbox"}
-    SKIP_SUFFIX = (".app", ".photoslibrary", ".musiclibrary", ".tvlibrary", ".framework", ".bundle")
+                 "site-packages", "OneDrive", "Dropbox"} | plat.SEARCH_SKIP_DIRS
+    SKIP_SUFFIX = plat.SEARCH_SKIP_SUFFIX
     deadline = time.time() + 20
     q = query.lower()
     timed_out = False

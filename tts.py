@@ -74,7 +74,7 @@ def speak(text: str):
                 if fname:
                     try: os.unlink(fname)
                     except OSError: pass
-                fd, fname = tempfile.mkstemp(suffix=".aiff"); os.close(fd)
+                fd, fname = tempfile.mkstemp(suffix=plat.NATIVE_VOICE_EXT); os.close(fd)
                 synthesized = plat.synth_native(clean, fname)
             if my_gen != _gen: return            # stopped or superseded while synthesising
             _playing(fname if synthesized else None)

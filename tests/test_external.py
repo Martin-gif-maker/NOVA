@@ -21,7 +21,8 @@ def test_one_copy_hands_text_to_the_running_one(app, monkeypatch, tmp_path):
     assert len(ipc.server_name().encode()) <= 104                                    # macOS's limit for socket paths
     import paths
     monkeypatch.setattr(paths, "DATA_DIR", str(tmp_path / ("deep" * 40)))
-    assert ipc.server_name().startswith("/tmp/nova-") and len(ipc.server_name()) < 60     # a deep folder falls back to a short path
+    if sys.platform != "win32":                                                      # (a Windows pipe has a short name anyway)
+        assert ipc.server_name().startswith("/tmp/nova-") and len(ipc.server_name()) < 60     # a deep folder falls back to a short path
     monkeypatch.undo(); monkeypatch.setattr(ipc.tempfile, "gettempdir", lambda: str(tmp_path))
     got = []
     assert ipc.send({"ask": "nobody listens yet"}, timeout_ms=200) is False
@@ -65,7 +66,7 @@ def test_ask_flag_reaches_a_running_nova(tmp_path):
     """Two real processes: the first NOVA runs (headless, private profile and lock), the second one is `--ask`."""
     (tmp_path / "config.json").write_text(json.dumps({"onboarded": True, "consent": True, "schema": 2, "provider": "ollama", "keyless": True}))
     lockdir = tmp_path / "tmp"; lockdir.mkdir()
-    env = dict(os.environ, QT_QPA_PLATFORM="offscreen", NOVA_DATA_DIR=str(tmp_path), NOVA_NO_MIGRATE="1", NOVA_QUIT_AFTER_MS="6000", TMPDIR=str(lockdir))
+    env = dict(os.environ, QT_QPA_PLATFORM="offscreen", NOVA_DATA_DIR=str(tmp_path), NOVA_NO_MIGRATE="1", NOVA_QUIT_AFTER_MS="6000", TMPDIR=str(lockdir), TEMP=str(lockdir), TMP=str(lockdir))
     env.pop("NOVA_STRICT_CONFIG", None)
     main_py = os.path.join(ROOT, "main.py")
     first = subprocess.Popen([sys.executable, main_py], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -145,14 +146,13 @@ def test_a_caller_that_gives_up_is_noticed(listener, app):
 
 
 def test_no_nova_and_bad_messages(app, monkeypatch, tmp_path):
-    import socket
     monkeypatch.setattr(ipc.tempfile, "gettempdir", lambda: str(tmp_path))
     assert ipc.reachable() is False and ipc.request({"ask": "anyone?"}, 1) == ("offline", "")
     got = []
     server = ipc.start(lambda msg, reply: got.append(msg))
     import threading
     def push(raw):
-        s = socket.socket(socket.AF_UNIX); s.settimeout(3); s.connect(ipc.server_name())
+        s = ipc._connect(3)                                       # the plain connection a second copy would open
         try: s.sendall(raw)
         except OSError: pass                                      # the listener hangs up on an oversized message
         s.close()
@@ -259,7 +259,7 @@ def _profile(tmp_path, address, **extra):
     cfg.update(extra)
     (tmp_path / "config.json").write_text(json.dumps(cfg))
     lockdir = tmp_path / "tmp"; lockdir.mkdir()
-    env = dict(os.environ, QT_QPA_PLATFORM="offscreen", NOVA_DATA_DIR=str(tmp_path), NOVA_NO_MIGRATE="1", TMPDIR=str(lockdir))
+    env = dict(os.environ, QT_QPA_PLATFORM="offscreen", NOVA_DATA_DIR=str(tmp_path), NOVA_NO_MIGRATE="1", TMPDIR=str(lockdir), TEMP=str(lockdir), TMP=str(lockdir))
     env.pop("NOVA_STRICT_CONFIG", None)
     return env
 

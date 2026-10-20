@@ -1,5 +1,5 @@
 """End-to-end flows of the main window (fake AI, temp folders; nothing touches the real system)."""
-import json, os, time, types, zipfile
+import json, os, sys, time, types, zipfile
 import pytest
 pytest.importorskip("PySide6")
 from PySide6.QtCore import QUrl, QMimeData
@@ -135,7 +135,7 @@ def test_delete_all_data_can_be_declined(win, monkeypatch):
 
 
 def test_export_chat_writes_to_desktop(win, monkeypatch, tmp_path):
-    monkeypatch.setenv("HOME", str(tmp_path)); (tmp_path / "Desktop").mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path)); monkeypatch.setenv("USERPROFILE", str(tmp_path)); (tmp_path / "Desktop").mkdir()
     win.messages += [{"role": "user", "content": "hi"}, {"role": "assistant", "content": "hello"}]
     win._export_chat()
     f = next((tmp_path / "Desktop").iterdir()).read_text()
@@ -395,6 +395,7 @@ def test_prompt_carries_only_relevant_memories(win, data_dir):
 
 
 # ── part of the screen ─────────────────────────────────────────────
+@pytest.mark.skipif(sys.platform != "darwin", reason="the macOS screen selector (Windows: test_windows.py)")
 def test_region_capture_hides_nova_then_analyses_the_selection(win, monkeypatch, tmp_path):
     import subprocess as sp
     from PIL import Image
@@ -417,6 +418,7 @@ def test_region_capture_hides_nova_then_analyses_the_selection(win, monkeypatch,
     assert not os.path.exists(calls[0][0][-1])                                    # the temporary picture is deleted
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="the macOS screen selector (Windows: test_windows.py)")
 def test_region_capture_cancelled_gives_the_question_back(win, monkeypatch):
     import subprocess as sp
     monkeypatch.setattr(main.plat, "screen_capture_allowed", lambda request=False: True)
@@ -431,6 +433,7 @@ def test_region_capture_cancelled_gives_the_question_back(win, monkeypatch):
     assert win.input_field.toPlainText() == "my question" and win.isVisible()
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="the macOS screen selector (Windows: test_windows.py)")
 def test_region_capture_needs_screen_permission(win, monkeypatch):
     import subprocess as sp
     monkeypatch.setattr(main.plat, "screen_capture_allowed", lambda request=False: False)

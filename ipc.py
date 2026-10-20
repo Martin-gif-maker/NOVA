@@ -2,11 +2,13 @@
 # (that is how an Apple Shortcut calls NOVA). The second copy passes the text to the running NOVA over a
 # local socket that only the same user can open, then exits - or, with `--wait`, stays until NOVA has answered
 # and prints the answer, so the Shortcut can use it.
-import os, json, time, socket, hashlib, logging, tempfile
+# On Windows the "local socket" is a named pipe; everything else is the same.
+import os, sys, json, time, socket, hashlib, logging, tempfile
 from urllib.parse import urlparse, parse_qs
 
 log = logging.getLogger("nova")
 MAX_TEXT = 8000
+IS_WINDOWS = sys.platform == "win32"
 
 
 def server_name() -> str:
@@ -15,6 +17,8 @@ def server_name() -> str:
     very deep data folder falls back to a short name in /tmp."""
     import paths
     tag = hashlib.sha1((tempfile.gettempdir() + "|" + paths.DATA_DIR).encode()).hexdigest()[:10]
+    if IS_WINDOWS:
+        return f"nova-{tag}"                               # a named pipe has a name, not a place: \\.\pipe\nova-…
     path = os.path.join(paths.DATA_DIR, f".ipc-{tag}")
     if len(path.encode()) > 100:
         path = f"/tmp/nova-{os.getuid() if hasattr(os, 'getuid') else 0}-{tag}.sock"
@@ -25,9 +29,46 @@ def _frame(payload: dict) -> bytes:
     return json.dumps(payload, ensure_ascii=False).encode("utf-8") + b"\n"            # one message = one line of JSON
 
 
+class _Pipe:
+    """Windows: a connection to the running NOVA's named pipe, with the few socket methods this module uses."""
+    _app = None                                            # Qt wants an application object, even for one pipe
+
+    def __init__(self, sock):
+        self._sock = sock; self._timeout = 1.5
+
+    @classmethod
+    def connect(cls, name: str, timeout: float):
+        from PySide6.QtCore import QCoreApplication
+        from PySide6.QtNetwork import QLocalSocket
+        if QCoreApplication.instance() is None:
+            cls._app = QCoreApplication([])                # no window, nothing in the taskbar
+        sock = QLocalSocket()
+        sock.connectToServer(name)
+        return cls(sock) if sock.waitForConnected(max(1, int(timeout * 1000))) else None
+
+    def settimeout(self, secs: float): self._timeout = secs
+
+    def sendall(self, data: bytes):
+        self._sock.write(data)
+        if not self._sock.waitForBytesWritten(max(1, int(self._timeout * 1000))):
+            raise OSError("the running NOVA did not take the message")
+
+    def recv(self, n: int) -> bytes:
+        from PySide6.QtNetwork import QLocalSocket
+        if not self._sock.bytesAvailable() and not self._sock.waitForReadyRead(max(1, int(self._timeout * 1000))):
+            if self._sock.state() == QLocalSocket.LocalSocketState.ConnectedState: raise TimeoutError()
+            return b""                                     # NOVA closed the pipe
+        return bytes(self._sock.read(n).data())
+
+    def close(self):
+        try: self._sock.disconnectFromServer(); self._sock.close()
+        except RuntimeError: pass
+
+
 def _connect(timeout: float):
-    """A plain connection to the running NOVA (None if there is none). No Qt here, so the short-lived copy that
-    only passes a request on never shows up in the Dock."""
+    """A plain connection to the running NOVA (None if there is none). No Qt here on macOS, so the short-lived
+    copy that only passes a request on never shows up in the Dock."""
+    if IS_WINDOWS: return _Pipe.connect(server_name(), timeout)
     if not hasattr(socket, "AF_UNIX"): return None
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.settimeout(timeout)
@@ -167,6 +208,14 @@ def text_from_url(url: str):
     return text[:MAX_TEXT] or None
 
 
+def url_arg(argv: list):
+    """The request in a nova:// link given on the command line (how Windows hands a clicked link to NOVA), or None."""
+    for arg in argv[1:]:
+        if str(arg).lower().startswith("nova:"):
+            return text_from_url(arg)
+    return None
+
+
 def arg_value(argv: list, flag: str):
     """The value after `flag` on the command line ('' if the flag is last), or None if it is absent."""
     if flag not in argv: return None
@@ -189,12 +238,18 @@ def ask_args(argv: list) -> tuple:
 
 def _start_nova() -> bool:
     """Start NOVA on its own (menu bar only) for a caller that found none running."""
-    import sys, subprocess
-    cmd = [sys.executable] if getattr(sys, "frozen", False) else \
-        [sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "main.py")]
+    import subprocess
+    exe = sys.executable
+    if IS_WINDOWS:              # start the windowless program: NOVA.exe rather than NOVA-cli.exe, pythonw rather than python
+        for console, windowless in (("nova-cli.exe", "NOVA.exe"), ("python.exe", "pythonw.exe")):
+            twin = os.path.join(os.path.dirname(exe), windowless)
+            if os.path.basename(exe).lower() == console and os.path.exists(twin): exe = twin
+    cmd = [exe] if getattr(sys, "frozen", False) else \
+        [exe, os.path.join(os.path.dirname(os.path.abspath(__file__)), "main.py")]
     try:
+        own = {"creationflags": 0x00000008 | 0x00000200} if IS_WINDOWS else {"start_new_session": True}   # detached, own group
         subprocess.Popen(cmd + ["--hidden"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                         start_new_session=True, close_fds=True)
+                         close_fds=True, **own)
         return True
     except OSError:
         return False
@@ -206,8 +261,8 @@ EXIT_OK, EXIT_NO_NOVA, EXIT_NO_ANSWER, EXIT_TIMEOUT = 0, 1, 2, 3
 def cli(argv: list, out=None, err=None, start_secs: float = 40) -> int:
     """`NOVA --ask "text" --wait`: print NOVA's answer and nothing else, so a Shortcut or script can use it.
     Exit code: 0 answered · 1 NOVA could not be reached · 2 NOVA gave no answer (reason on stderr) · 3 timed out."""
-    import sys
-    out = out or sys.stdout; err = err or sys.stderr
+    # (a windowed NOVA.exe has no console: then the answer goes nowhere, for as long as the program runs)
+    out = out or sys.stdout or open(os.devnull, "w"); err = err or sys.stderr or open(os.devnull, "w")  # noqa: SIM115
     text, _wait, secs = ask_args(argv)
     if not text:
         print('Usage: NOVA --ask "your request" --wait [--timeout SECONDS]', file=err); return EXIT_NO_ANSWER

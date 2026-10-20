@@ -9,7 +9,7 @@ def _run(tmp_path, extra_env=None, args=()):
     (tmp_path / "config.json").write_text(json.dumps(
         {"onboarded": True, "consent": True, "schema": 2, "provider": "ollama", "keyless": True, "wake_word": False}))
     lockdir = tmp_path / "tmp"; lockdir.mkdir(exist_ok=True)      # own "one NOVA at a time" lock: never collides with your NOVA
-    env = dict(os.environ, QT_QPA_PLATFORM="offscreen", NOVA_DATA_DIR=str(tmp_path), NOVA_NO_MIGRATE="1", TMPDIR=str(lockdir),
+    env = dict(os.environ, QT_QPA_PLATFORM="offscreen", NOVA_DATA_DIR=str(tmp_path), NOVA_NO_MIGRATE="1", TMPDIR=str(lockdir), TEMP=str(lockdir), TMP=str(lockdir),
                **(extra_env or {}))
     env.pop("NOVA_STRICT_CONFIG", None)
     return subprocess.run([sys.executable, os.path.join(ROOT, "main.py"), *args], env=env, capture_output=True, text=True, timeout=90)
@@ -32,7 +32,7 @@ def test_app_starts_and_quits_cleanly(tmp_path):
 def test_second_instance_refuses_to_start(tmp_path):
     lockdir = tmp_path / "tmp"; lockdir.mkdir(exist_ok=True)
     env = dict(os.environ, QT_QPA_PLATFORM="offscreen", NOVA_DATA_DIR=str(tmp_path), NOVA_NO_MIGRATE="1", NOVA_QUIT_AFTER_MS="4000",
-               TMPDIR=str(lockdir))
+               TMPDIR=str(lockdir), TEMP=str(lockdir), TMP=str(lockdir))
     env.pop("NOVA_STRICT_CONFIG", None)
     (tmp_path / "config.json").write_text(json.dumps({"onboarded": True, "consent": True, "schema": 2, "provider": "ollama", "keyless": True}))
     first = subprocess.Popen([sys.executable, os.path.join(ROOT, "main.py")], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -56,7 +56,7 @@ def _run_visible(tmp_path, quit_ms="1800", program=None):
     (tmp_path / "config.json").write_text(json.dumps(
         {"onboarded": True, "consent": True, "schema": 2, "provider": "ollama", "keyless": True, "wake_word": False, "ax_prompted": True}))
     lockdir = tmp_path / "tmp"; lockdir.mkdir(exist_ok=True)          # own "one NOVA at a time" lock: works while your NOVA is open
-    env = dict(os.environ, NOVA_DATA_DIR=str(tmp_path), NOVA_NO_MIGRATE="1", NOVA_QUIT_AFTER_MS=quit_ms, TMPDIR=str(lockdir))
+    env = dict(os.environ, NOVA_DATA_DIR=str(tmp_path), NOVA_NO_MIGRATE="1", NOVA_QUIT_AFTER_MS=quit_ms, TMPDIR=str(lockdir), TEMP=str(lockdir), TMP=str(lockdir))
     for k in ("QT_QPA_PLATFORM", "NOVA_STRICT_CONFIG"): env.pop(k, None)
     cmd = [program] if program else [sys.executable, os.path.join(ROOT, "main.py")]
     return subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=120)
@@ -88,7 +88,7 @@ def _system_quit(tmp_path, program=None):
     (tmp_path / "config.json").write_text(json.dumps(
         {"onboarded": True, "consent": True, "schema": 2, "provider": "ollama", "keyless": True, "wake_word": False, "ax_prompted": True}))
     lockdir = tmp_path / "tmp"; lockdir.mkdir(exist_ok=True)
-    env = dict(os.environ, NOVA_DATA_DIR=str(tmp_path), NOVA_NO_MIGRATE="1", TMPDIR=str(lockdir))
+    env = dict(os.environ, NOVA_DATA_DIR=str(tmp_path), NOVA_NO_MIGRATE="1", TMPDIR=str(lockdir), TEMP=str(lockdir), TMP=str(lockdir))
     for k in ("QT_QPA_PLATFORM", "NOVA_STRICT_CONFIG", "NOVA_QUIT_AFTER_MS"): env.pop(k, None)
     cmd = [program] if program else [sys.executable, os.path.join(ROOT, "main.py")]
     p = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)

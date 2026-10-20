@@ -1,5 +1,6 @@
 # schemas.py — tool definitions sent to the model.
 import tools as computer_tools
+import platform_utils as plat
 import logging
 
 log = logging.getLogger("nova")
@@ -19,7 +20,7 @@ TOOLS_SCHEMA = [
     _schema("search_web","Opens a Google search in the browser ('search google for …'). For an answer: search_web_and_read.",
             {"query":{"type":"string"}},["query"]),
     _schema("manage_files","Files and folders: list (what is in a folder), create_folder (source = the new folder, "
-            "e.g. ~/Desktop/Projects), copy, move, rename, delete (to the Trash).",
+            f"e.g. ~/Desktop/Projects), copy, move, rename, delete (to the {plat.TRASH_NAME}).",
             {"action":{"type":"string","enum":["delete","move","copy","rename","list","create_folder"]},
              "source":{"type":"string"},"destination":{"type":"string"}},["action","source"]),
     _schema("run_shell_command","Runs shell.",{"command":{"type":"string"}},["command"]),
@@ -28,7 +29,7 @@ TOOLS_SCHEMA = [
     _schema("control_volume","Volume. up/down: a step louder/quieter ('louder', 'turn it up'; level = step); set: an exact level 0-100.",
         {"action":{"type":"string","enum":["up","down","set","mute","unmute","get"]},"level":{"type":"integer"}},["action"]),
     _schema("control_system","System actions.",{"action":{"type":"string","enum":["lock","sleep","shutdown","restart","cancel"]}},["action"]),
-    _schema("empty_recycle_bin","Empties the Trash.",{}),
+    _schema("empty_recycle_bin",f"Empties the {plat.TRASH_NAME}.",{}),
     _schema("get_system_stats","CPU/RAM/disk.",{}),
     _schema("control_spotify","Play/pause or skip a song in Spotify. To open an app use open_application.",{"action":{"type":"string","enum":["play_pause","next","prev"]}},["action"]),
     _schema("read_webpage","Reads a web page.",{"url":{"type":"string"}},["url"]),
@@ -51,7 +52,7 @@ TOOLS_SCHEMA = [
             {"query":{"type":"string"},"folder":{"type":"string"},"content_search":{"type":"boolean"}},["query"]),
     _schema("read_file","Reads a local file: text, PDF, Word, PowerPoint, Excel, Numbers or a picture of text (first 8000 chars).",
             {"path":{"type":"string"},"max_chars":{"type":"integer"}},["path"]),
-    _schema("open_in_explorer","Shows a file or folder in Finder.",
+    _schema("open_in_explorer",f"Shows a file or folder in {plat.FILE_MANAGER}.",
             {"path":{"type":"string","description":"File or folder path"}},["path"]),
     _schema("get_clipboard",     "Read the current clipboard text",                   {}),
     _schema("set_clipboard",     "Write text to the clipboard",
@@ -122,9 +123,9 @@ TOOLS_SCHEMA = [
 # everyday set always travels (open things, the web, weather, remember, remind, note). Everything else comes
 # along when the request is about it (the "words"), stays on for the rest of the chat once used, and can be
 # switched on by the model itself with more_tools.
-GROUPS = {
+GROUPS: dict[str, dict] = {
     "files":     {"tools": ("manage_files", "read_file", "write_file", "search_files", "open_in_explorer", "empty_recycle_bin"),
-                  "about": "files and folders, the Trash",
+                  "about": f"files and folders, the {plat.TRASH_NAME}",
                   "words": ("file", "folder", "director", "desktop", "downloads", "delete", "rename", "move ", "copy ", "trash",
                             "finder", ".txt", "pdf", ".doc", "docx", "xlsx", ".csv", ".md", ".py", ".json", ".png", ".jpg", "~/", " /", "path",
                             "файл", "папк", "изтрий", "изтри", "премест", "преимен", "копир", "кошче", "работния плот", "изтеглян")},
@@ -174,6 +175,13 @@ GROUPS = {
                   "about": "Apple Shortcuts",
                   "words": ("shortcut", "пряк път", "прекия път", "преки пътища", "шорткът")},
 }
+# What this system cannot do is not offered at all: neither the group (to more_tools) nor its tools (to the model).
+_UNAVAILABLE = {t for g in plat.UNAVAILABLE_GROUPS for t in GROUPS[g]["tools"]}
+for _g in plat.UNAVAILABLE_GROUPS: del GROUPS[_g]
+TOOLS_SCHEMA = [s for s in TOOLS_SCHEMA if s["function"]["name"] not in _UNAVAILABLE]
+if plat.IS_WINDOWS:                         # the words people use for these things on Windows
+    GROUPS["files"]["words"] += ("recycle", "explorer", ":\\", "кошчето")
+    GROUPS["code"]["words"] += ("powershell", "cmd ", "winget ")
 _GROUP_OF = {t: g for g, spec in GROUPS.items() for t in spec["tools"]}
 import re as _re
 _AT_TIME = _re.compile(r"\b(?:at|в|от)\s+\d{1,2}(?::\d\d)?\s*(?:am|pm|ч)?\b")

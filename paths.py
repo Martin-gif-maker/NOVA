@@ -1,7 +1,8 @@
 # paths.py — where NOVA keeps its files, plus migration / export / wipe helpers.
 #
 # User data lives in the per-user application-data folder, never next to the code:
-#   ~/Library/Application Support/NOVA      (logs: ~/Library/Logs/NOVA)
+#   macOS     ~/Library/Application Support/NOVA      (logs: ~/Library/Logs/NOVA)
+#   Windows   %APPDATA%\NOVA                          (logs: %LOCALAPPDATA%\NOVA\Logs)
 # (When the tests run on Linux, in CI, the usual $XDG_DATA_HOME/NOVA is used.)
 # NOVA_DATA_DIR overrides the location (used by the tests).
 import os, sys, shutil, zipfile, time, json
@@ -21,13 +22,24 @@ def _data_dir() -> str:
     home = os.path.expanduser("~")
     if sys.platform == "darwin":
         return os.path.join(home, "Library", "Application Support", APP_NAME)
+    if sys.platform == "win32":
+        return os.path.join(os.environ.get("APPDATA") or os.path.join(home, "AppData", "Roaming"), APP_NAME)
     return os.path.join(os.environ.get("XDG_DATA_HOME", os.path.join(home, ".local", "share")), APP_NAME)
 
 
+def _log_dir() -> str:
+    if "NOVA_DATA_DIR" in os.environ:
+        return os.path.join(DATA_DIR, "logs")
+    home = os.path.expanduser("~")
+    if sys.platform == "darwin":
+        return os.path.join(home, "Library", "Logs", APP_NAME)
+    if sys.platform == "win32":             # logs stay on this PC: they do not travel with a roaming profile
+        return os.path.join(os.environ.get("LOCALAPPDATA") or os.path.join(home, "AppData", "Local"), APP_NAME, "Logs")
+    return os.path.join(DATA_DIR, "logs")
+
+
 DATA_DIR = _data_dir()
-LOG_DIR  = (os.path.join(os.path.expanduser("~"), "Library", "Logs", APP_NAME)
-            if sys.platform == "darwin" and "NOVA_DATA_DIR" not in os.environ
-            else os.path.join(DATA_DIR, "logs"))
+LOG_DIR  = _log_dir()
 
 CONFIG_FILE    = os.path.join(DATA_DIR, "config.json")
 HISTORY_FILE   = os.path.join(DATA_DIR, "chat_history.json")
@@ -159,7 +171,7 @@ def export_zip(dest: str) -> int:
 
 
 def wipe_all() -> None:
-    """Delete every file NOVA stored (data folder, the Keychain keys, the data-encryption key)."""
+    """Delete every file NOVA stored (data folder, the keys in the system's key store, the data-encryption key)."""
     for entry in [f"{p}_api_key" for p in ("groq", "anthropic", "openai", "ollama", "custom", "brave")] + ["mcp_secrets"]:
         try:
             import keyring
@@ -172,6 +184,11 @@ def wipe_all() -> None:
     if sys.platform == "darwin":
         try: os.remove(os.path.expanduser("~/Library/LaunchAgents/com.nova.assistant.plist"))
         except OSError: pass
+    elif sys.platform == "win32":
+        import platform_utils as plat
+        plat.set_autostart(False, "")                       # the "start with Windows" entry
+        if LOG_DIR != os.path.join(DATA_DIR, "logs"):
+            shutil.rmtree(os.path.dirname(LOG_DIR), ignore_errors=True)        # %LOCALAPPDATA%\NOVA
     shutil.rmtree(DATA_DIR, ignore_errors=True)
 
 

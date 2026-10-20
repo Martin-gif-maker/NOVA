@@ -1,4 +1,4 @@
-# NOVA - what the app needs (minimum versions).
+# NOVA - what the app needs (minimum versions), on macOS and on Windows.
 # For an exact copy of the environment the test-suite passes on, install requirements.lock instead:
 #     pip install -r requirements.lock        (Python 3.14, macOS)
 groq>=0.4.0
@@ -34,3 +34,6 @@ pyobjc-framework-AVFoundation>=10.0; sys_platform == "darwin"
 pyobjc-framework-ApplicationServices>=10.0; sys_platform == "darwin"
 pyobjc-framework-EventKit>=10.0; sys_platform == "darwin"          # Calendar and Reminders
 pyobjc-framework-Vision>=10.0; sys_platform == "darwin"            # on-device text recognition (scanned PDFs)
+
+# ── Windows only ──  (everything else Windows-specific is reached without extra packages: see plat_windows.py)
+pypdf>=4.0; sys_platform == "win32"                                # PDF text (macOS uses its own PDF reader)

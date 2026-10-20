@@ -1,13 +1,16 @@
 """
-Run this once (setup_mac.command does) to:
-  1. create the NOVA icon (nova.icns)
-  2. create NOVA.app in ~/Applications, so NOVA is in Spotlight and Launchpad and can be dragged to the Dock
+Run this once (setup_mac.command / setup_windows.bat do) to:
+  macOS    1. create the NOVA icon (nova.icns)
+           2. create NOVA.app in ~/Applications, so NOVA is in Spotlight and Launchpad and can be dragged to the Dock
+  Windows  1. create the NOVA icon (nova.ico)
+           2. put a NOVA shortcut in the Start menu
 """
 import os, sys, shlex, shutil, plistlib, subprocess
 
 HELPER_DIR = os.path.dirname(os.path.abspath(__file__))
 MAIN_PY    = os.path.join(HELPER_DIR, "main.py")
 ICNS_PATH  = os.path.join(HELPER_DIR, "nova.icns")
+ICO_PATH   = os.path.join(HELPER_DIR, "nova.ico")
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -18,6 +21,8 @@ FONT_CANDIDATES = [
     "/System/Library/Fonts/Helvetica.ttc",
     "/System/Library/Fonts/Supplemental/Arial.ttf",
     "/Library/Fonts/Arial.ttf",
+    r"C:\Windows\Fonts\arial.ttf",
+    r"C:\Windows\Fonts\segoeui.ttf",
 ]
 
 
@@ -136,5 +141,38 @@ def make_mac():
     print("Errors are logged to ~/Library/Logs/NOVA.log")
 
 
+# ── Windows ──────────────────────────────────────────────────────
+def make_ico(path: str = ICO_PATH) -> str:
+    """The icon as a Windows .ico holding every size the taskbar, Start menu and Explorer ask for."""
+    draw_icon(256).save(path, format="ICO", sizes=[(s, s) for s in (16, 24, 32, 48, 64, 128, 256)])
+    return path
+
+
+def windows_shortcut_command() -> tuple:
+    """(program, arguments) the Start menu shortcut runs: the windowless Python of this environment and main.py."""
+    exe = sys.executable
+    if os.path.basename(exe).lower() == "python.exe":
+        pyw = os.path.join(os.path.dirname(exe), "pythonw.exe")
+        if os.path.exists(pyw): exe = pyw
+    return exe, f'"{MAIN_PY}"'
+
+
+def make_windows():
+    if not os.path.exists(ICO_PATH): make_ico()
+    programs = os.path.join(os.environ["APPDATA"], "Microsoft", "Windows", "Start Menu", "Programs")
+    os.makedirs(programs, exist_ok=True)
+    lnk = os.path.join(programs, "NOVA.lnk")
+    target, args = windows_shortcut_command()
+    script = ("$s = (New-Object -ComObject WScript.Shell).CreateShortcut($env:NOVA_LNK); "
+              "$s.TargetPath = $env:NOVA_TARGET; $s.Arguments = $env:NOVA_ARGS; $s.WorkingDirectory = $env:NOVA_DIR; "
+              "$s.IconLocation = $env:NOVA_ICON; $s.Description = 'NOVA - AI assistant'; $s.Save()")
+    env = dict(os.environ, NOVA_LNK=lnk, NOVA_TARGET=target, NOVA_ARGS=args, NOVA_DIR=HELPER_DIR, NOVA_ICON=ICO_PATH)
+    subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", script], env=env, check=True)
+    print(f"Shortcut created:  {lnk}")
+    print("Open NOVA from the Start menu (type NOVA), or pin it to the taskbar from there.")
+
+
 if __name__ == "__main__":
-    make_mac()
+    if "--icon-only" in sys.argv: print(make_ico())          # for the build script
+    elif sys.platform == "win32": make_windows()
+    else: make_mac()

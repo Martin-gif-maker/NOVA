@@ -39,7 +39,7 @@ def test_key_falls_back_to_private_file_when_keychain_fails(monkeypatch, tmp_pat
     monkeypatch.setattr(keystore, "_KEY_FILE", str(tmp_path / ".k"))
     assert keystore._save_api_key("gsk_xyz") == "file"
     assert keystore._get_api_key() == "gsk_xyz"
-    assert oct(os.stat(tmp_path / ".k").st_mode)[-3:] == "600"
+    assert os.name == "nt" or oct(os.stat(tmp_path / ".k").st_mode)[-3:] == "600"
 
 
 def test_missing_key_reads_empty(monkeypatch, tmp_path):

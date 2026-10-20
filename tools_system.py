@@ -1,6 +1,7 @@
-# tools_system.py — tools that act on the Mac itself: screenshot, typing, volume, power, Trash, Spotify,
-# clipboard, processes, battery, network, notifications, wallpaper.
-import os, time, threading, subprocess
+# tools_system.py — tools that act on the computer itself: screenshot, typing, volume, power, Trash / Recycle Bin,
+# Spotify, clipboard, processes, battery, network, notifications, wallpaper. How each is done on macOS and on
+# Windows lives in the platform layer (plat_mac.py / plat_windows.py).
+import os, time, threading
 import platform_utils as plat
 from toolbase import HOME, PYAUTOGUI_AVAILABLE, load_pyautogui, fail, user_path
 import logging
@@ -18,8 +19,7 @@ def _gui():
 def take_screenshot(save_path: str | None = None) -> str:
     if not PYAUTOGUI_AVAILABLE: return fail("pyautogui not installed.")
     if not plat.screen_capture_allowed(request=True):
-        return fail("Screen Recording permission is missing. Allow it in System Settings → "
-                    "Privacy & Security → Screen Recording, then restart NOVA.")
+        return fail(plat.NO_SCREEN_PERMISSION)
     try:
         if not save_path:
             save_path = os.path.join(HOME, "Desktop", f"screenshot_{time.strftime('%Y%m%d_%H%M%S')}.png")
@@ -32,8 +32,7 @@ def take_screenshot(save_path: str | None = None) -> str:
 def type_text_keyboard(text: str, press_enter: bool = False) -> str:
     if not PYAUTOGUI_AVAILABLE: return fail("pyautogui not installed.")
     if not plat.accessibility_trusted(prompt=True):
-        return fail("Accessibility permission is missing, so NOVA cannot type. Allow it in System "
-                    "Settings → Privacy & Security → Accessibility, then restart NOVA.")
+        return fail(plat.NO_TYPING_PERMISSION)
     old_clip = None
     try:
         import tools
@@ -46,7 +45,7 @@ def type_text_keyboard(text: str, press_enter: bool = False) -> str:
             except Exception: old_clip = None
             import pyperclip
             pyperclip.copy(text)
-            _gui().hotkey("command", "v")
+            _gui().hotkey(*plat.PASTE_KEYS)
             time.sleep(0.3)
         except ImportError:
             _gui().write(text, interval=0.04)
@@ -61,13 +60,7 @@ def type_text_keyboard(text: str, press_enter: bool = False) -> str:
 # ── TOOL: control_volume ──────────────────────────────────────────
 def control_volume(action: str, level: int | None = None) -> str:
     """Actions: mute, unmute, up, down, set (0-100), get"""
-    def current():
-        rc, out = plat.run_osascript("output volume of (get volume settings)")
-        return int(out) if rc == 0 and out.strip().isdigit() else None
-    def setv(n):
-        n = max(0, min(100, int(n)))
-        rc, _ = plat.run_osascript(f"set volume output volume {n}")
-        return n if rc == 0 else None
+    current, setv = plat.volume_get, plat.volume_set
     a = action.lower()
     if a == "get":
         v = current()
@@ -81,8 +74,8 @@ def control_volume(action: str, level: int | None = None) -> str:
         n = setv(v + step if a == "up" else v - step)
         return f"Volume: {n}% ✓" if n is not None else fail("Cannot control volume.")
     if a in ("mute", "unmute"):
-        rc, _ = plat.run_osascript(f"set volume output muted {'true' if a == 'mute' else 'false'}")
-        return ("Muted ✓" if a == "mute" else "Unmuted ✓") if rc == 0 else fail("Cannot control volume.")
+        ok = plat.volume_mute(a == "mute")
+        return ("Muted ✓" if a == "mute" else "Unmuted ✓") if ok else fail("Cannot control volume.")
     return fail(f"Unknown action: {action}")
 
 # ── TOOL: control_system ─────────────────────────────────────────
@@ -93,10 +86,8 @@ def control_system(action: str) -> str:
     global _pending_power
     a = action.lower()
     if a in ("shutdown", "restart"):
-        verb = "shut down" if a == "shutdown" else "restart"
         if _pending_power: _pending_power.cancel()
-        _pending_power = threading.Timer(
-            10, lambda: plat.run_osascript(f'tell application "System Events" to {verb}'))
+        _pending_power = threading.Timer(10, lambda: plat.power_off(restart=(a == "restart")))
         _pending_power.daemon = True
         _pending_power.start()
         return f"{'Shutting down' if a == 'shutdown' else 'Restarting'} in 10 s ✓ (say 'cancel' to abort)"
@@ -105,24 +96,16 @@ def control_system(action: str) -> str:
             _pending_power.cancel(); return "Cancelled ✓"
         return "Nothing to cancel."
     if a in ("sleep", "hibernate"):
-        subprocess.run(["pmset", "sleepnow"]); return "Sleep mode ✓"
+        plat.sleep_now(hibernate=(a == "hibernate")); return "Sleep mode ✓"
     if a == "lock":
-        # Ctrl+Cmd+Q is the real "Lock Screen" shortcut (needs Accessibility permission);
-        # fall back to sleeping the display, which locks if a password is required on wake.
-        rc, _ = plat.run_osascript(
-            'tell application "System Events" to keystroke "q" using {control down, command down}')
-        if rc != 0:
-            subprocess.run(["pmset", "displaysleepnow"])
-            return ("Display put to sleep (the Lock Screen shortcut needs Accessibility permission; "
-                    "the Mac only locks if a password is required after sleep).")
-        return "Locked ✓"
+        return plat.lock_screen()
     return fail(f"Unknown action: {action}")
 
 # ── TOOL: empty_recycle_bin ───────────────────────────────────────
 def empty_recycle_bin() -> str:
-    """Empty the Trash (the tool keeps its original name)."""
-    rc, out = plat.run_osascript('tell application "Finder" to empty the trash', timeout=60)
-    return "Trash emptied ✓" if rc == 0 else fail(f"Error: {out}")
+    """Empty the Trash / Recycle Bin."""
+    ok, out = plat.empty_trash()
+    return f"{plat.TRASH_NAME} emptied ✓" if ok else fail(f"Error: {out}")
 
 # ── TOOL: get_system_stats ────────────────────────────────────────
 def get_system_stats() -> str:
@@ -130,7 +113,7 @@ def get_system_stats() -> str:
         import psutil
         cpu  = psutil.cpu_percent(interval=0.5)
         ram  = psutil.virtual_memory()
-        disk = psutil.disk_usage("/System/Volumes/Data" if os.path.exists("/System/Volumes/Data") else "/")
+        disk = psutil.disk_usage(plat.stats_disk())
         return (
             f"CPU: {cpu}%\n"
             f"RAM: {ram.used/1024**3:.1f}GB / {ram.total/1024**3:.1f}GB ({ram.percent}%)\n"
@@ -142,15 +125,10 @@ def get_system_stats() -> str:
 # ── TOOL: control_spotify ─────────────────────────────────────────
 def control_spotify(action: str) -> str:
     """Actions: play_pause, next, prev"""
-    cmds = {"play_pause": "playpause", "next": "next track", "prev": "previous track"}
-    c = cmds.get(action.lower())
-    if not c: return fail(f"Unknown action: {action}")
-    rc, out = plat.run_osascript(
-        'if application "Spotify" is running then\n'
-        f'tell application "Spotify" to {c}\n'
-        'return "ok"\nend if\nreturn "not running"')
-    if rc != 0: return fail(f"Error: {out}")
-    if out == "not running": return "Spotify is not running."
+    if action.lower() not in ("play_pause", "next", "prev"): return fail(f"Unknown action: {action}")
+    status, out = plat.media_control(action.lower())
+    if status == "error": return fail(f"Error: {out}")
+    if status == "not running": return "Spotify is not running."
     labels = {"play_pause": "Play/Pause", "next": "Next track", "prev": "Previous track"}
     return f"{labels.get(action.lower(), action)} ✓"
 
@@ -184,34 +162,26 @@ def list_processes(filter_name: str = "") -> str:
     except Exception as e:
         return fail(f"Error: {e}")
 
-_NEVER_KILL = {"launchd", "kernel_task", "windowserver", "loginwindow", "systemd", "init", "system",
-               "finder", "dock", "systemuiserver"}
+_NEVER_KILL = plat.NEVER_KILL          # what the system itself cannot do without
 
-def _running_apps(name: str) -> list:
-    """The Mac apps with that name that have a Dock icon (NSRunningApplication objects)."""
-    try:
-        from AppKit import NSWorkspace
-    except ImportError:
-        return []
-    want = name.strip().lower().removesuffix(".app")
-    return [a for a in NSWorkspace.sharedWorkspace().runningApplications()
-            if (a.localizedName() or "").lower() == want and a.activationPolicy() == 0]     # 0: a regular app
+def _same_program(process_name: str, wanted: str) -> bool:
+    """"chrome" is chrome.exe on Windows; names are compared without case."""
+    return process_name.lower().removesuffix(".exe") == wanted.lower().removesuffix(".exe")
 
 def kill_process(name_or_pid: str, force: bool = False) -> str:
-    """Quit an app the way ⌘Q does - it may ask to save first - or end a process by name or PID. `force`, a PID, or a
-    process that is not an app: it is killed at once (unsaved work is lost)."""
+    """Quit an app the way ⌘Q (Mac) or its close button (Windows) does - it may ask to save first - or end a process
+    by name or PID. `force`, a PID, or a process that is not an app: it is killed at once (unsaved work is lost)."""
     try:
         import psutil as _ps
         target = str(name_or_pid).strip()
         mine = {os.getpid(), os.getppid()}
         if not force and not target.isdigit() and target.lower() not in _NEVER_KILL:
-            apps = [a for a in _running_apps(target) if a.processIdentifier() not in mine]
-            asked = [a.localizedName() for a in apps if a.terminate()]
-            if asked: return f"Asked {asked[0]} to quit (as with ⌘Q - it may ask to save first)."
+            asked = plat.quit_app(target)
+            if asked: return f"Asked {asked[0]} to quit ({plat.QUIT_HOW} - it may ask to save first)."
         killed, failed = [], []
         for p in _ps.process_iter(["pid","name"]):
             nm = p.info["name"] or ""
-            if str(p.info["pid"]) == target or nm.lower() == target.lower():
+            if str(p.info["pid"]) == target or _same_program(nm, target):
                 if p.info["pid"] in mine or nm.lower() in _NEVER_KILL:
                     failed.append(f"{nm} (protected)"); continue
                 try:
@@ -229,7 +199,7 @@ def get_battery() -> str:
     try:
         import psutil as _ps
         b = _ps.sensors_battery()
-        if not b: return "No battery (this Mac runs on mains power)."
+        if not b: return plat.NO_BATTERY
         status = "charging" if b.power_plugged else "discharging"
         time_str = ""
         if b.secsleft and b.secsleft > 0:
@@ -245,7 +215,7 @@ def get_network_info() -> str:
 
 
 def send_notification(title: str, message: str) -> str:
-    """Show a notification in Notification Center."""
+    """Show a desktop notification."""
     try:
         plat.notify(title, message)
         return f"Notification sent: {title}"
@@ -258,9 +228,7 @@ def set_wallpaper(path: str) -> str:
         path = user_path(path)
         if not os.path.exists(path):
             return fail(f"File not found: {path}")
-        p = plat.as_quote(os.path.abspath(path))
-        rc, out = plat.run_osascript(
-            f'tell application "System Events" to tell every desktop to set picture to POSIX file "{p}"')
-        return f"Wallpaper set to: {path}" if rc == 0 else fail(f"Error: {out}")
+        ok, out = plat.set_wallpaper(path)
+        return f"Wallpaper set to: {path}" if ok else fail(f"Error: {out}")
     except Exception as e:
         return fail(f"Error: {e}")

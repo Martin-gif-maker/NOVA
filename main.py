@@ -17,7 +17,9 @@ if len(sys.argv) > 2 and sys.argv[1] == "--plugin-host":      # packaged app re-
 if len(sys.argv) > 1 and sys.argv[1] == "--eventkit-helper":  # packaged app re-launched to talk to Calendar / Reminders
     import eventkit_helper
     sys.exit(eventkit_helper.main())
-if "--ask" in sys.argv and "--wait" in sys.argv:              # `NOVA --ask "…" --wait`: print the running NOVA's answer and leave
+_FROM_LINK = any(a.lower().startswith("nova:") for a in sys.argv[1:])   # Windows starts NOVA with a clicked nova:// link as its argument;
+                                                                        # nothing else on such a command line is obeyed
+if not _FROM_LINK and "--ask" in sys.argv and "--wait" in sys.argv:    # `NOVA --ask "…" --wait`: print the running NOVA's answer and leave
     import ipc
     sys.exit(ipc.cli(sys.argv))
 import os
@@ -79,6 +81,7 @@ class _Bridge(QObject):
     tts_playing = Signal(object, float)     # the sound is about to start: (loudness curve of the audio or None, when)
     mcp_changed = Signal(object)            # an MCP tool server connected / failed (comes from its own thread)
     memory_saved = Signal()                 # the AI saved a memory (from the worker thread)
+    notify = Signal(str, str, int)          # show a notification through the tray icon (Windows; asked from any thread)
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -263,6 +266,10 @@ class AssistantWindow(WindowModesMixin, VoiceMixin, ApprovalsMixin, DataMixin, D
             if not self.config.get("ax_prompted"):
                 self.config["ax_prompted"] = True
                 plat.accessibility_trusted(prompt=True)
+        elif plat.IS_WINDOWS and not ok:
+            QTimer.singleShot(1500, lambda: self.chat_area.add_message(
+                tr("⚠️  The shortcut {} is already used by another program, so it cannot show or hide NOVA. "
+                   "Use NOVA's icon in the notification area instead.").format(plat.HOTKEY_LABEL), "system", self._theme))
 
 
     # ── Theme ────────────────────────────────────────────────────
@@ -317,6 +324,7 @@ class AssistantWindow(WindowModesMixin, VoiceMixin, ApprovalsMixin, DataMixin, D
         self._quitting = True
         self._running_spotify = False
         plat.remove_global_hotkey(self._selection_callback())
+        if plat.IS_WINDOWS: plat.NOTIFY_HOOK = None          # the tray icon is about to go
         for name in ("_gc_timer", "_front_timer", "_think_timer", "_sched_timer"):   # nothing periodic may outlive the window
             t = getattr(self, name, None)
             if t is not None: t.stop()
@@ -417,6 +425,9 @@ def run_app(argv) -> int:
     lock = QLockFile(os.path.join(tempfile.gettempdir(), "nova_assistant.lock"))
     lock.setStaleLockTime(0)
     ask = ipc.arg_value(argv, "--ask")               # `NOVA --ask "text"`: how a Shortcut or script hands NOVA a request
+    if _FROM_LINK or any(str(a).lower().startswith("nova:") for a in argv[1:]):
+        ask = ipc.url_arg(argv) or ""                # a clicked nova://ask?text=… link (Windows passes it on the command line)
+        argv = [a for a in argv if a != "--hidden"]
     if not lock.tryLock(200):
         if ask:
             sent = ipc.send({"ask": ask})
@@ -427,6 +438,8 @@ def run_app(argv) -> int:
     app.aboutToQuit.connect(window._shutdown)
     window._ipc_server = ipc.start(window._external_message)
     opener = _UrlOpener(window); app.installEventFilter(opener); window._url_opener = opener      # nova://ask?text=…
+    if plat.IS_WINDOWS and paths.IS_FROZEN:
+        plat.register_url_scheme()                   # so nova:// links open this NOVA
     if ask: QTimer.singleShot(900, lambda: window._external_ask(ask))
     if "--hidden" in argv and not ask:               # started at login: stay in the menu bar; the hotkey / tray icon opens it
         window.hide()

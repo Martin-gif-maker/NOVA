@@ -2,7 +2,10 @@
 #   tr("Settings")  ->  "Настройки" when the interface language is Bulgarian.
 # Lookup order: the exact string, then the text without leading symbols/emoji and trailing punctuation
 # (so "⚙  Settings" and "Settings:" both find the "Settings" entry and keep their decoration).
-import re
+#
+# The texts are written with the Mac's words. On Windows the same texts are shown with Windows' words
+# (PC, Recycle Bin, Explorer, Credential Manager, notification area …): see local() at the end.
+import re, sys
 
 _LANG = "en"
 SUPPORTED = ("en", "bg")
@@ -38,6 +41,10 @@ BG = {
     "Reset approvals": "Нулирай одобренията", "Copy diagnostics": "Копирай диагностика",
     "Click to pick color": "Кликни за избор на цвят", "Save": "Запази", "Cancel": "Отказ",
     "Applies after restart": "Влиза в сила след рестарт",
+    # Windows
+    "sandboxed plugins do not work on Windows yet": "изолираните добавки още не работят под Windows",
+    "The shortcut {} is already used by another program, so it cannot show or hide NOVA. Use NOVA's icon in the notification area instead.":
+        "Клавишната комбинация {} вече се използва от друга програма, затова не може да показва или скрива NOVA. Използвай иконата на NOVA в областта за уведомяване.",
     # new in v6
     "Keep chat history on this Mac": "Пази историята на чата на този Mac", "History:": "История:",
     " days (0 = forever)": " дни (0 = завинаги)", "Delete saved chats after:": "Изтривай чатовете след:",
@@ -753,7 +760,7 @@ def translated(text: str, lang: str = "bg") -> bool:
     return (core + post) in table or core in table
 
 
-def tr(text: str) -> str:
+def _lookup(text: str) -> str:
     table = TABLES.get(_LANG)
     if not table or not text:
         return text
@@ -765,3 +772,66 @@ def tr(text: str) -> str:
     if core in table:
         return pre + table[core] + post
     return text
+
+
+def tr(text: str, windows: bool | None = None) -> str:
+    """The text in the interface language and in this system's words. `windows` forces the system for the tests."""
+    if (ON_WINDOWS if windows is None else windows) and text in _WINDOWS_TEXTS:
+        en, bg = _WINDOWS_TEXTS[text]
+        return bg if _LANG == "bg" else en
+    return local(_lookup(text), windows)
+
+
+# ── this system's words ────────────────────────────────────────────
+ON_WINDOWS = sys.platform == "win32"
+
+# Whole texts that describe something Windows does differently (English text -> English, Bulgarian).
+# An empty pair means "does not apply on Windows": the line is left out there (see whatsnew.py).
+_WINDOWS_TEXTS = dict((
+    ("Connect tool servers (MCP) and run your Apple Shortcuts from NOVA.",
+     ("Connect tool servers (MCP) to give NOVA more tools.",
+         "Свържи сървъри с инструменти (MCP), за да дадеш на NOVA още инструменти.")),
+    ("Ask about your calendar, reminders and mail — NOVA can add events and draft replies (you press Send).",
+     ("", "")),
+    ("“Quit Safari” now quits an app the way ⌘Q does, so it can ask you to save first.",
+     ("“Quit Notepad” now closes a program the way its close button does, so it can ask you to save first.",
+         "„Затвори Notepad“ вече затваря програмата като бутона ѝ за затваряне, така че тя може първо да те попита дали да запази.")),
+    ("Send requests from Shortcuts and nova:// links right away, without me pressing Enter",
+     ("Send requests from other programs and nova:// links right away, without me pressing Enter",
+         "Изпращай заявките от други програми и nova:// връзки веднага, без да натискам Enter")),
+))
+
+# Words and phrases, longest first. They are replaced in English and Bulgarian texts alike (the Bulgarian ones
+# keep some names in English).
+_WINDOWS_WORDS = (
+    ("System Settings → Privacy & Security → Microphone", "Settings → Privacy & security → Microphone"),
+    ("drag NOVA to Applications to finish", "the setup program has been opened: follow it to finish"),
+    ("провлачи NOVA в Applications, за да завършиш", "инсталаторът е отворен: следвай го, за да завършиш"),
+    ("(for the app that launches NOVA)", ""),
+    ("⌃⇧Space", "Ctrl+Alt+Shift+Space"), ("⌘⇧Space", "Ctrl+Alt+Space"), ("⌘", "Ctrl+"),
+    ("“Launch at login”", "“Start with Windows”"), ("Launch at login", "Start with Windows"),
+    ("launch-at-login", "start-with-Windows"), ("At login, start", "When you sign in, start"),
+    ("in the menu bar", "in the notification area"), ("menu bar", "notification area"),
+    ("the Keychain", "Windows Credential Manager"), ("your Keychain", "Windows Credential Manager"),
+    ("Keychain", "Windows Credential Manager"), ("keychain", "Windows Credential Manager"),
+    ("the Trash", "the Recycle Bin"), ("Trash", "Recycle Bin"), ("Finder", "Explorer"),
+    ("this Mac", "this PC"), ("your Mac", "your PC"), ("the Mac", "the PC"), ("another Mac", "another PC"),
+    ("macOS", "Windows"),
+    # Bulgarian
+    ("в твоя Windows Credential Manager", "в Windows Credential Manager"),
+    ("„Стартирай при вход“", "„Стартирай с Windows“"), ("Стартирай при вход", "Стартирай с Windows"),
+    ("стартиране при вход", "стартиране с Windows"), ("При вход стартирай", "При влизане в Windows стартирай"),
+    ("в лентата с менюта", "в областта за уведомяване"), ("лентата с менюта", "областта за уведомяване"),
+    ("във Explorer", "в Explorer"),
+    ("този Mac", "този компютър"), ("твоя Mac", "твоя компютър"), ("Mac-а", "компютъра"), ("друг Mac", "друг компютър"),
+    ("гласа на Mac", "гласа на Windows"),
+)
+
+
+def local(text: str, windows: bool | None = None) -> str:
+    """`text` in this operating system's words (unchanged on the Mac). `windows` forces the answer for the tests."""
+    if not text or not (ON_WINDOWS if windows is None else windows):
+        return text
+    for old, new in _WINDOWS_WORDS:
+        if old in text: text = text.replace(old, new)
+    return text.replace("  ,", ",").replace(" ,", ",")

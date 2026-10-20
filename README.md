@@ -110,11 +110,28 @@ saving) and two real fixes in the tools: relative paths now mean the home folder
   and Reminders run in a helper process, so a macOS permission prompt can't freeze the window.
 
 ## Run from source
+macOS:
 ```
 ./setup_mac.command      # one-time: venv + dependencies
 ./start.command          # or:  .venv/bin/python main.py
 ```
+Windows (10 or 11):
+```
+setup_windows.bat        :: one-time: venv + dependencies + Start menu shortcut
+start.bat                :: or:  .venv\Scripts\python main.py
+```
 First launch shows a setup wizard: how your data is handled, which AI to use, optional permissions.
+
+## macOS and Windows
+NOVA is one program for both systems. Everything it asks of the operating system goes through one layer
+(`platform_utils`, which is `plat_mac.py` on a Mac and `plat_windows.py` on Windows), so the window, the AI
+providers, the tools and the safety rules are the same code.
+
+**The Windows side is new and has not been tried on a real PC yet** — it is checked by the automatic tests on
+GitHub's Windows machines, which cannot see a window, hear sound or press a hotkey. What works there, what is
+done differently and what is missing is listed at the end of `WHAT_NOVA_CAN_DO.md`. In short: no Calendar /
+Reminders / Mail / browser-page / Apple Shortcuts tools and no sandboxed plugins on Windows; the hotkeys are
+Ctrl+Alt+Space (show / hide) and Ctrl+Alt+Shift+Space (selected text).
 
 ## Which AI answers
 Pick it in the wizard or in **Settings → AI**; each provider's key is stored separately in the Keychain.
@@ -226,6 +243,14 @@ NOVA_NOTARY_PROFILE=<notarytool profile> ./packaging/build_mac.sh   # signed + n
 Needs an Apple Developer account for signing/notarization. The packaged app is built for the architecture of
 the Mac that built it (arm64 = Apple Silicon); build on an Intel Mac for Intel users.
 
+On Windows:
+```
+powershell -ExecutionPolicy Bypass -File packaging\build_windows.ps1
+```
+makes `dist\NOVA\NOVA.exe` (and `NOVA-cli.exe`, the same program with a console for `--ask … --wait`), a `.zip`
+of that folder and — if Inno Setup is installed — `NOVA-<version>-setup.exe`, which installs for the current
+user without administrator rights. The build is not code-signed, so SmartScreen warns on other PCs.
+
 ## Tip: keep NOVA out of ~/Downloads
 macOS asks for permission the first time an app reads files in Downloads, which can stall the first launch by
 ~30 s. Move the folder (e.g. to `~/NOVA`) and re-run `setup_mac.command`, or install the packaged app to `/Applications`.
@@ -239,7 +264,8 @@ stalled download resumes where it stopped, the app inside must be intact and —
 same developer; if anything fails the working app is put back and no partial file is left behind.
 
 ## Development
-* `./check.sh` runs lint (ruff), a type check of the core modules (mypy; both set up in `pyproject.toml`) and every test (`./check.sh --screen` adds the few that briefly open a real window).
+* `./check.sh` (`check.bat` on Windows) runs lint (ruff), a type check of the core modules (mypy; both set up in
+  `pyproject.toml`) and every test (`./check.sh --screen` adds the few that briefly open a real window).
   `.github/workflows/ci.yml` does the same on GitHub for every push, then builds the app.
 * Coverage: `.venv/bin/python -m coverage run -m pytest -q tests && .venv/bin/python -m coverage report` (86 % of the
   app's code; the gaps are mostly macOS glue that would need real permission prompts).
@@ -278,18 +304,20 @@ same developer; if anything fails the working app is put back and no partial fil
 | `tools.py` · `schemas.py` · `prompts.py` | the table of tools, NOVA's stateful tools, approvals, taint tracking, plugins · tool descriptions · the system prompt |
 | `tools_apps.py` · `tools_system.py` · `tools_web.py` · `tools_files.py` · `toolbase.py` | the tools themselves, by theme: open things · control the Mac · the web · files, notes, code |
 | `echo.py` · `selftest.py` | telling your voice from NOVA's own in the speakers · `--selftest` |
-| `sandbox.py` · `plugin_host.py` | the macOS sandbox profile and the separate process plugins run in |
+| `sandbox.py` · `plugin_host.py` | the macOS sandbox profile and the separate process plugins run in (macOS only) |
 | `memory.py` | memories: categories, expiry, relevance |
 | `storage.py` · `ledger.py` · `crash.py` | encryption at rest, the outbound ledger, opt-in crash reports |
-| `settings.py` · `paths.py` · `keystore.py` | typed settings, data locations / export / wipe, Keychain |
+| `settings.py` · `paths.py` · `keystore.py` | typed settings, data locations / export / wipe, Keychain / Credential Manager |
 | `widgets.py` · `dialogs.py` · `settings_dialog.py` · `onboarding.py` | UI pieces |
 | `mdrender.py` · `themes.py` · `i18n.py` | markdown, the four palettes (WCAG-checked), translations (EN/BG) |
 | `icons.py` · `actions.py` | NOVA's own line icons · how a finished tool call is worded for the "what NOVA did" rows |
-| `mac_apps.py` · `eventkit_helper.py` | Calendar / Reminders (EventKit, in a helper process), Mail, browser, Shortcuts |
+| `mac_apps.py` · `eventkit_helper.py` | Calendar / Reminders (EventKit, in a helper process), Mail, browser, Shortcuts (macOS only) |
 | `docs.py` · `embeddings.py` · `schedule.py` · `modes.py` · `usage.py` | document library and its search by words and by meaning (the on-device model), scheduled tasks, modes and saved prompts, usage and cost |
+| `docs_windows.py` · `region_select.py` | Windows: PDF / rich text / web page readers and text recognition · NOVA's own "select part of the screen" |
 | `mcp_client.py` · `ipc.py` | MCP tool servers (stdio and HTTP), requests handed over from other programs |
 | `win_docs.py` · `win_selection.py` · `win_schedule.py` · `win_persona.py` · `win_mcp.py` | the window's side of those features |
-| `updater.py` · `diagnostics.py` · `platform_utils.py` · `games.py` | verified updates, support report, macOS glue, mini-games |
+| `updater.py` · `diagnostics.py` · `games.py` | verified updates, support report, mini-games |
+| `platform_utils.py` · `plat_mac.py` · `plat_windows.py` | everything asked of the operating system: one door, and the macOS and Windows way behind it |
 | `evals/` | the evaluation set (`cases.jsonl`) and harness: tool routing offline, tool choice with the real model |
 
 ## Handy settings (Settings window, or config.json)

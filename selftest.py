@@ -1,6 +1,7 @@
 # selftest.py — `NOVA --selftest`: prove that everything the app needs is present and working.
-# The build script runs it against the packaged .app (with a throw-away data folder).
+# The build script runs it against the packaged app (with a throw-away data folder).
 import os
+import sys
 import tempfile
 import logging
 import paths
@@ -35,16 +36,27 @@ def run() -> int:
         import plugin_host, memory, ledger
         assert callable(plugin_host.main) and sandbox.PERMISSIONS and memory.CATEGORIES and ledger.record and crash.install
     except Exception as e: problems.append(f"core modules ({e})")
-    try:                                                                # Calendar helper: the separate process starts and answers
-        import mac_apps
-        try: mac_apps._eventkit({"op": "selftest"}, timeout=30)
-        except mac_apps.AppError as e:
-            if "unknown request" not in str(e): problems.append(f"calendar helper ({e})")
-    except Exception as e: problems.append(f"calendar helper ({e})")
+    if sys.platform == "darwin":
+        try:                                                            # Calendar helper: the separate process starts and answers
+            import mac_apps
+            try: mac_apps._eventkit({"op": "selftest"}, timeout=30)
+            except mac_apps.AppError as e:
+                if "unknown request" not in str(e): problems.append(f"calendar helper ({e})")
+        except Exception as e: problems.append(f"calendar helper ({e})")
+    else:
+        try:                                                            # the platform layer: its plain questions get answers
+            import platform_utils as plat
+            assert plat.HOTKEY_LABEL and isinstance(plat.autostart_enabled(), bool) and plat.frontmost_pid() >= 0
+            assert plat.protected_paths(os.path.expanduser("~")) and plat.stats_disk()
+        except Exception as e: problems.append(f"platform layer ({e})")
     try:                                                                # documents: Word text extraction + search, PDF reader present
         import docs, zipfile
-        import Quartz
-        assert hasattr(Quartz, "PDFDocument")                             # the PDF reader is in the bundle
+        if sys.platform == "darwin":
+            import Quartz
+            assert hasattr(Quartz, "PDFDocument")                         # the PDF reader is in the bundle
+        else:
+            import pypdf                                                  # the PDF reader is in the bundle
+            assert pypdf.PdfReader
         tmpd = tempfile.mkdtemp(prefix="nova_selftest_")
         try:
             W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"

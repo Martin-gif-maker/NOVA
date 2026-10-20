@@ -219,7 +219,8 @@ class ChatMixin:
 
     # ── Part of the screen ───────────────────────────────────────
     def _take_region_vision(self):
-        """Let the user drag a rectangle (the macOS crosshair) and analyse just that part of the screen."""
+        """Let the user drag a rectangle (the macOS crosshair; NOVA's own overlay on Windows) and analyse just that
+        part of the screen."""
         q = self.input_field.text().strip()
         if not self.client or self._busy:
             self.chat_area.add_message(tr("NOVA is busy - try again in a moment."), "system", self._theme); return
@@ -229,16 +230,29 @@ class ChatMixin:
         self.input_field.clear()
         self._region_question = q
         self.hide()                                   # NOVA must not cover what you want to select
+        if plat.OWN_REGION_PICKER:
+            QTimer.singleShot(350, self._pick_region); return                       # once the window has faded away
 
         def _bg():
-            import tempfile, subprocess
+            import tempfile
             fd, path = tempfile.mkstemp(suffix=".png", prefix="nova_region_"); os.close(fd); os.unlink(path)
             try:
-                subprocess.run(["/usr/sbin/screencapture", "-i", "-x", path], timeout=180)   # -i: drag to select, Esc cancels
+                plat.capture_region(path)             # drag to select, Esc cancels
             except Exception as e:
                 log.info("region capture failed: %s", e)
             self._region_ready.emit(path if os.path.exists(path) and os.path.getsize(path) > 0 else "")
         QTimer.singleShot(200, lambda: threading.Thread(target=_bg, daemon=True).start())     # after the window is gone
+
+    def _pick_region(self):
+        """Windows has no selection tool NOVA could wait for, so it shows its own (region_select.py)."""
+        import tempfile, region_select
+        fd, path = tempfile.mkstemp(suffix=".png", prefix="nova_region_"); os.close(fd); os.unlink(path)
+        try:
+            self._region_overlay = region_select.RegionOverlay(path)
+            self._region_overlay.done.connect(self._region_ready.emit)
+            self._region_overlay.start()
+        except Exception as e:
+            log.info("region capture failed: %s", e); self._region_ready.emit("")
 
     def _on_region_ready(self, path: str):
         self._bring_to_front()

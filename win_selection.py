@@ -41,8 +41,8 @@ class SelectionMixin:
 
     def _setup_selection_hotkey(self):
         plat.remove_global_hotkey(self._selection_callback())               # never registered twice
-        if plat.IS_MAC and self.config.get("selection_actions", True):
-            plat.add_global_hotkey(49, plat._SELECTION_HOTKEY_MODS, self._selection_callback())
+        if self.config.get("selection_actions", True):
+            plat.add_global_hotkey(plat._SELECTION_HOTKEY_KEY, plat._SELECTION_HOTKEY_MODS, self._selection_callback())
 
     def _apply_selection_setting(self):
         self._setup_selection_hotkey()

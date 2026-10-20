@@ -214,3 +214,33 @@ Settings → AI: **Groq** (free and fast), **Anthropic (Claude)**, **OpenAI**, *
 - It never sends an email, pays, or posts anything by itself.
 - It does not watch your screen, microphone or clipboard in the background (except the wake word, if you turned it on).
 - It does not upload your documents: only the passages that match a question leave the Mac.
+
+---
+
+## NOVA on Windows
+
+NOVA also runs on Windows 10 and 11, from the same code and with the same look. **This part is new: it is checked by
+automatic tests on Windows machines, but nobody has used it on a real PC yet** — expect first-use surprises in
+anything you see, hear or press. Where nothing is said below, a feature works the same as on the Mac.
+
+| Part of this guide | On Windows |
+|---|---|
+| 1. Opening things | Same. Apps are found by their Start menu name (Store apps such as Calculator included). Files are shown in Explorer. |
+| 2. The internet | Same. |
+| 3. Files and folders | Same. Delete moves to the **Recycle Bin** — and refuses on a USB stick or network drive, which have none, instead of deleting for good. Commands run in `cmd`. |
+| 4. Your documents | Search by meaning (the on-device model): same. PDF, Word, PowerPoint, Excel, Numbers, plain text: same. Rich text (`.rtf`), OpenDocument (`.odt`) and web pages (`.html`) are read by NOVA itself. **Not readable:** old Word `.doc` (save as `.docx`), `.rtfd`, `.webarchive`. Scans and photos use Windows' own text recognition, for the languages installed in Windows. |
+| 5. Memory, notes and reminders | Same. Notifications come from NOVA's icon in the notification area. |
+| 6. Controlling the computer | Volume, mute, lock, sleep, hibernate, shut down / restart (10 seconds to cancel), empty the Recycle Bin, wallpaper, clipboard, typing, running programs, battery, network, screenshot. Spotify: play / pause / next / previous through the media keys. "Quit Notepad" closes the program the way its close button does, so it can ask to save; "force quit" (or a process number) ends it at once. Program names work without ".exe". |
+| 7. Calendar, Reminders, Mail, browser | **Not available.** These use Apple's apps. NOVA does not offer these tools to the AI on Windows, so it will say it cannot rather than try. |
+| 8. Apple Shortcuts, in both directions | Apple Shortcuts do not exist on Windows. Other programs can still hand NOVA a request: `NOVA-cli --ask "…" --wait` prints the answer, and `nova://ask?text=…` links open the installed app. |
+| 9. Text selected in any app | The shortcut is **Ctrl+Alt+Shift+Space**. NOVA always copies the selection for you (Ctrl+C) and then puts your clipboard back. |
+| 10. Voice | Microphone, wake word, read aloud (online voices, or Windows' own voice offline) and voice conversation. Speech in any language on this PC (Whisper, Settings → Voice): same. With the online voices, "talk over NOVA to interrupt" uses a plain loudness threshold unless ffmpeg is installed. |
+| 11. Seeing things | Whole screen: same. Part of the screen: NOVA dims the screen the mouse is on and you drag a rectangle (Esc cancels). |
+| 12–13, 15–16 | Same. Keys are kept in **Windows Credential Manager**. |
+| 14. More tools from outside | Tool servers (MCP): same. Plugins: a plugin without a `MANIFEST` can be allowed after the same warning. **A plugin with a `MANIFEST` is not loaded**, because Windows has no sandbox NOVA can put it in — NOVA never runs such a plugin unsealed. |
+| 17. The window | Same look and the same three round buttons. Show / hide from anywhere: **Ctrl+Alt+Space**. NOVA sits in the notification area (bottom right). "Start with Windows" replaces "Launch at login". There is no menu bar; Ctrl+N, Ctrl+Q and the other keys still work. |
+| Permissions | Windows asks for none. Voice needs Settings → Privacy & security → Microphone → "Let desktop apps access your microphone". |
+| Where things are kept | Data: `%APPDATA%\NOVA` · logs: `%LOCALAPPDATA%\NOVA\Logs` |
+| Updates | NOVA looks at its GitHub releases (or your own feed) for a Windows setup program (`NOVA-<version>-setup.exe`); it is downloaded, checked against the SHA-256 GitHub publishes and opened, and it replaces NOVA. A release with only the Mac disk image is no update for Windows. Run from its source code, NOVA says to update with `git pull`. |
+
+If another program already uses Ctrl+Alt+Space, NOVA says so when it starts; the icon in the notification area still works.

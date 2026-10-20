@@ -10,6 +10,7 @@
 # Only loudness is compared (no audio is stored or sent anywhere). It is a level comparison, not full echo
 # cancellation: with loud speakers right next to the microphone you may have to speak up or use a pause.
 import os, logging, subprocess, tempfile
+import platform_utils as plat
 
 log = logging.getLogger("nova")
 
@@ -29,14 +30,12 @@ def envelope(samples, chunk: int = CHUNK):
 
 def reference_envelope(path: str):
     """The loudness curve of an audio file NOVA is about to play (mp3 / aiff / wav), or None if it cannot be read.
-    Uses afconvert, which ships with macOS."""
+    Decoding is the platform layer's job (afconvert on macOS)."""
     import wave
     import numpy as np
     fd, tmp = tempfile.mkstemp(suffix=".wav"); os.close(fd)
     try:
-        r = subprocess.run(["/usr/bin/afconvert", "-f", "WAVE", "-d", f"LEI16@{RATE}", "-c", "1", path, tmp],
-                           capture_output=True, timeout=20)
-        if r.returncode != 0: return None
+        if not plat.audio_to_wav(path, tmp, RATE): return None
         with wave.open(tmp, "rb") as w:
             if w.getframerate() != RATE or w.getsampwidth() != 2: return None
             data = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16)

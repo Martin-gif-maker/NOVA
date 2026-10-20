@@ -147,7 +147,8 @@ def test_settings_shapes_and_pasted_json():
         with pytest.raises(mc.MCPError): mc.parse_pasted(bad)
     assert mc.tool_id("my server!", "do.thing/now") == "mcp__my_server__do_thing_now" and len(mc.tool_id("s" * 99, "t" * 99)) == 64
     env = mc.gui_env({"TOKEN": 5})
-    assert "/opt/homebrew/bin" in env["PATH"] and env["TOKEN"] == "5" and "PYTHONHOME" not in env
+    import platform_utils as plat
+    assert plat.extra_path_dirs(os.path.expanduser("~"))[0] in env["PATH"] and env["TOKEN"] == "5" and "PYTHONHOME" not in env
 
 
 def test_manager_starts_changed_servers_and_stops_removed_ones():

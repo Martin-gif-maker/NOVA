@@ -68,8 +68,9 @@ def text(version: str | None = None, since: str = "") -> str:
         rels = sorted((r for r in NOTES if older < _key(r) <= _key(current)), key=_key, reverse=True)
     else:
         rels = [current] if notes(version) else []
-    parts = ["**" + tr("What's new in NOVA {}").format(r) + "**\n\n" + "\n".join("• " + tr(l) for l in NOTES[r])
-             for r in rels]
+    shown = {r: [t for t in map(tr, NOTES[r]) if t] for r in rels}        # a line that is not for this system is ""
+    parts = ["**" + tr("What's new in NOVA {}").format(r) + "**\n\n" + "\n".join("• " + t for t in shown[r])
+             for r in rels if shown[r]]
     return "\n\n".join(parts)
 
 

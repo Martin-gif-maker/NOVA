@@ -16,5 +16,8 @@ dist_next/
 .pytest_cache/
 .DS_Store
 *.locked-*
+test-failures.txt
+test-output.txt
+selftest-output.txt
 .mypy_cache/
 .ruff_cache/

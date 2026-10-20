@@ -20,6 +20,10 @@ def test_hotkey_registry_accepts_several_shortcuts(monkeypatch):
     assert [cb for _k, _m, cb in plat._hotkeys] == [a]
 
 
+mac_only = pytest.mark.skipif(not plat.IS_MAC, reason="how macOS reads a selection (Windows: test_windows.py)")
+
+
+@mac_only
 def test_selection_is_not_read_from_nova_itself(monkeypatch):
     monkeypatch.setattr(plat, "nova_is_frontmost", lambda: True)
     monkeypatch.setattr(plat, "_ax_selected_text", lambda: pytest.fail("must not be asked"))
@@ -27,6 +31,7 @@ def test_selection_is_not_read_from_nova_itself(monkeypatch):
     assert plat.selected_text() == ""
 
 
+@mac_only
 def test_copy_fallback_only_when_needed_and_permitted(monkeypatch):
     monkeypatch.setattr(plat, "IS_MAC", True); monkeypatch.setattr(plat, "nova_is_frontmost", lambda: False)
     monkeypatch.setattr(plat, "_ax_selected_text", lambda: "  from the app  ")
@@ -111,9 +116,9 @@ def test_busy_or_empty_selection_does_nothing_harmful(win, monkeypatch):
 
 
 def test_setting_turns_the_hotkey_off_and_on(win, monkeypatch):
-    monkeypatch.setattr(plat, "_hotkeys", []); monkeypatch.setattr(plat, "IS_MAC", True)
+    monkeypatch.setattr(plat, "_hotkeys", [])
     win.config["selection_actions"] = True; win._apply_selection_setting()
-    assert [(k, m) for k, m, _ in plat._hotkeys] == [(49, ("ctrl", "shift"))]
+    assert [(k, m) for k, m, _ in plat._hotkeys] == [(plat._SELECTION_HOTKEY_KEY, plat._SELECTION_HOTKEY_MODS)]
     win._apply_selection_setting(); assert len(plat._hotkeys) == 1            # applying twice does not register twice
     win.config["selection_actions"] = False; win._apply_selection_setting()
     assert plat._hotkeys == []
@@ -257,6 +262,7 @@ def test_it_falls_back_to_copying_when_pasting_is_not_possible(win, desk):
     assert state["pasted"] == 0
 
 
+@mac_only
 def test_the_real_key_helpers_refuse_when_it_is_not_safe(monkeypatch):
     monkeypatch.setattr(plat, "IS_MAC", True)
     pressed = []
