@@ -1,6 +1,6 @@
 # NOVA — what changed
 
-## Unreleased
+## 6.6.0 — October 2026
 
 - **"Quit Safari" quits Safari the way ⌘Q does**, so it can ask to save first. NOVA used to end the app at once
   (unsaved work was lost). Forcing an app closed, or ending a process by its number, still works when you ask for

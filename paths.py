@@ -10,7 +10,7 @@ import logging
 log = logging.getLogger("nova")
 
 APP_NAME       = "NOVA"
-__version__    = "6.5.1"
+__version__    = "6.6.0"
 SCHEMA_VERSION = 2          # bump when the layout/format of the stored files changes
 
 
