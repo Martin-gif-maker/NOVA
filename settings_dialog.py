@@ -615,7 +615,7 @@ class SettingsDialog(QDialog):
         self._sync_btn.setText(tr("Stop syncing") if self._sync_folder else tr("Set up sync") + "…")
         self._sync_status.setText(status or (
             tr("Syncing through {}.").format(self._sync_folder) if self._sync_folder else
-            tr("Keep the same memories on your other computers - a Mac or a Windows PC: choose a folder they all see "
+            tr("Keep the same memories on all your computers, whatever system they run: choose a folder they all see "
                "(OneDrive, Dropbox, Google Drive, iCloud Drive) and a passphrase.")))
 
     def _sync_clicked(self):

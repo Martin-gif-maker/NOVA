@@ -174,10 +174,10 @@ BG.update({
     # Settings → Data: the same memories on your other computers
     "Other computers:": "Други компютри:", "Set up sync": "Настрой синхронизация", "Stop syncing": "Спри синхронизацията",
     "Syncing through {}.": "Синхронизира се през {}.",
-    "Keep the same memories on your other computers - a Mac or a Windows PC: choose a folder they all see "
+    "Keep the same memories on all your computers, whatever system they run: choose a folder they all see "
     "(OneDrive, Dropbox, Google Drive, iCloud Drive) and a passphrase.":
-        "Пази едни и същи спомени на всичките си компютри - Mac или Windows: избери папка, която виждат всички "
-        "(OneDrive, Dropbox, Google Drive, iCloud Drive), и парола.",
+        "Пази едни и същи спомени на всичките си компютри, каквато и система да ползват: избери папка, която виждат "
+        "всички (OneDrive, Dropbox, Google Drive, iCloud Drive), и парола.",
     "Syncing stops when you press Save.": "Синхронизацията спира, когато натиснеш „Запази“.",
     "Choose a folder your other computers see too": "Избери папка, която виждат и другите ти компютри",
     "Sync passphrase": "Парола за синхронизация",
