@@ -125,6 +125,7 @@ class _RefusesOnce:
 def test_a_refused_tool_call_is_tried_again_with_the_reason(app, monkeypatch):
     import providers
     assert providers.classify_error(Exception("… 'code': 'tool_use_failed' …"))[0] == "tool_json"
+    assert providers.classify_error(Exception("Failed to parse tool call arguments as JSON"))[0] == "tool_json"   # gpt-oss-20b
     monkeypatch.setattr(workers.AIWorker, "_sleep", lambda self, s: True)
     ran = []
     shot = "Screenshot saved: ~/Desktop/Screen 10.24.png (a browser with a news site)"          # not a bare "done": a next round

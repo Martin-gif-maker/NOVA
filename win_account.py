@@ -183,6 +183,7 @@ class AccountMixin:
         vals = dlg.get_values()
         before = {k: self.config.get(k) for k in ("provider", "base_url", "models_by_provider", "keyless")}
         ai_before = self._ai_signature(); was_encrypted = bool(self.config.get("encrypt_data", False))
+        sync_before = self.config.get("sync_folder", "")
         changed_model = vals["model_key"] != self._model_key
         tts.ENABLED  = vals["tts"]
         tts.VOICE    = vals["tts_voice"]
@@ -194,6 +195,12 @@ class AccountMixin:
             self._apply_provider_change(before, self)
         if bool(self.config.get("encrypt_data", False)) != was_encrypted:
             self._apply_encryption_setting()
+        if self.config.get("sync_folder", "") != sync_before:
+            self.config["sync_status"] = ""
+            if self.config.get("sync_folder"): self._start_sync()
+            else:
+                import sync
+                sync.forget(self.config)
         self._theme_key = vals["theme"]
         self._theme = self._resolve_theme()
         self._apply_theme()                       # also re-applies fonts / scale

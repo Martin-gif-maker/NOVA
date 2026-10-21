@@ -98,6 +98,7 @@ class AssistantWindow(WindowModesMixin, VoiceMixin, ApprovalsMixin, DataMixin, D
     _models_ready    = Signal(object)
     _update_found    = Signal(object)
     _usage_ready     = Signal(int, int)
+    _sync_done       = Signal(object, str)    # (result, error) of a sync with the other computers (win_data)
 
     def __init__(self):
         super().__init__()
@@ -166,6 +167,7 @@ class AssistantWindow(WindowModesMixin, VoiceMixin, ApprovalsMixin, DataMixin, D
         self._followup_ready.connect(self._show_followup_chips)
         self._title_ready.connect(self._set_session_title)
         self._models_ready.connect(self._on_models)
+        self._sync_done.connect(self._on_sync_done)
         self._update_found.connect(self._offer_update)
         self._sys_msg_ready.connect(lambda m: self.chat_area.add_message(m, "system", self._theme))
         self._doc_ready.connect(self._on_doc_ready)
@@ -218,6 +220,7 @@ class AssistantWindow(WindowModesMixin, VoiceMixin, ApprovalsMixin, DataMixin, D
         self._later(6000, self._tag_memories)                 # older memories without keywords get them once
         self._later(30000, self._auto_update_check)
         self._later(9000, self._refresh_documents)            # documents that changed while NOVA was closed
+        self._later(8000, self._start_sync)                   # memories from your other computers
 
     def _later(self, ms: int, job):
         """Run a start-up job after `ms` - unless NOVA has been shut down by then (quitting within the first half

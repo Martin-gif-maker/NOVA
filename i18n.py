@@ -171,6 +171,40 @@ BG.update({
     "English — Aria (US)": "Английски — Aria (САЩ)", "English — Sonia (UK)": "Английски — Sonia (Великобритания)",
     "Bulgarian — Kalina": "Български — Калина", "German — Katja": "Немски — Katja", "French — Denise": "Френски — Denise",
     "Spanish — Elvira": "Испански — Elvira", "Russian — Svetlana": "Руски — Svetlana",
+    # Settings → Data: the same memories on your other computers
+    "Other computers:": "Други компютри:", "Set up sync": "Настрой синхронизация", "Stop syncing": "Спри синхронизацията",
+    "Syncing through {}.": "Синхронизира се през {}.",
+    "Keep the same memories on your other computers - a Mac or a Windows PC: choose a folder they all see "
+    "(OneDrive, Dropbox, Google Drive, iCloud Drive) and a passphrase.":
+        "Пази едни и същи спомени на всичките си компютри - Mac или Windows: избери папка, която виждат всички "
+        "(OneDrive, Dropbox, Google Drive, iCloud Drive), и парола.",
+    "Syncing stops when you press Save.": "Синхронизацията спира, когато натиснеш „Запази“.",
+    "Choose a folder your other computers see too": "Избери папка, която виждат и другите ти компютри",
+    "Sync passphrase": "Парола за синхронизация",
+    "At least 8 characters. Use the same passphrase on your other computers: NOVA encrypts what it puts in the folder with it.":
+        "Поне 8 знака. Използвай същата парола и на другите си компютри: с нея NOVA криптира всичко, което слага в папката.",
+    "The passphrase could not be stored safely on this computer.": "Паролата не можа да бъде запазена сигурно на този компютър.",
+    "The passphrase fits ✓ - syncing starts when you press Save.": "Паролата съвпада ✓ - синхронизацията започва, когато натиснеш „Запази“.",
+    "This is the first computer in that folder: set up the others with the same folder and passphrase. Syncing starts when you press Save.":
+        "Това е първият компютър в тази папка: настрой другите със същата папка и парола. Синхронизацията започва, когато натиснеш „Запази“.",
+    "Sync with your other computers: {}": "Синхронизация с другите ти компютри: {}",
+    "Last synced at {} with {}.": "Последна синхронизация в {} с {}.",
+    "Last synced at {} - no other computer in the folder yet.": "Последна синхронизация в {} - в папката още няма друг компютър.",
+    "The passphrase does not match the one used on your other computer.": "Паролата не съвпада с тази на другия ти компютър.",
+    "The sync folder is not there any more - choose it again in Settings → Data.":
+        "Папката за синхронизация вече я няма - избери я отново в Настройки → Данни.",
+    "The passphrase needs at least 8 characters.": "Паролата трябва да е поне 8 знака.",
+    # Settings → AI: the local model through Ollama
+    "Local model:": "Локален модел:", "Local model": "Локален модел", "Checking Ollama…": "Проверявам Ollama…", "Check again": "Провери пак",
+    "Ollama is not running on this Mac. Install it from ollama.com, start it, then check again.":
+        "Ollama не работи на този Mac. Инсталирай го от ollama.com, пусни го и провери пак.",
+    "Use {}": "Използвай {}", "Download {} ({} GB)": "Изтегли {} ({} GB)",
+    "{} is on this Mac ✓ - with it nothing you type leaves your computer.":
+        "{} е на този Mac ✓ - с него нищо, което пишеш, не напуска компютъра ти.",
+    "Recommended: in NOVA's tests {} picked the right tool for 94 % of requests. Ollama downloads it once.":
+        "Препоръчан: в тестовете на NOVA {} избра правилния инструмент за 94 % от заявките. Ollama го изтегля веднъж.",
+    "NOVA will use {} after you press Save - nothing you type will leave your computer.":
+        "NOVA ще използва {}, след като натиснеш „Запази“ - нищо, което пишеш, няма да напуска компютъра ти.",
     # the AI providers, as the menus list them
     "Groq (free tier, fast)": "Groq (безплатен план, бърз)",
     "Ollama (runs on this Mac, private, offline)": "Ollama (работи на този Mac, лично, без интернет)",

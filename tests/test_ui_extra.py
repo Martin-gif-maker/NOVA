@@ -213,7 +213,7 @@ def test_settings_provider_switch_shows_that_providers_models(app, monkeypatch):
     assert not d._url_edit.isEnabled() and d._key_btn.isEnabled()
     assert "llama-3.3-70b-versatile" in [d._slot_cbs["smart"].itemText(i) for i in range(d._slot_cbs["smart"].count())]
     d._provider_cb.setCurrentIndex(d._provider_cb.findData("ollama"))
-    assert d._url_edit.isEnabled() and not d._key_btn.isEnabled() and d._slot_cbs["smart"].currentText() == "llama3.1"
+    assert d._url_edit.isEnabled() and not d._key_btn.isEnabled() and d._slot_cbs["smart"].currentText() == "qwen3:4b-instruct"   # the default for Ollama
     d._url_edit.setText(" http://mac-mini.local:11434/v1 "); d._slot_cbs["smart"].setCurrentText("qwen2.5:14b")
     v = d.get_values()
     assert v["provider"] == "ollama" and v["base_url"] == "http://mac-mini.local:11434/v1"

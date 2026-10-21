@@ -97,6 +97,9 @@ SCHEMA = {
     "home_city":         F(str, "", doc="used by the Weather quick command, empty = auto-detect"),
     "update_feed":       F(str, "", doc="https URL of the update feed JSON"),
     "auto_update":       F(str, "notify", choices=("off", "notify", "install"), doc="daily update check: off, tell me, or install by itself"),
+    "sync_folder":       F(str, "", doc="a folder your other computers see too (OneDrive, Dropbox …): memories are synced through it (sync.py)"),
+    "sync_device":       F(str, "", doc="this computer's id in the sync folder (made once)"),
+    "sync_status":       F(str, "", doc="how the last sync went (shown in Settings → Data)"),
     "update_checked":    F(str, "", doc="the day of the last automatic update check"),
 }
 LEGACY_KEYS = {"groq_api_key", "lang"}        # still tolerated in old files; removed by paths.upgrade_config

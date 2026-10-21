@@ -48,9 +48,11 @@ PROVIDERS = {
     "ollama": {
         "label": "Ollama (runs on this Mac, private, offline)", "kind": "openai", "needs_key": False, "key_hint": "",
         "key_url": "https://ollama.com/download", "base_url": "http://localhost:11434/v1", "local": True,
-        "models": {"smart": ("llama3.1", "LOCAL"), "fast": ("llama3.1", "LOCAL"), "mix": ("llama3.1", "LOCAL")},
-        "preferred": {"smart": ["qwen2.5", "llama3.3", "llama3.1", "mistral"], "fast": ["llama3.2", "llama3.1", "qwen2.5"],
-                      "mix": ["llama3.1", "qwen2.5", "mistral"]},
+        "models": {"smart": ("qwen3:4b-instruct", "LOCAL"), "fast": ("qwen3:4b-instruct", "LOCAL"),
+                   "mix": ("qwen3:4b-instruct", "LOCAL")},
+        "preferred": {"smart": ["qwen3:4b-instruct", "qwen3:8b", "qwen2.5", "llama3.1", "mistral"],
+                      "fast": ["qwen3:4b-instruct", "llama3.2", "llama3.1", "qwen2.5"],
+                      "mix": ["qwen3:4b-instruct", "llama3.1", "qwen2.5", "mistral"]},
         "vision": ["llama3.2-vision", "llava"], "stt": None,
     },
     "custom": {
@@ -147,7 +149,8 @@ def _sdk_modules():
 
 # How providers say that the model's tool call did not fit the tool (Groq: "tool_use_failed", e.g. null for an optional
 # text argument), or was not valid JSON.
-_TOOL_CALL_REFUSED = ("tool_use_failed", "tool call validation failed", "failed to call a function", "failed_generation")
+_TOOL_CALL_REFUSED = ("tool_use_failed", "tool call validation failed", "failed to call a function", "failed_generation",
+                      "failed to parse tool call")
 
 
 def classify_error(exc: Exception):
@@ -337,6 +340,50 @@ def list_model_ids(client) -> set:
     ledger.record(getattr(client, "host", "AI provider"), "model list")
     page = client.models.list()
     return {m.id for m in getattr(page, "data", page)}
+
+
+# ── Ollama: the model NOVA recommends for running on this computer ─────────────────
+# Qwen3 4B Instruct picked the right tool for 94 % of NOVA's evaluation requests on a Mac (evals/results).
+LOCAL_MODEL = {"id": "qwen3:4b-instruct", "name": "Qwen3 4B", "gb": 2.5}
+
+
+def ollama_root(base_url: str = "") -> str:
+    """http://localhost:11434 - Ollama's own API (the chat API NOVA talks to is under /v1)."""
+    url = str(base_url or PROVIDERS["ollama"]["base_url"]).rstrip("/")
+    return url[:-3] if url.endswith("/v1") else url
+
+
+def ollama_models(base_url: str = "") -> set | None:
+    """The models Ollama has, or None when Ollama is not running there."""
+    import requests
+    try:
+        r = requests.get(ollama_root(base_url) + "/api/tags", timeout=3)
+        r.raise_for_status()
+        names = {str(m.get("name", "")) for m in r.json().get("models", [])}
+    except Exception:
+        return None
+    return names | {n.removesuffix(":latest") for n in names}
+
+
+def ollama_pull(model: str, base_url: str = "", progress=None, cancelled=None) -> None:
+    """Have Ollama download `model` (Ollama fetches it from ollama.com). progress(fraction) as it goes; raises
+    RuntimeError on an error, on cancel, or when Ollama stops before the model is complete."""
+    import json, requests
+    ledger.record("ollama.com", "model download (by Ollama)", 0, model)
+    parts: dict = {}                                     # each layer of the model: [done, size]
+    with requests.post(ollama_root(base_url) + "/api/pull", json={"model": model, "stream": True},
+                       stream=True, timeout=(5, 120)) as r:
+        r.raise_for_status()
+        for line in r.iter_lines():
+            if cancelled and cancelled(): raise RuntimeError("cancelled")
+            if not line: continue
+            msg = json.loads(line)
+            if msg.get("error"): raise RuntimeError(str(msg["error"]))
+            if msg.get("status") == "success": return
+            if msg.get("digest") and msg.get("total"):
+                parts[msg["digest"]] = [msg.get("completed", 0), msg["total"]]
+                if progress: progress(sum(d for d, _ in parts.values()) / sum(t for _, t in parts.values()))
+    raise RuntimeError("Ollama stopped before the model was complete")
 
 
 def validate(provider_id: str, api_key: str = "", base_url: str = ""):
