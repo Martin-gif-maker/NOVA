@@ -15,6 +15,23 @@
   updates from GitHub (the Windows setup program), the safety fixes, the eval set, and "quit Notepad" closing a
   program the way its close button does.
 
+
+- **Measured again with Groq's models, after the 6.6 fixes:** gpt-oss-120b (NOVA's default) is right for **100 %**
+  of the 64 requests the day's free allowance covered (89.4 % before), at 1.09 s per request; gpt-oss-20b for 98 %
+  of 50, at 0.68 s. Its one miss showed one more thing to fix: when Groq cannot parse the model's tool arguments,
+  NOVA now asks again instead of ending the request.
+- **A website:** [martin-gif-maker.github.io/NOVA](https://martin-gif-maker.github.io/NOVA/) - what NOVA does, the
+  downloads for Mac and Windows, the measured results, and a write-up of what the 86 requests taught.
+- **The same memories on your Mac and your Windows PC.** Settings → Data → Other computers → *Set up sync*: choose
+  a folder all your computers see (OneDrive, Dropbox, Google Drive, iCloud Drive) and a passphrase. A memory saved
+  on one computer appears on the others within a few minutes, and one you make NOVA forget is forgotten everywhere -
+  unless you save it again later. Each computer writes only its own file in the folder, encrypted with the
+  passphrase, so the cloud service sees nothing readable and never makes "conflicted copy" files. A wrong
+  passphrase is reported once; a file the cloud has not finished bringing is simply read next time.
+- **NOVA without the internet, in one click.** With Ollama installed, Settings → AI → Ollama shows a "Download
+  Qwen3 4B (2.5 GB)" button: Ollama fetches the model once, with progress, and NOVA uses it - nothing you type
+  leaves your computer. Qwen3 4B picked the right tool for 94 % of NOVA's evaluation requests on a Mac; it is now
+  NOVA's default model for Ollama (it was Llama 3.1).
 - If the network is not up yet when NOVA starts (the Wi-Fi still waking), it fetches the list of models again after
   half a minute and after two minutes, instead of going without it until the next start: retired models are swapped
   for current ones and Settings → AI lists what your account offers.

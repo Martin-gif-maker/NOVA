@@ -1,4 +1,5 @@
 # settings_dialog.py — the Settings window, grouped into tabs: General · AI · Voice · Privacy · Data.
+import os
 import threading
 from PySide6.QtWidgets import (QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QDialog, QFormLayout, QComboBox,
                                QCheckBox, QSpinBox, QDialogButtonBox, QColorDialog, QTabWidget, QWidget, QLineEdit,
@@ -10,7 +11,7 @@ import paths
 import providers
 import speech
 import tools as computer_tools
-from i18n import tr
+from i18n import tr, language
 from models import MODELS, MODEL_ORDER
 from themes import THEMES, THEMES_BASE, controls_css
 from widgets import WrapLabel
@@ -101,6 +102,8 @@ class SettingsDialog(QDialog):
     voice_progress  = Signal(float, str)     # (fraction done or -1, status text) from the download thread
     whisper_progress = Signal(float, str)    # the same for the speech model that knows every language
     connection_done = Signal(bool, str)
+    local_state     = Signal(object)         # the models Ollama has (a set), or None when it is not running
+    local_progress  = Signal(float, str)     # (fraction done or -1, status) while Ollama downloads the local model
 
     def __init__(self, config, theme, parent=None, available_models=None, key_lookup=None):
         super().__init__(parent)
@@ -150,6 +153,8 @@ class SettingsDialog(QDialog):
         self.voice_progress.connect(self._on_voice_progress)
         self.whisper_progress.connect(self._on_whisper_progress)
         self.connection_done.connect(self._on_connection_done)
+        self.local_state.connect(self._on_local_state)
+        self.local_progress.connect(self._on_local_progress)
 
     # ── small helpers ─────────────────────────────────────────────
     def _row(self, form, label, widget):
@@ -262,6 +267,16 @@ class SettingsDialog(QDialog):
         form.addRow("", self._conn_status)
         self._test_btn.clicked.connect(self._test_connection)
 
+        # Ollama: get the recommended model with one click (shown only for a provider that runs on this computer)
+        self._ai_form = form
+        self._local_btn = self._small_btn(""); self._local_status = self._hint("")
+        self._local_btn.setAccessibleName(tr("Local model"))
+        self._local_btn.clicked.connect(self._local_model_clicked)
+        self._local_job = None; self._local_models = None
+        self._local_row = self._hbox(self._local_btn)
+        form.addRow(tr("Local model:"), self._local_row)
+        form.addRow("", self._local_status)
+
         self._model_cb = QComboBox()
         self._row(form, "Model:", self._model_cb)
         self._slot_cbs = {}
@@ -316,6 +331,9 @@ class SettingsDialog(QDialog):
             self._slot_initial[slot] = mid
         self._select(self._model_cb, self._config.get("model_key", "smart"))
         if not initial: self._conn_status.setText("")
+        local = pid == "ollama"
+        for w in (self._local_row, self._local_status): self._ai_form.setRowVisible(w, local)
+        if local and not self._local_job: self._check_local()
 
     def _test_connection(self):
         pid = self._provider_cb.currentData(); url = self._url_edit.text().strip()
@@ -328,6 +346,67 @@ class SettingsDialog(QDialog):
 
     def _on_connection_done(self, ok, msg):
         self._test_btn.setEnabled(True); self._conn_status.setText(("✓ " if ok else "✗ ") + msg)
+
+    # ── Ollama: the local model in one click ──────────────────────
+    def _check_local(self):
+        url = self._url_edit.text().strip()
+        self._local_btn.setEnabled(False); self._local_status.setText(tr("Checking Ollama…"))
+        def _bg():
+            models = providers.ollama_models(url)
+            try: self.local_state.emit(models)
+            except RuntimeError: pass                          # Settings was closed meanwhile
+        threading.Thread(target=_bg, daemon=True).start()
+
+    def _on_local_state(self, models):
+        m = providers.LOCAL_MODEL
+        self._local_models = models; self._local_btn.setEnabled(True)
+        if models is None:
+            self._local_btn.setText(tr("Check again"))
+            self._local_status.setText(tr("Ollama is not running on this Mac. Install it from ollama.com, start it, then check again."))
+        elif m["id"] in models:
+            self._local_btn.setText(tr("Use {}").format(m["name"]))
+            self._local_status.setText(tr("{} is on this Mac ✓ - with it nothing you type leaves your computer.").format(m["name"]))
+        else:
+            gb = f"{m['gb']:g}".replace(".", "," if language() == "bg" else ".")       # 2,5 GB in Bulgarian
+            self._local_btn.setText(tr("Download {} ({} GB)").format(m["name"], gb))
+            self._local_status.setText(tr("Recommended: in NOVA's tests {} picked the right tool for 94 % of requests. "
+                                          "Ollama downloads it once.").format(m["name"]))
+
+    def _local_model_clicked(self):
+        if self._local_job:                                     # downloading: the button is "Cancel"
+            self._local_job["cancel"] = True; return
+        m = providers.LOCAL_MODEL
+        if self._local_models is None: self._check_local(); return
+        if m["id"] in self._local_models: self._use_local_model(); return
+        job = self._local_job = {"cancel": False}
+        url = self._url_edit.text().strip()
+        self._local_btn.setText(tr("Cancel"))
+        def emit(frac, status):
+            try: self.local_progress.emit(frac, status)
+            except RuntimeError: pass                          # Settings was closed; Ollama goes on downloading
+        def _bg():
+            try:
+                providers.ollama_pull(m["id"], url, lambda f: emit(f, ""), lambda: job["cancel"])
+                emit(1.0, "ok")
+            except Exception as e:
+                emit(-1.0, str(e))
+        threading.Thread(target=_bg, daemon=True).start()
+
+    def _on_local_progress(self, frac, status):
+        if status == "ok":
+            self._local_job = None; self._local_models = (self._local_models or set()) | {providers.LOCAL_MODEL["id"]}
+            self._use_local_model()
+        elif frac < 0:
+            self._local_job = None; self._on_local_state(self._local_models)
+            if "cancelled" not in status: self._local_status.setText("✗ " + status)
+        else:
+            self._local_status.setText(tr("Downloading… {}%").format(int(frac * 100)))
+
+    def _use_local_model(self):
+        m = providers.LOCAL_MODEL
+        for cb in self._slot_cbs.values(): cb.setCurrentText(m["id"])
+        self._on_local_state(self._local_models)
+        self._local_status.setText(tr("NOVA will use {} after you press Save - nothing you type will leave your computer.").format(m["name"]))
 
     # ── Voice ─────────────────────────────────────────────────────
     def _tab_voice(self, form):
@@ -520,9 +599,49 @@ class SettingsDialog(QDialog):
         else:
             hint = tr("This NOVA runs from source: update it with git pull. Check for updates still shows if there is a new release.")
         form.addRow("", self._hint(hint))
+
+        self._sync_folder = self._config.get("sync_folder", "")
+        self._sync_btn = self._small_btn(""); self._sync_btn.clicked.connect(self._sync_clicked)
+        self._sync_status = self._hint("")
+        form.addRow(tr("Other computers:"), self._hbox(self._sync_btn))
+        form.addRow("", self._sync_status)
+        self._show_sync(self._config.get("sync_status", ""))
         form.addRow(tr("Danger zone:"), self._hbox(self._data_wipe_btn))
         form.addRow("", self._hint(tr("Everything NOVA stores lives in one folder in your Library. Export makes a zip of it "
                                        "(without the API key); Delete removes it and the saved keys.")))
+
+    # ── syncing memories with your other computers (sync.py) ─────
+    def _show_sync(self, status: str = ""):
+        self._sync_btn.setText(tr("Stop syncing") if self._sync_folder else tr("Set up sync") + "…")
+        self._sync_status.setText(status or (
+            tr("Syncing through {}.").format(self._sync_folder) if self._sync_folder else
+            tr("Keep the same memories on all your computers, whatever system they run: choose a folder they all see "
+               "(OneDrive, Dropbox, Google Drive, iCloud Drive) and a passphrase.")))
+
+    def _sync_clicked(self):
+        if self._sync_folder:
+            self._sync_folder = ""; self._show_sync(tr("Syncing stops when you press Save.")); return
+        from PySide6.QtWidgets import QFileDialog, QInputDialog
+        import sync, keystore
+        start = next((p for p in (os.path.expanduser("~/Library/CloudStorage"), os.path.expanduser("~/OneDrive"),
+                                  os.path.expanduser("~/Library/Mobile Documents/com~apple~CloudDocs"))
+                      if os.path.isdir(p)), os.path.expanduser("~"))
+        folder = QFileDialog.getExistingDirectory(self, tr("Choose a folder your other computers see too"), start)
+        if not folder: return
+        phrase, ok = QInputDialog.getText(self, tr("Sync passphrase"),
+                                          tr("At least 8 characters. Use the same passphrase on your other computers: "
+                                             "NOVA encrypts what it puts in the folder with it."), QLineEdit.EchoMode.Password)
+        if not ok: return
+        try:
+            others = sync.check_passphrase(folder, phrase)
+        except sync.SyncError as e:
+            self._show_sync("✗ " + tr(str(e))); return
+        if not keystore._save_api_key(phrase, "sync"):
+            self._show_sync("✗ " + tr("The passphrase could not be stored safely on this computer.")); return
+        self._sync_folder = folder
+        self._show_sync(tr("The passphrase fits ✓ - syncing starts when you press Save.") if others else
+                        tr("This is the first computer in that folder: set up the others with the same folder and "
+                           "passphrase. Syncing starts when you press Save."))
 
     # ── result ────────────────────────────────────────────────────
     def get_values(self):
@@ -559,6 +678,7 @@ class SettingsDialog(QDialog):
             "external_autosend": self._external_chk.isChecked(),
             "smart_memory": self._smart_mem_chk.isChecked(),
             "auto_update": self._update_cb.currentData(),
+            "sync_folder": self._sync_folder,
             "search_engine": self._search_cb.currentData(),
             "voice_auto_stop": self._autostop_chk.isChecked(),
             "voice_barge_in": self._barge_chk.isChecked(),

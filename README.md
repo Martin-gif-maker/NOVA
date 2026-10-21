@@ -4,8 +4,10 @@
 manages your calendar and reminders, acts on text you select in any app, and listens and speaks. It works with
 Groq, Claude, OpenAI or a model running offline on your Mac, and it asks before anything risky.
 
-**[Download NOVA for Mac](https://github.com/Martin-gif-maker/NOVA/releases/latest)** (Apple Silicon) · or run it from
-source (below).
+**[Download NOVA for Mac](https://github.com/Martin-gif-maker/NOVA/releases/latest)** (Apple Silicon) ·
+[Windows (test version)](https://github.com/Martin-gif-maker/NOVA/releases/tag/windows-test-1) ·
+**[the website](https://martin-gif-maker.github.io/NOVA/)** · or run it from source (below).
+Read **[what 86 requests taught me about building an AI agent](https://martin-gif-maker.github.io/NOVA/evals.html)**.
 
 [![CI](https://github.com/Martin-gif-maker/NOVA/actions/workflows/ci.yml/badge.svg)](https://github.com/Martin-gif-maker/NOVA/actions/workflows/ci.yml)
 ![macOS](https://img.shields.io/badge/platform-macOS-lightgrey)
@@ -67,6 +69,14 @@ with hidden instructions that NOVA must not follow.
   tools are stand-ins, so nothing happens on the Mac. It reports right tool, right details, time, tokens,
   whether hidden instructions were ignored and, where they were not, whether NOVA's approval rules would have
   stopped every resulting action. Results are saved in `evals/results/`.
+
+**Results with the models NOVA uses on Groq** (October 2026; the free tier allows about two thirds of the set per day,
+so the rest follows): **gpt-oss-120b** (NOVA's default) went from 89.4 % on the first 66 requests to **100 % on 64**
+after the fixes its misses pointed to, at 1.09 s per request; **gpt-oss-20b** 98.0 % on 50, at 0.68 s. Times leave out
+waiting for the free tier's per-minute limit. The misses: the AI asked "may I run this?" in the chat although NOVA
+shows its own approval (an ambiguous line in the prompt), Groq refused calls with `null` for an optional argument
+(screenshots failed), "quit Safari" went through the terminal because the quit tool force-killed apps, and a reply
+whose tool arguments Groq could not parse ended the request. All fixed; see the CHANGELOG.
 
 **Results** with a small open model running entirely on the Mac (Qwen3-4B-Instruct-2507, 4-bit, via `mlx-lm`'s
 OpenAI-compatible server and NOVA's *Custom* provider; Apple M4):

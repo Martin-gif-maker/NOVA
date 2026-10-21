@@ -31,7 +31,7 @@ ignore = [
 files = ["workers.py", "providers.py", "models.py", "docs.py", "embeddings.py", "memory.py", "storage.py", "updater.py",
          "tools.py", "toolbase.py", "tools_web.py", "tools_system.py", "tools_files.py", "tools_apps.py", "schemas.py",
          "prompts.py", "ledger.py", "keystore.py", "settings.py", "i18n.py", "whatsnew.py", "speech.py",
-         "evals/harness.py", "evals/__main__.py"]
+         "sync.py", "evals/harness.py", "evals/__main__.py"]
 ignore_missing_imports = true
 follow_imports = "silent"
 warn_unused_ignores = true

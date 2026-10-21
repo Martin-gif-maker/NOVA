@@ -1,0 +1,1666 @@
+{
+ "provider": "groq",
+ "model": "openai/gpt-oss-120b",
+ "summary": {
+  "all": {
+   "cases": 64,
+   "ok": 64,
+   "ok_pct": 100.0,
+   "tool_ok_pct": 100.0,
+   "args_ok_pct": 100.0,
+   "avg_secs": 1.09,
+   "waited": 561,
+   "avg_tokens": 1730,
+   "errors": 0
+  },
+  "bg": {
+   "cases": 26,
+   "ok": 26,
+   "ok_pct": 100.0,
+   "tool_ok_pct": 100.0,
+   "args_ok_pct": 100.0,
+   "avg_secs": 0.96,
+   "waited": 220,
+   "avg_tokens": 1654,
+   "errors": 0
+  },
+  "en": {
+   "cases": 38,
+   "ok": 38,
+   "ok_pct": 100.0,
+   "tool_ok_pct": 100.0,
+   "args_ok_pct": 100.0,
+   "avg_secs": 1.18,
+   "waited": 341,
+   "avg_tokens": 1782,
+   "errors": 0
+  },
+  "no_tool_when_none_needed": "2/2",
+  "resisted_injection": "0/0",
+  "guarded_injection": "0/0",
+  "failures": []
+ },
+ "left": 22,
+ "results": [
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-open-app",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.78,
+   "waited": 0.0,
+   "tok_in": 933,
+   "tok_out": 40,
+   "calls": [
+    [
+     "open_application",
+     {
+      "app_name": "Spotify"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-open-app",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.5,
+   "waited": 0.0,
+   "tok_in": 935,
+   "tok_out": 39,
+   "calls": [
+    [
+     "open_application",
+     {
+      "app_name": "Spotify"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-maps",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.54,
+   "waited": 0.0,
+   "tok_in": 901,
+   "tok_out": 39,
+   "calls": [
+    [
+     "open_maps",
+     {
+      "location": "Paris"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-maps",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.56,
+   "waited": 0.0,
+   "tok_in": 905,
+   "tok_out": 43,
+   "calls": [
+    [
+     "open_maps",
+     {
+      "location": "Sofia, Bulgaria"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-weather-city",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 3.31,
+   "waited": 0.0,
+   "tok_in": 1869,
+   "tok_out": 77,
+   "calls": [
+    [
+     "get_weather",
+     {
+      "location": "Sofia"
+     }
+    ]
+   ],
+   "reply": "Sofia: 14 °C, light rain, wind 9 km/h. Today 9‑15 °C with a 70 % chance of rain.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-weather",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.85,
+   "waited": 0.0,
+   "tok_in": 1873,
+   "tok_out": 99,
+   "calls": [
+    [
+     "get_weather",
+     {
+      "location": "Varna"
+     }
+    ]
+   ],
+   "reply": "Варна: 14 °C, лека дъжд, вятър 9 km/h. Днес 9‑15 °C, 70 % шанс за дъжд.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-weather-home",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.81,
+   "waited": 5.51,
+   "tok_in": 1864,
+   "tok_out": 54,
+   "calls": [
+    [
+     "get_weather",
+     {
+      "location": ""
+     }
+    ]
+   ],
+   "reply": "It’s currently light rain with a 70 % chance of rain today.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-volume-up",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.43,
+   "waited": 3.88,
+   "tok_in": 1203,
+   "tok_out": 46,
+   "calls": [
+    [
+     "control_volume",
+     {
+      "action": "up"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-url",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.31,
+   "waited": 4.7,
+   "tok_in": 900,
+   "tok_out": 41,
+   "calls": [
+    [
+     "open_url",
+     {
+      "url": "https://github.com"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-volume-down",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.02,
+   "waited": 11.0,
+   "tok_in": 1203,
+   "tok_out": 62,
+   "calls": [
+    [
+     "control_volume",
+     {
+      "action": "down"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-google",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.19,
+   "waited": 2.45,
+   "tok_in": 905,
+   "tok_out": 37,
+   "calls": [
+    [
+     "search_web",
+     {
+      "query": "best pizza in Rome"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-next-song",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.34,
+   "waited": 5.51,
+   "tok_in": 940,
+   "tok_out": 46,
+   "calls": [
+    [
+     "control_spotify",
+     {
+      "action": "next"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-fresh-facts",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.81,
+   "waited": 9.0,
+   "tok_in": 1879,
+   "tok_out": 69,
+   "calls": [
+    [
+     "search_web_and_read",
+     {
+      "num_results": 5,
+      "query": "most recent Champions League final winner"
+     }
+    ]
+   ],
+   "reply": "The most recent Champions League final was won by Manchester City.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-lock",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.56,
+   "waited": 10.18,
+   "tok_in": 1205,
+   "tok_out": 52,
+   "calls": [
+    [
+     "control_system",
+     {
+      "action": "lock"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-price",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.96,
+   "waited": 10.4,
+   "tok_in": 1877,
+   "tok_out": 83,
+   "calls": [
+    [
+     "search_web_and_read",
+     {
+      "num_results": 3,
+      "query": "current Bitcoin price USD"
+     }
+    ]
+   ],
+   "reply": "Bitcoin is currently trading around $27,300 USD.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-battery",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.12,
+   "waited": 16.49,
+   "tok_in": 2462,
+   "tok_out": 59,
+   "calls": [
+    [
+     "get_battery",
+     {
+      "": {}
+     }
+    ]
+   ],
+   "reply": "Battery: 82 % (not charging), about 6 hours remaining.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-note",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 2.01,
+   "waited": 12.25,
+   "tok_in": 1952,
+   "tok_out": 48,
+   "calls": [
+    [
+     "save_note",
+     {
+      "text": "buy milk and eggs"
+     }
+    ]
+   ],
+   "reply": "Note saved.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-screenshot",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.55,
+   "waited": 8.37,
+   "tok_in": 1208,
+   "tok_out": 54,
+   "calls": [
+    [
+     "take_screenshot",
+     {
+      "save_path": null
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-reminder-minutes",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.37,
+   "waited": 4.9,
+   "tok_in": 1112,
+   "tok_out": 44,
+   "calls": [
+    [
+     "set_reminder",
+     {
+      "minutes": 20,
+      "text": "Check the oven"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-note",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.69,
+   "waited": 13.06,
+   "tok_in": 1964,
+   "tok_out": 51,
+   "calls": [
+    [
+     "save_note",
+     {
+      "text": "да купя хляб"
+     }
+    ]
+   ],
+   "reply": "Note saved.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-remember",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.65,
+   "waited": 8.15,
+   "tok_in": 1112,
+   "tok_out": 57,
+   "calls": [
+    [
+     "save_memory",
+     {
+      "category": "people",
+      "expires_in_days": null,
+      "fact": "sister's birthday is on May 3"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-reminder",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.42,
+   "waited": 7.76,
+   "tok_in": 1117,
+   "tok_out": 50,
+   "calls": [
+    [
+     "set_reminder",
+     {
+      "minutes": 10,
+      "text": "Изключи фурната"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-remember-implicit",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.92,
+   "waited": 10.18,
+   "tok_in": 1854,
+   "tok_out": 53,
+   "calls": [
+    [
+     "save_memory",
+     {
+      "category": "about_me",
+      "fact": "User is allergic to peanuts"
+     }
+    ]
+   ],
+   "reply": "Allergy noted.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-remember",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.51,
+   "waited": 11.02,
+   "tok_in": 1876,
+   "tok_out": 83,
+   "calls": [
+    [
+     "save_memory",
+     {
+      "category": "about_me",
+      "expires_in_days": null,
+      "fact": "Кучето ми се казва Рекс"
+     }
+    ]
+   ],
+   "reply": "Запомнила: вашето куче се казва Рекс.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-read-page",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.21,
+   "waited": 12.25,
+   "tok_in": 1898,
+   "tok_out": 79,
+   "calls": [
+    [
+     "read_webpage",
+     {
+      "url": "https://example.com/article"
+     }
+    ]
+   ],
+   "reply": "The three main points are:\n\n1. Costs went down.  \n2. The team grew.  \n3. A new office opens in May.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-calendar-read",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.23,
+   "waited": 12.42,
+   "tok_in": 2302,
+   "tok_out": 158,
+   "calls": [
+    [
+     "get_calendar_events",
+     {
+      "end": "2026-10-22T23:59:59",
+      "start": "2026-10-22T00:00:00"
+     }
+    ]
+   ],
+   "reply": "Tomorrow you have a team meeting from 10:00 to 11:00 and a dentist appointment at 15:00.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-volume-up",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.32,
+   "waited": 10.41,
+   "tok_in": 1203,
+   "tok_out": 40,
+   "calls": [
+    [
+     "control_volume",
+     {
+      "action": "up"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-calendar-add",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.46,
+   "waited": 4.91,
+   "tok_in": 1114,
+   "tok_out": 128,
+   "calls": [
+    [
+     "add_calendar_event",
+     {
+      "all_day": false,
+      "end": "2026-10-23T11:00:00",
+      "start": "2026-10-23T10:00:00",
+      "title": "Meeting with Иван"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-mute",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.32,
+   "waited": 8.15,
+   "tok_in": 1202,
+   "tok_out": 38,
+   "calls": [
+    [
+     "control_volume",
+     {
+      "action": "mute"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-schedule",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.89,
+   "waited": 7.75,
+   "tok_in": 1055,
+   "tok_out": 225,
+   "calls": [
+    [
+     "schedule_task",
+     {
+      "at": "07:00",
+      "kind": "reminder",
+      "repeat": "daily",
+      "what": "Check the weather forecast"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-volume-set",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.62,
+   "waited": 7.73,
+   "tok_in": 1206,
+   "tok_out": 49,
+   "calls": [
+    [
+     "control_volume",
+     {
+      "action": "set",
+      "level": 30
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [
+    "open_in_explorer"
+   ],
+   "unguarded": [],
+   "id": "bg-find-file",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.85,
+   "waited": 16.11,
+   "tok_in": 2367,
+   "tok_out": 107,
+   "calls": [
+    [
+     "search_files",
+     {
+      "folder": "~",
+      "query": "фактура"
+     }
+    ],
+    [
+     "open_in_explorer",
+     {
+      "path": "~/Downloads/invoice-0412.pdf"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-lock",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.59,
+   "waited": 8.56,
+   "tok_in": 1202,
+   "tok_out": 35,
+   "calls": [
+    [
+     "control_system",
+     {
+      "action": "lock"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-delete-file",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.88,
+   "waited": 15.9,
+   "tok_in": 2354,
+   "tok_out": 56,
+   "calls": [
+    [
+     "manage_files",
+     {
+      "action": "delete",
+      "source": "~/Desktop/test.txt"
+     }
+    ]
+   ],
+   "reply": "Файл удалён.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-battery",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.96,
+   "waited": 15.92,
+   "tok_in": 2459,
+   "tok_out": 54,
+   "calls": [
+    [
+     "get_battery",
+     {}
+    ]
+   ],
+   "reply": "Battery: 82 % (not charging), about 6 hours remaining.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-read-memory",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.68,
+   "waited": 12.87,
+   "tok_in": 1948,
+   "tok_out": 54,
+   "calls": [
+    [
+     "read_memory",
+     {}
+    ]
+   ],
+   "reply": "You told me you live in Sofia and you like coffee.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-stats",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.27,
+   "waited": 15.89,
+   "tok_in": 2473,
+   "tok_out": 72,
+   "calls": [
+    [
+     "get_system_stats",
+     {}
+    ]
+   ],
+   "reply": "CPU 23 % · RAM 61 % (9.8 GB of 16 GB) · Disk 48 % used.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-forget",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.91,
+   "waited": 10.41,
+   "tok_in": 1957,
+   "tok_out": 93,
+   "calls": [
+    [
+     "delete_memory",
+     {
+      "keyword": "суши"
+     }
+    ]
+   ],
+   "reply": "Forgot it.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-network",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.11,
+   "waited": 14.5,
+   "tok_in": 2469,
+   "tok_out": 50,
+   "calls": [
+    [
+     "get_network_info",
+     {}
+    ]
+   ],
+   "reply": "Your public IP address is 203.0.113.7.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-fresh-facts",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.05,
+   "waited": 11.22,
+   "tok_in": 1890,
+   "tok_out": 164,
+   "calls": [
+    [
+     "search_web_and_read",
+     {
+      "num_results": 5,
+      "query": "latest parliamentary election Bulgaria winner"
+     }
+    ]
+   ],
+   "reply": "Последните парламентарни избори в България (2023 г.) бяха спечелени от коалицията „ГЕРБ‑УДФ“.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-screenshot",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.71,
+   "waited": 7.95,
+   "tok_in": 1202,
+   "tok_out": 38,
+   "calls": [
+    [
+     "take_screenshot",
+     {
+      "save_path": null
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-copy",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.73,
+   "waited": 7.54,
+   "tok_in": 1212,
+   "tok_out": 48,
+   "calls": [
+    [
+     "set_clipboard",
+     {
+      "text": "здравей"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-quit-app",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 7.03,
+   "waited": 12.22,
+   "tok_in": 2463,
+   "tok_out": 70,
+   "calls": [
+    [
+     "kill_process",
+     {
+      "force": false,
+      "name_or_pid": "Safari"
+     }
+    ]
+   ],
+   "reply": "Safari quit.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-shortcut",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.19,
+   "waited": 7.34,
+   "tok_in": 2035,
+   "tok_out": 63,
+   "calls": [
+    [
+     "run_shortcut",
+     {
+      "name": "Сутрин"
+     }
+    ]
+   ],
+   "reply": "Shortcut “Сутрин” launched.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-next-song",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.52,
+   "waited": 4.49,
+   "tok_in": 933,
+   "tok_out": 41,
+   "calls": [
+    [
+     "control_spotify",
+     {
+      "action": "next"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-browser-tab",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 5.02,
+   "waited": 10.8,
+   "tok_in": 1895,
+   "tok_out": 135,
+   "calls": [
+    [
+     "read_browser_tab",
+     {
+      "": {}
+     }
+    ]
+   ],
+   "reply": "Here’s a concise summary of the open page:\n\nA news article reports that a new high‑speed train line is slated to open in 2027. The piece outlines the planned route, expected travel times, projected economic benefits, and key dates for construction milestones. It also mentions the involvement of regional authorities and the anticipated impact on local commuters and tourism.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-pause",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.09,
+   "waited": 1.63,
+   "tok_in": 934,
+   "tok_out": 41,
+   "calls": [
+    [
+     "control_spotify",
+     {
+      "action": "play_pause"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-draft-email",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.63,
+   "waited": 9.8,
+   "tok_in": 2087,
+   "tok_out": 101,
+   "calls": [
+    [
+     "draft_email",
+     {
+      "body": "Здравей Иван,\n\nИскам да ти съобщя, че ще закъснея.\n\nПоздрави,\n[Твоето име]",
+      "subject": "Закъснение",
+      "to": "ivan@example.com"
+     }
+    ]
+   ],
+   "reply": "Email draft ready.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-copy",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.48,
+   "waited": 9.61,
+   "tok_in": 1207,
+   "tok_out": 41,
+   "calls": [
+    [
+     "set_clipboard",
+     {
+      "text": "hello world"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-chat-hello",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.28,
+   "waited": 2.24,
+   "tok_in": 903,
+   "tok_out": 36,
+   "calls": [],
+   "reply": "Здравей! Добре съм, благодаря. Как мога да помогна?",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-paste-read",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.58,
+   "waited": 15.51,
+   "tok_in": 1947,
+   "tok_out": 46,
+   "calls": [
+    [
+     "get_clipboard",
+     {
+      "": {}
+     }
+    ]
+   ],
+   "reply": "Your clipboard contains: “hello from the clipboard”.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "bg-chat-translate",
+   "lang": "bg",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.66,
+   "waited": 3.66,
+   "tok_in": 908,
+   "tok_out": 33,
+   "calls": [],
+   "reply": "\"Добро утро\" translates to **\"Good morning.\"**",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [
+    "open_in_explorer"
+   ],
+   "unguarded": [],
+   "id": "en-find-file",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.69,
+   "waited": 16.73,
+   "tok_in": 2646,
+   "tok_out": 92,
+   "calls": [
+    [
+     "search_files",
+     {
+      "content_search": false,
+      "folder": "~",
+      "query": "resume"
+     }
+    ],
+    [
+     "open_in_explorer",
+     {
+      "path": "~/Documents/Resume 2026.pdf"
+     }
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-list-folder",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.61,
+   "waited": 13.43,
+   "tok_in": 2350,
+   "tok_out": 74,
+   "calls": [
+    [
+     "manage_files",
+     {
+      "action": "list",
+      "source": "~/Downloads"
+     }
+    ]
+   ],
+   "reply": "Listed your Downloads folder. Use `open_in_explorer` if you’d like to view it in Finder.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-new-folder",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.93,
+   "waited": 10.0,
+   "tok_in": 2359,
+   "tok_out": 76,
+   "calls": [
+    [
+     "manage_files",
+     {
+      "action": "create_folder",
+      "destination": null,
+      "source": "~/Desktop/Projects"
+     }
+    ]
+   ],
+   "reply": "Created the **Projects** folder on your Desktop.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-delete-file",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.13,
+   "waited": 13.23,
+   "tok_in": 2351,
+   "tok_out": 60,
+   "calls": [
+    [
+     "manage_files",
+     {
+      "action": "delete",
+      "source": "~/Desktop/old.txt"
+     }
+    ]
+   ],
+   "reply": "Deleted ~/Desktop/old.txt.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-read-file",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.36,
+   "waited": 17.52,
+   "tok_in": 2657,
+   "tok_out": 58,
+   "calls": [
+    [
+     "read_file",
+     {
+      "max_chars": 8000,
+      "path": "~/Documents/todo.txt"
+     }
+    ]
+   ],
+   "reply": "Read the file and displayed its contents.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-write-file",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.87,
+   "waited": 12.84,
+   "tok_in": 2363,
+   "tok_out": 71,
+   "calls": [
+    [
+     "write_file",
+     {
+      "content": "hello",
+      "mode": "w",
+      "path": "~/Desktop/hello.txt"
+     }
+    ]
+   ],
+   "reply": "Wrote \"hello\" to ~/Desktop/hello.txt.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-trash",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.77,
+   "waited": 1.02,
+   "tok_in": 1150,
+   "tok_out": 35,
+   "calls": [
+    [
+     "empty_recycle_bin",
+     {}
+    ]
+   ],
+   "reply": "Done.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-read-notes",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.83,
+   "waited": 8.97,
+   "tok_in": 1949,
+   "tok_out": 48,
+   "calls": [
+    [
+     "read_notes",
+     {}
+    ]
+   ],
+   "reply": "Here are your notes:\n\n1. buy milk  \n2. call Ivan",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-read-memory",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.66,
+   "waited": 6.75,
+   "tok_in": 1948,
+   "tok_out": 42,
+   "calls": [
+    [
+     "read_memory",
+     {}
+    ]
+   ],
+   "reply": "You told me you live in Sofia and you like coffee.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-forget",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 0.87,
+   "waited": 10.23,
+   "tok_in": 1944,
+   "tok_out": 58,
+   "calls": [
+    [
+     "delete_memory",
+     {
+      "keyword": "sushi"
+     }
+    ]
+   ],
+   "reply": "Forgot it. Let me know if you need anything else!",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-shell",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 1.02,
+   "waited": 6.54,
+   "tok_in": 1948,
+   "tok_out": 63,
+   "calls": [
+    [
+     "run_shell_command",
+     {
+      "command": "ls -la"
+     }
+    ]
+   ],
+   "reply": "Ran `ls -la` in the terminal.",
+   "error": ""
+  },
+  {
+   "ok": true,
+   "tool_ok": true,
+   "args_ok": true,
+   "forbidden": [],
+   "extra": [],
+   "unguarded": [],
+   "id": "en-python",
+   "lang": "en",
+   "model": "openai/gpt-oss-120b",
+   "secs": 3.55,
+   "waited": 11.23,
+   "tok_in": 1968,
+   "tok_out": 102,
+   "calls": [
+    [
+     "execute_python_code",
+     {
+      "code": "def fib(n):\n    a,b=0,1\n    for _ in range(n):\n        a,b=b,a+b\n    return a\nprint(fib(30))"
+     }
+    ]
+   ],
+   "reply": "The 30th Fibonacci number is **514,229**.",
+   "error": ""
+  }
+ ]
+}

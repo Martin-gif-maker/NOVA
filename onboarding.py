@@ -158,7 +158,7 @@ class OnboardingDialog(QDialog):
         if p.get("local"):
             text = tr("{} runs AI models on this Mac - nothing you type leaves your computer, and it works offline. "
                       "Install it from {}, download a model (for example {}), then press Test.").format(
-                f"<b>{name}</b>", f"<a href='{p['key_url']}'>ollama.com</a>", "<code>ollama pull llama3.1</code>")
+                f"<b>{name}</b>", f"<a href='{p['key_url']}'>ollama.com</a>", "<code>ollama pull qwen3:4b-instruct</code>")
         elif p.get("needs_url"):
             text = tr("Any server that speaks the OpenAI chat API (LM Studio, a company gateway…). Enter its address; the key is optional.")
         else:

@@ -1,8 +1,9 @@
 # memory.py — what NOVA remembers about you.
 #
-# Each memory has a category, the day it was saved, an optional expiry date and search keywords:
+# Each memory has a category, the day it was saved, an optional expiry date, search keywords and the moment it was
+# saved (sync.py uses it to tell "forgotten" from "saved again later"):
 #     {"text": "is allergic to peanuts", "category": "preference", "created": "2026-10-07", "expires": "",
-#      "tags": "food allergy nuts eating restaurant diet health храна алергия ядки"}
+#      "tags": "food allergy nuts eating restaurant diet health храна алергия ядки", "at": "2026-10-07T18:02:11"}
 # Only the memories that matter for the current question go into the prompt (`relevant`), so the list can
 # grow without every request carrying all of it. Expired memories disappear on their own.
 #
@@ -59,7 +60,8 @@ def _clean_category(cat: str, text: str) -> str:
     return cat if cat in CATEGORIES else guess_category(text)
 
 
-def make(text: str, category: str = "", expires_days: float = 0, created: str | None = None, tags: str = "") -> dict:
+def make(text: str, category: str = "", expires_days: float = 0, created: str | None = None, tags: str = "",
+         at: str | None = None) -> dict:
     text = re.sub(r"\s+", " ", str(text or "")).strip()
     expires = ""
     try:
@@ -69,7 +71,8 @@ def make(text: str, category: str = "", expires_days: float = 0, created: str | 
         pass
     return {"text": text, "category": _clean_category(category, text),
             "created": today() if created is None else created, "expires": expires,
-            "tags": re.sub(r"\s+", " ", str(tags or "")).strip()[:400]}
+            "tags": re.sub(r"\s+", " ", str(tags or "")).strip()[:400],
+            "at": datetime.datetime.now().isoformat(timespec="seconds") if at is None else at}   # when saved (sync.py)
 
 
 def from_display(s: str) -> dict:
@@ -94,7 +97,8 @@ def to_display(item: dict) -> str:
 def coerce(x) -> dict:
     """Accept a memory dict or an old-style string."""
     if isinstance(x, dict):
-        it = make(x.get("text", ""), x.get("category", ""), created=str(x.get("created") or ""), tags=x.get("tags", ""))
+        it = make(x.get("text", ""), x.get("category", ""), created=str(x.get("created") or ""), tags=x.get("tags", ""),
+                  at=str(x.get("at") or ""))
         it["expires"] = str(x.get("expires") or "")
         return it
     return from_display(x)

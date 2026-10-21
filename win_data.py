@@ -235,6 +235,52 @@ class DataMixin:
                 else: self._sys_msg_ready.emit(tr("❌  Update check failed: {}").format(e))
         threading.Thread(target=_bg, daemon=True).start()
 
+    # ── the same memories on your other computers (sync.py) ───────
+    _SYNC_EVERY_MS = 180_000                    # the cloud folder brings the others' changes; look every 3 minutes
+
+    def _start_sync(self):
+        if not getattr(self, "_sync_timer", None):
+            self._sync_timer = QTimer(self); self._sync_timer.timeout.connect(self._sync_now)
+            self._sync_timer.start(self._SYNC_EVERY_MS)
+        self._sync_now()
+
+    def _sync_now(self):
+        import keystore, sync, memory as mem
+        folder = self.config.get("sync_folder", "")
+        if not folder or getattr(self, "_sync_busy", False): return
+        phrase = keystore._get_api_key("sync")
+        if not phrase: return
+        self._sync_busy = True
+        def _bg():
+            try:
+                with computer_tools._mem_lock:                   # nothing else reads or writes memories meanwhile
+                    out = sync.run(folder, phrase, self.config, lambda: mem.load(computer_tools.MEMORY_FILE),
+                                   lambda items: mem.save(computer_tools.MEMORY_FILE, items))
+                self._sync_done.emit(out, "")
+            except sync.SyncError as e:
+                self._sync_done.emit({}, str(e))
+            except Exception as e:                               # a cloud folder can be half-written, offline …
+                log.warning("sync failed: %s", e)
+                self._sync_done.emit({}, f"{type(e).__name__}: {e}")
+        threading.Thread(target=_bg, daemon=True).start()
+
+    def _on_sync_done(self, out, err):
+        self._sync_busy = False
+        when = datetime.datetime.now().strftime("%H:%M")
+        if err:
+            self.config["sync_status"] = "✗ " + tr(err)
+            if err != getattr(self, "_sync_last_error", ""):      # say it once, not every three minutes
+                self.chat_area.add_message(tr("Sync with your other computers: {}").format(tr(err)), "system", self._theme)
+            self._sync_last_error = err
+        else:
+            self._sync_last_error = ""
+            names = ", ".join(out.get("computers") or [])
+            self.config["sync_status"] = (tr("Last synced at {} with {}.").format(when, names) if names else
+                                          tr("Last synced at {} - no other computer in the folder yet.").format(when))
+            if out.get("added") or out.get("removed"):
+                log.info("sync: %d memories arrived, %d were forgotten elsewhere", out["added"], out["removed"])
+        self._save_config()
+
     def _auto_update_check(self):
         """Once a day, unless you turned checking off. NOVA run from source is updated with git, so it checks only
         when you set a feed of your own (Help → Check for updates still works)."""

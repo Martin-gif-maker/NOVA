@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NOVA — an AI assistant that does things</title>
+<meta name="description" content="NOVA is a desktop AI assistant for macOS and Windows: it opens apps, finds files, reads your documents, remembers what matters and asks before anything risky. Free and open source.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <span class="mark">NOVA</span>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#measured">Measured</a>
+      <a href="#privacy">Privacy</a>
+      <a href="evals.html">What the evals taught</a>
+      <a class="gh" href="https://github.com/Martin-gif-maker/NOVA">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <h1>An AI assistant on your computer that does things — and asks before anything risky.</h1>
+    <p class="lead">Open apps, find files, read your documents, remember what matters, talk in Bulgarian or English.
+      Use Groq, Claude or OpenAI — or run it with no internet at all.</p>
+    <div class="buttons">
+      <a class="btn primary" id="mac" href="https://github.com/Martin-gif-maker/NOVA/releases/latest">Download for Mac</a>
+      <a class="btn" href="https://github.com/Martin-gif-maker/NOVA/releases/tag/windows-test-1">Windows (test version)</a>
+      <a class="btn" href="https://github.com/Martin-gif-maker/NOVA">Source code</a>
+    </div>
+    <p class="fine" id="macinfo">Free and open source (MIT). The Mac app updates itself and checks every download.</p>
+    <div class="shot">
+      <picture>
+        <source srcset="https://raw.githubusercontent.com/Martin-gif-maker/NOVA/main/design/nova-dark.png" media="(prefers-color-scheme: dark)">
+        <img src="https://raw.githubusercontent.com/Martin-gif-maker/NOVA/main/design/nova-light.png" alt="The NOVA window: a short chat where NOVA opened Maps, checked the weather, set a reminder and answered from a document" width="440" height="860" loading="lazy">
+      </picture>
+    </div>
+  </div>
+
+  <section id="features">
+    <div class="wrap">
+      <h2>What it does</h2>
+      <p class="sub">NOVA gives the AI 52 tools on your computer and sends only the ones a request needs. Everything that
+        could change or delete something waits for your yes.</p>
+      <div class="grid">
+        <div class="card"><h3>Does things, not just talk</h3><p>Opens apps and pages, controls volume and music, moves files to the Trash, sets reminders, drafts mail, takes screenshots.</p></div>
+        <div class="card"><h3>Asks before anything risky</h3><p>Shell commands, deleting, quitting apps, typing for you — an approval every time. Text from web pages can never quietly send your data anywhere.</p></div>
+        <div class="card"><h3>Your documents, by meaning</h3><p>Drop in PDFs, Word or Excel files. Ask in other words — or in Bulgarian about an English contract — and it finds the right passage. On your computer.</p></div>
+        <div class="card"><h3>Speech in any language, offline</h3><p>Whisper runs on your computer: Bulgarian, English and 97 more languages, without your voice leaving it.</p></div>
+        <div class="card"><h3>Remembers you — everywhere</h3><p>Memories it picks by meaning, and the same memories on your Mac and your PC through your own cloud folder, encrypted.</p></div>
+        <div class="card"><h3>Runs without the internet</h3><p>One click downloads a small model through Ollama. In NOVA's tests it picked the right tool for 94 % of requests.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="measured">
+    <div class="wrap">
+      <h2>Measured, not guessed</h2>
+      <p class="sub">86 everyday requests in English and Bulgarian go through NOVA's real AI loop with stand-in tools.
+        A request counts as correct only if the model picked the right tool <em>and</em> filled it in right.
+        <a href="https://github.com/Martin-gif-maker/NOVA/tree/main/evals">The set and the harness</a>.</p>
+      <div class="table-scroll">
+      <table>
+        <thead><tr><th>Model</th><th class="where">Where it runs</th><th class="num">Requests</th><th class="num">Correct</th><th class="num">Avg time</th></tr></thead>
+        <tbody id="results">
+          <tr><td>gpt-oss-120b</td><td class="where">Groq (NOVA's default)</td><td class="num">64 of 86</td><td class="num">100 %</td><td class="num">1.09 s</td></tr>
+          <tr><td>gpt-oss-20b</td><td class="where">Groq</td><td class="num">50 of 86</td><td class="num">98.0 %</td><td class="num">0.68 s</td></tr>
+          <tr><td>Qwen3 4B Instruct</td><td class="where">this Mac, offline</td><td class="num">86</td><td class="num">94.2 %</td><td class="num">3.0 s</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="fine">Every miss became a fix: the AI no longer asks "may I?" in the chat before risky tools (NOVA asks itself),
+        refused tool calls are retried with the reason, and "quit Safari" quits like ⌘Q instead of killing the app.
+        <a href="evals.html">What the evals taught</a>.</p>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <div class="wrap two">
+      <div>
+        <h2>Privacy</h2>
+        <ul class="plain">
+          <li>Your messages go only to the AI service you choose — or nowhere, with a local model.</li>
+          <li>"What NOVA sent" lists every request that left your computer, by address.</li>
+          <li>Keys stay in the Keychain (Credential Manager on Windows). Chats and memories can be encrypted on disk.</li>
+          <li>Documents are indexed on your computer; only the passages that answer a question are sent.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Under the hood</h2>
+        <ul class="plain">
+          <li>Python and Qt; one code base for macOS and Windows behind a small platform layer.</li>
+          <li>A tool-calling agent loop with rate-limit pacing, retries and a model fallback.</li>
+          <li>About 650 automated tests, lint and type checks on every change.</li>
+          <li>On-device models: multilingual-e5 for meaning, Whisper for speech.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">NOVA is made by Martin · <a href="https://github.com/Martin-gif-maker/NOVA">GitHub</a> · MIT licence</div>
+</footer>
+
+<script>
+  // Point "Download for Mac" straight at the newest disk image (the button works without this too).
+  fetch("https://api.github.com/repos/Martin-gif-maker/NOVA/releases/latest")
+    .then(r => r.ok ? r.json() : null)
+    .then(rel => {
+      if (!rel) return;
+      const dmg = (rel.assets || []).find(a => a.name.endsWith(".dmg"));
+      if (!dmg) return;
+      document.getElementById("mac").href = dmg.browser_download_url;
+      document.getElementById("macinfo").textContent =
+        "Version " + rel.tag_name.replace(/^v/, "") + " · " + Math.round(dmg.size / 1e6) + " MB · free and open source (MIT). The Mac app updates itself and checks every download.";
+    })
+    .catch(() => {});
+</script>
+</body>
+</html>
